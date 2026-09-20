@@ -1,0 +1,168 @@
+import { PriceExplorer } from "./prices/PriceExplorer";
+import { Link } from "react-router";
+import { Page } from "./components/Page";
+
+export function Home() {
+  return (
+    <Page
+      title="NEMLab — Explore the electricity market"
+      eyebrow="Australia’s National Electricity Market"
+      heading="A closer look at the electricity market."
+      introduction="Explore how batteries trade energy and how the grid changes through time. Our interactive tools are taking shape."
+    >
+      <div className="features">
+        <section aria-labelledby="battery-heading">
+          <p className="feature-number" aria-hidden="true">
+            01
+          </p>
+          <h2 id="battery-heading">BatteryLab</h2>
+          <p>Compare battery trading strategies using historical electricity prices.</p>
+          <p className="availability">Coming soon</p>
+          <Link to="/batterylab">
+            Explore BatteryLab <span aria-hidden="true">→</span>
+          </Link>
+        </section>
+        <section aria-labelledby="grid-heading">
+          <p className="feature-number" aria-hidden="true">
+            02
+          </p>
+          <h2 id="grid-heading">GridReplay</h2>
+          <p>Explore notable market periods and follow the changing energy mix.</p>
+          <p className="availability">Coming soon</p>
+          <Link to="/gridreplay">
+            Explore GridReplay <span aria-hidden="true">→</span>
+          </Link>
+        </section>
+      </div>
+    </Page>
+  );
+}
+
+export function BatteryLab() {
+  return (
+    <Page
+      title="BatteryLab — NEMLab"
+      eyebrow="BatteryLab"
+      heading="What could a battery do?"
+      introduction="Compare a fixed trading schedule with the best outcome available in hindsight, using the same battery limits and operating windows."
+    >
+      <section className="notice" aria-labelledby="battery-status">
+        <h2 id="battery-status">The simulator is being built</h2>
+        <p>You cannot run a simulation here yet. This page describes the planned experience.</p>
+      </section>
+      <PriceExplorer />
+      <section className="prose" aria-labelledby="battery-plan">
+        <h2 id="battery-plan">A day, a battery, two strategies</h2>
+        <ol>
+          <li>Choose a historical region and day with complete price data.</li>
+          <li>Set battery capacity, power limits, operating windows and costs.</li>
+          <li>Compare charging, stored energy and simulated trading margin.</li>
+        </ol>
+        <p>
+          Hindsight knows the day’s prices in advance. It is a benchmark, not a forecast or a
+          promise of real returns.
+        </p>
+        <Link to="/methodology">Read the model assumptions</Link>
+      </section>
+    </Page>
+  );
+}
+
+export function GridReplay() {
+  return (
+    <Page
+      title="GridReplay — NEMLab"
+      eyebrow="GridReplay"
+      heading="See the story behind a market day."
+      introduction="Explore historical periods through aligned views of electricity prices and the grid’s changing energy mix."
+    >
+      <section className="notice" aria-labelledby="grid-status">
+        <h2 id="grid-status">Replay is being built</h2>
+        <p>
+          The event catalogue and replay controls are not available yet. No market events are shown
+          on this page.
+        </p>
+      </section>
+      <section className="prose" aria-labelledby="grid-plan">
+        <h2 id="grid-plan">Follow the evidence</h2>
+        <p>
+          The planned experience will let you explore notable periods, inspect the available data
+          and move through time with a shared chart cursor.
+        </p>
+        <p>
+          Gaps in the source data will stay visible. A missing observation does not mean zero
+          generation or a zero price.
+        </p>
+        <Link to="/methodology">Read about data and limitations</Link>
+      </section>
+    </Page>
+  );
+}
+
+export function Methodology() {
+  return (
+    <Page
+      title="Methodology — NEMLab"
+      eyebrow="Methodology"
+      heading="Understand what the numbers mean."
+      introduction="NEMLab explores historical data and simplified models. These principles guide the tools being built."
+    >
+      <div className="prose methodology">
+        <section aria-labelledby="historical-data">
+          <h2 id="historical-data">Historical data, with visible gaps</h2>
+          <p>
+            The backend stores electricity prices sourced from Open Electricity. Prices are in
+            Australian dollars per megawatt-hour (AUD/MWh), at five-minute intervals.
+          </p>
+          <p>
+            A NEM market day uses a fixed UTC+10 offset, including during daylight saving. Complete
+            days contain 288 intervals. Missing observations are kept distinct from zero.
+          </p>
+          <p>
+            Stored revisions preserve which data a calculation uses. This website does not display
+            the stored data yet.
+          </p>
+        </section>
+        <section aria-labelledby="fair-comparison">
+          <h2 id="fair-comparison">Two strategies, the same limits</h2>
+          <p>
+            The initial battery comparison uses one charging window followed by one discharging
+            window. Both strategies use the same battery, costs and windows, and finish with the
+            energy they started with.
+          </p>
+          <p>
+            A fixed schedule is chosen without looking at future prices. Hindsight can see the whole
+            day’s prices and may choose not to trade. It is only described as optimal when the
+            calculation establishes that result within its numerical tolerance.
+          </p>
+        </section>
+        <section aria-labelledby="model-limits">
+          <h2 id="model-limits">Trading margin is not investment return</h2>
+          <p>
+            The model accounts for energy purchases, sales, conversion losses and selected variable
+            costs. It assumes the battery’s trades do not change market prices.
+          </p>
+          <p>
+            It excludes capital and financing costs, household tariffs, ancillary-service revenue
+            and detailed network charges. Simulated trading margin is not actual facility revenue.
+          </p>
+        </section>
+      </div>
+    </Page>
+  );
+}
+
+export function NotFound() {
+  return (
+    <Page
+      title="Page not found — NEMLab"
+      eyebrow="Page not found"
+      heading="This page isn’t here."
+      introduction="The address may be incorrect, or this page may have moved."
+    >
+      <Link className="return-link" to="/">
+        Return to NEMLab home
+      </Link>
+    </Page>
+  );
+}
