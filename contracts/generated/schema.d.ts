@@ -107,6 +107,63 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/simulations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Submit or reuse a revision-bound scenario
+         * @description No ingestion is triggered. Pending jobs return 202; terminal duplicates return 200. Equivalent normalised parameters and price revision reuse the same job, including failures; resubmission does not reset retries. No Idempotency-Key is required. Worker and API enablement are independent.
+         */
+        post: operations["submitSimulation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/simulations/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read simulation progress without private worker metadata */
+        get: operations["getSimulationStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/simulations/{id}/result": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read an immutable proven comparison
+         * @description Returns original exact inputs/prices and unrounded double-based dispatch/accounting. Failed or unproven solver outcomes do not produce a successful public comparison. Currency is AUD; prices/cost rates AUD/MWh; energy MWh and power MW. No retention promise is made by this pre-launch contract.
+         */
+        get: operations["getSimulationResult"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -201,6 +258,167 @@ export interface components {
             actor: string;
             action: string;
             diagnostic: string | null;
+        };
+        SimulationSite: {
+            /** @description Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors. */
+            capacityMWh: string;
+            /** @description Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors. */
+            minimumMWh: string;
+            /** @description Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors. */
+            maximumMWh: string;
+            /** @description Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors. */
+            initialMWh: string;
+            /** @description Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors. */
+            chargeMW: string;
+            /** @description Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors. */
+            dischargeMW: string;
+            /** @description Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors. */
+            importLimitMW: string;
+            /** @description Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors. */
+            exportLimitMW: string;
+        };
+        SimulationCosts: {
+            /** @description Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors. */
+            importFee: string;
+            /** @description Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors. */
+            exportFee: string;
+            /** @description Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors. */
+            degradationPerExportedMWh: string;
+        };
+        /** @description Both efficiency legs in [0.01,1]. */
+        SimulationEfficiencyLegs: {
+            /** @description Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors. */
+            charge: string;
+            /** @description Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors. */
+            discharge: string;
+        };
+        SimulationEfficiency: components["schemas"]["SimulationEfficiencyLegs"] | {
+            /** @description Round-trip efficiency in [0.0001,1]; normalised to equal square-root legs. */
+            roundTrip: string;
+        };
+        /** @description Minutes from midnight in fixed UTC+10; nonempty ordered charge then discharge windows. 1440 is next midnight. */
+        SimulationWindows: {
+            chargeStart: number;
+            chargeEnd: number;
+            dischargeStart: number;
+            dischargeEnd: number;
+        };
+        SimulationRequest: {
+            region: components["schemas"]["Region"];
+            /**
+             * Format: date
+             * @description Completed NEM day on/after 2021-10-01 with complete stored prices.
+             */
+            day: string;
+            site: components["schemas"]["SimulationSite"];
+            efficiency: components["schemas"]["SimulationEfficiency"];
+            costs: components["schemas"]["SimulationCosts"];
+            windows: components["schemas"]["SimulationWindows"];
+        };
+        SimulationInputs: {
+            region: components["schemas"]["Region"];
+            /**
+             * Format: date
+             * @description Completed NEM day on/after 2021-10-01 with complete stored prices.
+             */
+            day: string;
+            site: components["schemas"]["SimulationSite"];
+            efficiency: components["schemas"]["SimulationEfficiencyLegs"];
+            costs: components["schemas"]["SimulationCosts"];
+            windows: components["schemas"]["SimulationWindows"];
+        };
+        SimulationStatus: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            status: "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED";
+            attempts: number;
+            /** @enum {string|null} */
+            failureCode: null | "LEASE_EXPIRED" | "WORKER_STOPPED" | "SIMULATION_DEADLINE_EXCEEDED" | "SIMULATION_PROCESS_FAILED" | "INVALID_CHILD_RESULT" | "UNSUPPORTED_SIMULATION_VERSION" | "SOLVER_FEASIBLE_NOT_PROVEN" | "SOLVER_NO_SOLUTION" | "SOLVER_INFEASIBLE" | "SOLVER_FAILED_VALIDATION" | "SOLVER_ERROR" | "SIMULATION_FAILED";
+            statusUrl: string;
+            resultUrl: string;
+        };
+        SimulationVersions: {
+            request: string;
+            model: string;
+            fixed: string;
+            hindsight: string;
+            solver: string;
+            executionProfile: string;
+            limits: {
+                milliseconds: number;
+                iterations: number;
+            };
+        };
+        SimulationDispatch: {
+            intervals: {
+                importedMWh: number;
+                exportedMWh: number;
+                endingEnergyMWh: number;
+            }[];
+            /** @enum {string} */
+            limitingReason: "ENERGY_HEADROOM" | "CHARGE_WINDOW" | "DISCHARGE_WINDOW" | "NOT_EVALUATED";
+        };
+        SimulationAccounting: {
+            importedMWh: number;
+            exportedMWh: number;
+            chargingCost: number;
+            revenue: number;
+            fees: number;
+            degradation: number;
+            margin: number;
+            lossesMWh: number;
+        };
+        SimulationStrategy: {
+            dispatch: components["schemas"]["SimulationDispatch"];
+            accounting: components["schemas"]["SimulationAccounting"];
+        };
+        SimulationResult: {
+            /** Format: uuid */
+            id: string;
+            inputs: components["schemas"]["SimulationInputs"];
+            /** Format: uuid */
+            priceRevision: string;
+            versions: components["schemas"]["SimulationVersions"];
+            /** @enum {string} */
+            marketOffset: "+10:00";
+            /** @enum {integer} */
+            intervalSeconds: 300;
+            /** @enum {string} */
+            intervalLabel: "END";
+            units: {
+                /** @enum {string} */
+                energy: "MWh";
+                /** @enum {string} */
+                power: "MW";
+                /** @enum {string} */
+                money: "AUD";
+                /** @enum {string} */
+                price: "AUD/MWh";
+            };
+            prices: {
+                /** Format: date-time */
+                start: string;
+                /** Format: date-time */
+                end: string;
+                price: string;
+            }[];
+            fixed: components["schemas"]["SimulationStrategy"];
+            hindsight: components["schemas"]["SimulationStrategy"];
+            solver: {
+                /** @enum {string} */
+                status: "OPTIMAL";
+                objective: number | null;
+                upperBound: number;
+                absoluteGap: number;
+            };
+        };
+        SimulationError: {
+            /** @enum {string} */
+            code: "INVALID_REQUEST" | "PRICE_DAY_UNAVAILABLE" | "PRICE_DAY_INCOMPLETE" | "SIMULATION_NOT_FOUND" | "RESULT_NOT_READY" | "SIMULATION_FAILED" | "QUEUE_FULL" | "REQUEST_TOO_LARGE" | "UNSUPPORTED_CONTENT_TYPE" | "STORAGE_UNAVAILABLE";
+            message: string;
+            field: string;
+            reason: string;
         };
     };
     responses: never;
@@ -740,6 +958,221 @@ export interface operations {
                         code: "STORAGE_UNAVAILABLE";
                         message: string;
                     };
+                };
+            };
+        };
+    };
+    submitSimulation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SimulationRequest"];
+            };
+        };
+        responses: {
+            /** @description Reused terminal job */
+            200: {
+                headers: {
+                    "Cache-Control": string;
+                    Location: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimulationStatus"];
+                };
+            };
+            /** @description Accepted pending job */
+            202: {
+                headers: {
+                    "Cache-Control": string;
+                    Location: string;
+                    "Retry-After": "2";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimulationStatus"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    "Cache-Control": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimulationError"];
+                };
+            };
+            /** @description Unavailable or incomplete stored prices */
+            409: {
+                headers: {
+                    "Cache-Control": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimulationError"];
+                };
+            };
+            /** @description Body exceeds 16384 bytes */
+            413: {
+                headers: {
+                    "Cache-Control": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimulationError"];
+                };
+            };
+            /** @description Requires application/json */
+            415: {
+                headers: {
+                    "Cache-Control": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimulationError"];
+                };
+            };
+            /** @description Queue full */
+            429: {
+                headers: {
+                    "Cache-Control": string;
+                    "Retry-After": "5";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimulationError"];
+                };
+            };
+            /** @description Storage unavailable */
+            503: {
+                headers: {
+                    "Cache-Control": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimulationError"];
+                };
+            };
+        };
+    };
+    getSimulationStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current job state */
+            200: {
+                headers: {
+                    "Cache-Control": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimulationStatus"];
+                };
+            };
+            /** @description Invalid identifier */
+            400: {
+                headers: {
+                    "Cache-Control": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimulationError"];
+                };
+            };
+            /** @description Unknown simulation */
+            404: {
+                headers: {
+                    "Cache-Control": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimulationError"];
+                };
+            };
+            /** @description Storage unavailable */
+            503: {
+                headers: {
+                    "Cache-Control": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimulationError"];
+                };
+            };
+        };
+    };
+    getSimulationResult: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Saved proven comparison */
+            200: {
+                headers: {
+                    "Cache-Control": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimulationResult"];
+                };
+            };
+            /** @description Invalid identifier */
+            400: {
+                headers: {
+                    "Cache-Control": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimulationError"];
+                };
+            };
+            /** @description Unknown simulation */
+            404: {
+                headers: {
+                    "Cache-Control": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimulationError"];
+                };
+            };
+            /** @description Result pending or simulation failed */
+            409: {
+                headers: {
+                    "Cache-Control": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimulationError"];
+                };
+            };
+            /** @description Storage unavailable */
+            503: {
+                headers: {
+                    "Cache-Control": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimulationError"];
                 };
             };
         };

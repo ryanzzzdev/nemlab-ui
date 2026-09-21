@@ -1,8 +1,8 @@
 {
-  "backendCommit": "7bdbd1ce74700454db123974a209f64250e3c7d1",
-  "version": "1.0.0",
+  "backendCommit": "9395a92c08069622756f32a8c0d337f8d0119b20",
+  "version": "1.1.0",
   "sha256": {
-    "openapi.json": "15a3986e02aebe2ae1ae895ed9c18389ea152281516b4b68054d8bd081e3bb2c",
-    "generated/schema.d.ts": "8eb493599e9b0b4ab574fd5b05064a82e634dea2cdf817ee0c08b7c6d3cc192f"
+    "openapi.json": "27ab786de99ab668c85df15cece5204cd2dd9d98e62c65df5165feebd133a0fb",
+    "generated/schema.d.ts": "7caf6dcbbc1fbb8765cde316a91f3e055467466291e97195a132015d6e2bfcdc"
   }
 }

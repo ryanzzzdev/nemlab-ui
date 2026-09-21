@@ -2,8 +2,8 @@
   "openapi": "3.0.3",
   "info": {
     "title": "NEMLab shared API",
-    "version": "1.0.0",
-    "description": "Enabled price-read and operator surfaces. Features are independently opt-in; disabled routes return 404. All market dates use fixed UTC+10, not daylight saving. Operator credentials must remain in trusted operator tooling. No simulation or GridReplay API is implemented here."
+    "version": "1.1.0",
+    "description": "Independently enabled price reads, operator controls and simulation lifecycle. Disabled routes return 404. Market dates use fixed UTC+10. Simulation bodies are at most 16384 bytes and decimal inputs are strings. No GridReplay API is implemented."
   },
   "paths": {
     "/api/v1/prices/{region}/coverage": {
@@ -1040,6 +1040,422 @@
           }
         }
       }
+    },
+    "/api/v1/simulations": {
+      "post": {
+        "operationId": "submitSimulation",
+        "summary": "Submit or reuse a revision-bound scenario",
+        "description": "No ingestion is triggered. Pending jobs return 202; terminal duplicates return 200. Equivalent normalised parameters and price revision reuse the same job, including failures; resubmission does not reset retries. No Idempotency-Key is required. Worker and API enablement are independent.",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Reused terminal job",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationStatus"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "pattern": "no-store"
+                }
+              },
+              "Location": {
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "pattern": "^/api/v1/simulations/[0-9a-f-]{36}$"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Accepted pending job",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationStatus"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "pattern": "no-store"
+                }
+              },
+              "Location": {
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "pattern": "^/api/v1/simulations/[0-9a-f-]{36}$"
+                }
+              },
+              "Retry-After": {
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "2"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationError"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "pattern": "no-store"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Unavailable or incomplete stored prices",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationError"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "pattern": "no-store"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Body exceeds 16384 bytes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationError"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "pattern": "no-store"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Requires application/json",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationError"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "pattern": "no-store"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Queue full",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationError"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "pattern": "no-store"
+                }
+              },
+              "Retry-After": {
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "5"
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Storage unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationError"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "pattern": "no-store"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/simulations/{id}": {
+      "get": {
+        "operationId": "getSimulationStatus",
+        "summary": "Read simulation progress without private worker metadata",
+        "security": [],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current job state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationStatus"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "pattern": "no-store"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid identifier",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationError"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "pattern": "no-store"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown simulation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationError"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "pattern": "no-store"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Storage unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationError"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "pattern": "no-store"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/simulations/{id}/result": {
+      "get": {
+        "operationId": "getSimulationResult",
+        "summary": "Read an immutable proven comparison",
+        "description": "Returns original exact inputs/prices and unrounded double-based dispatch/accounting. Failed or unproven solver outcomes do not produce a successful public comparison. Currency is AUD; prices/cost rates AUD/MWh; energy MWh and power MW. No retention promise is made by this pre-launch contract.",
+        "security": [],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Saved proven comparison",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationResult"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "pattern": "no-store"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid identifier",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationError"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "pattern": "no-store"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown simulation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationError"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "pattern": "no-store"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Result pending or simulation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationError"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "pattern": "no-store"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Storage unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationError"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "pattern": "no-store"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1383,6 +1799,663 @@
           "diagnostic": {
             "type": "string",
             "nullable": true
+          }
+        }
+      },
+      "SimulationSite": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "capacityMWh",
+          "minimumMWh",
+          "maximumMWh",
+          "initialMWh",
+          "chargeMW",
+          "dischargeMW",
+          "importLimitMW",
+          "exportLimitMW"
+        ],
+        "properties": {
+          "capacityMWh": {
+            "type": "string",
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
+            "maxLength": 80,
+            "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors."
+          },
+          "minimumMWh": {
+            "type": "string",
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
+            "maxLength": 80,
+            "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors."
+          },
+          "maximumMWh": {
+            "type": "string",
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
+            "maxLength": 80,
+            "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors."
+          },
+          "initialMWh": {
+            "type": "string",
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
+            "maxLength": 80,
+            "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors."
+          },
+          "chargeMW": {
+            "type": "string",
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
+            "maxLength": 80,
+            "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors."
+          },
+          "dischargeMW": {
+            "type": "string",
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
+            "maxLength": 80,
+            "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors."
+          },
+          "importLimitMW": {
+            "type": "string",
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
+            "maxLength": 80,
+            "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors."
+          },
+          "exportLimitMW": {
+            "type": "string",
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
+            "maxLength": 80,
+            "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors."
+          }
+        }
+      },
+      "SimulationCosts": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "importFee",
+          "exportFee",
+          "degradationPerExportedMWh"
+        ],
+        "properties": {
+          "importFee": {
+            "type": "string",
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
+            "maxLength": 80,
+            "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors."
+          },
+          "exportFee": {
+            "type": "string",
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
+            "maxLength": 80,
+            "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors."
+          },
+          "degradationPerExportedMWh": {
+            "type": "string",
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
+            "maxLength": 80,
+            "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors."
+          }
+        }
+      },
+      "SimulationEfficiencyLegs": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "charge",
+          "discharge"
+        ],
+        "properties": {
+          "charge": {
+            "type": "string",
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
+            "maxLength": 80,
+            "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors."
+          },
+          "discharge": {
+            "type": "string",
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
+            "maxLength": 80,
+            "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors."
+          }
+        },
+        "description": "Both efficiency legs in [0.01,1]."
+      },
+      "SimulationEfficiency": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/SimulationEfficiencyLegs"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "roundTrip"
+            ],
+            "properties": {
+              "roundTrip": {
+                "type": "string",
+                "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
+                "maxLength": 80,
+                "description": "Round-trip efficiency in [0.0001,1]; normalised to equal square-root legs."
+              }
+            }
+          }
+        ]
+      },
+      "SimulationWindows": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "chargeStart",
+          "chargeEnd",
+          "dischargeStart",
+          "dischargeEnd"
+        ],
+        "properties": {
+          "chargeStart": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1440,
+            "multipleOf": 5
+          },
+          "chargeEnd": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1440,
+            "multipleOf": 5
+          },
+          "dischargeStart": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1440,
+            "multipleOf": 5
+          },
+          "dischargeEnd": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1440,
+            "multipleOf": 5
+          }
+        },
+        "description": "Minutes from midnight in fixed UTC+10; nonempty ordered charge then discharge windows. 1440 is next midnight."
+      },
+      "SimulationRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "region",
+          "day",
+          "site",
+          "efficiency",
+          "costs",
+          "windows"
+        ],
+        "properties": {
+          "region": {
+            "$ref": "#/components/schemas/Region"
+          },
+          "day": {
+            "type": "string",
+            "format": "date",
+            "description": "Completed NEM day on/after 2021-10-01 with complete stored prices."
+          },
+          "site": {
+            "$ref": "#/components/schemas/SimulationSite"
+          },
+          "efficiency": {
+            "$ref": "#/components/schemas/SimulationEfficiency"
+          },
+          "costs": {
+            "$ref": "#/components/schemas/SimulationCosts"
+          },
+          "windows": {
+            "$ref": "#/components/schemas/SimulationWindows"
+          }
+        }
+      },
+      "SimulationInputs": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "region",
+          "day",
+          "site",
+          "efficiency",
+          "costs",
+          "windows"
+        ],
+        "properties": {
+          "region": {
+            "$ref": "#/components/schemas/Region"
+          },
+          "day": {
+            "type": "string",
+            "format": "date",
+            "description": "Completed NEM day on/after 2021-10-01 with complete stored prices."
+          },
+          "site": {
+            "$ref": "#/components/schemas/SimulationSite"
+          },
+          "efficiency": {
+            "$ref": "#/components/schemas/SimulationEfficiencyLegs"
+          },
+          "costs": {
+            "$ref": "#/components/schemas/SimulationCosts"
+          },
+          "windows": {
+            "$ref": "#/components/schemas/SimulationWindows"
+          }
+        }
+      },
+      "SimulationStatus": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "status",
+          "attempts",
+          "failureCode",
+          "statusUrl",
+          "resultUrl"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "QUEUED",
+              "RUNNING",
+              "SUCCEEDED",
+              "FAILED"
+            ]
+          },
+          "attempts": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 3
+          },
+          "failureCode": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              null,
+              "LEASE_EXPIRED",
+              "WORKER_STOPPED",
+              "SIMULATION_DEADLINE_EXCEEDED",
+              "SIMULATION_PROCESS_FAILED",
+              "INVALID_CHILD_RESULT",
+              "UNSUPPORTED_SIMULATION_VERSION",
+              "SOLVER_FEASIBLE_NOT_PROVEN",
+              "SOLVER_NO_SOLUTION",
+              "SOLVER_INFEASIBLE",
+              "SOLVER_FAILED_VALIDATION",
+              "SOLVER_ERROR",
+              "SIMULATION_FAILED"
+            ]
+          },
+          "statusUrl": {
+            "type": "string",
+            "pattern": "^/api/v1/simulations/[0-9a-f-]{36}$"
+          },
+          "resultUrl": {
+            "type": "string",
+            "pattern": "^/api/v1/simulations/[0-9a-f-]{36}/result$"
+          }
+        }
+      },
+      "SimulationVersions": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "request",
+          "model",
+          "fixed",
+          "hindsight",
+          "solver",
+          "executionProfile",
+          "limits"
+        ],
+        "properties": {
+          "request": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "model": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "fixed": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "hindsight": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "solver": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "executionProfile": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "limits": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "milliseconds",
+              "iterations"
+            ],
+            "properties": {
+              "milliseconds": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 60000
+              },
+              "iterations": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483647
+              }
+            }
+          }
+        }
+      },
+      "SimulationDispatch": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "intervals",
+          "limitingReason"
+        ],
+        "properties": {
+          "intervals": {
+            "type": "array",
+            "minItems": 288,
+            "maxItems": 288,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "importedMWh",
+                "exportedMWh",
+                "endingEnergyMWh"
+              ],
+              "properties": {
+                "importedMWh": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "exportedMWh": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "endingEnergyMWh": {
+                  "type": "number"
+                }
+              }
+            }
+          },
+          "limitingReason": {
+            "type": "string",
+            "enum": [
+              "ENERGY_HEADROOM",
+              "CHARGE_WINDOW",
+              "DISCHARGE_WINDOW",
+              "NOT_EVALUATED"
+            ]
+          }
+        }
+      },
+      "SimulationAccounting": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "importedMWh",
+          "exportedMWh",
+          "chargingCost",
+          "revenue",
+          "fees",
+          "degradation",
+          "margin",
+          "lossesMWh"
+        ],
+        "properties": {
+          "importedMWh": {
+            "type": "number"
+          },
+          "exportedMWh": {
+            "type": "number"
+          },
+          "chargingCost": {
+            "type": "number"
+          },
+          "revenue": {
+            "type": "number"
+          },
+          "fees": {
+            "type": "number"
+          },
+          "degradation": {
+            "type": "number"
+          },
+          "margin": {
+            "type": "number"
+          },
+          "lossesMWh": {
+            "type": "number"
+          }
+        }
+      },
+      "SimulationStrategy": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "dispatch",
+          "accounting"
+        ],
+        "properties": {
+          "dispatch": {
+            "$ref": "#/components/schemas/SimulationDispatch"
+          },
+          "accounting": {
+            "$ref": "#/components/schemas/SimulationAccounting"
+          }
+        }
+      },
+      "SimulationResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "inputs",
+          "priceRevision",
+          "versions",
+          "marketOffset",
+          "intervalSeconds",
+          "intervalLabel",
+          "units",
+          "prices",
+          "fixed",
+          "hindsight",
+          "solver"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "inputs": {
+            "$ref": "#/components/schemas/SimulationInputs"
+          },
+          "priceRevision": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "versions": {
+            "$ref": "#/components/schemas/SimulationVersions"
+          },
+          "marketOffset": {
+            "type": "string",
+            "enum": [
+              "+10:00"
+            ]
+          },
+          "intervalSeconds": {
+            "type": "integer",
+            "enum": [
+              300
+            ]
+          },
+          "intervalLabel": {
+            "type": "string",
+            "enum": [
+              "END"
+            ]
+          },
+          "units": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "energy",
+              "power",
+              "money",
+              "price"
+            ],
+            "properties": {
+              "energy": {
+                "type": "string",
+                "enum": [
+                  "MWh"
+                ]
+              },
+              "power": {
+                "type": "string",
+                "enum": [
+                  "MW"
+                ]
+              },
+              "money": {
+                "type": "string",
+                "enum": [
+                  "AUD"
+                ]
+              },
+              "price": {
+                "type": "string",
+                "enum": [
+                  "AUD/MWh"
+                ]
+              }
+            }
+          },
+          "prices": {
+            "type": "array",
+            "minItems": 288,
+            "maxItems": 288,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "start",
+                "end",
+                "price"
+              ],
+              "properties": {
+                "start": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "end": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "price": {
+                  "type": "string",
+                  "pattern": "^-?[0-9]+(\\.[0-9]+)?$"
+                }
+              }
+            }
+          },
+          "fixed": {
+            "$ref": "#/components/schemas/SimulationStrategy"
+          },
+          "hindsight": {
+            "$ref": "#/components/schemas/SimulationStrategy"
+          },
+          "solver": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "status",
+              "objective",
+              "upperBound",
+              "absoluteGap"
+            ],
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "OPTIMAL"
+                ]
+              },
+              "objective": {
+                "type": "number",
+                "nullable": true
+              },
+              "upperBound": {
+                "type": "number"
+              },
+              "absoluteGap": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 0.01
+              }
+            }
+          }
+        }
+      },
+      "SimulationError": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "message",
+          "field",
+          "reason"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "INVALID_REQUEST",
+              "PRICE_DAY_UNAVAILABLE",
+              "PRICE_DAY_INCOMPLETE",
+              "SIMULATION_NOT_FOUND",
+              "RESULT_NOT_READY",
+              "SIMULATION_FAILED",
+              "QUEUE_FULL",
+              "REQUEST_TOO_LARGE",
+              "UNSUPPORTED_CONTENT_TYPE",
+              "STORAGE_UNAVAILABLE"
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "field": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
           }
         }
       }
