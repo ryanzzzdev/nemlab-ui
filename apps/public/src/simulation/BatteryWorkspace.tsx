@@ -7,6 +7,7 @@ import { fields, initialForm, prepare, siteFields, costFields, windowFields } fr
 import type { Field, Form, Errors } from "./scenario";
 import { readResult, readStatus, submitSimulation, SimulationError } from "./client";
 import type { Job, Result } from "./client";
+import { ResultView } from "./ResultView";
 
 function wait(seconds: number, signal: AbortSignal) {
   return new Promise<void>((resolve, reject) => {
@@ -315,10 +316,11 @@ export function BatteryWorkspace() {
               <h3>Stored result ready</h3>
               <p>288 intervals · fixed schedule and proven hindsight comparison.</p>
               <p className="revision">Price revision: {result.priceRevision}</p>
-              <p>The detailed comparison and result charts are coming next.</p>
+              <p>The full comparison and linked charts are below.</p>
             </div>
           )}
         </section>
+        {result && <ResultView result={result} />}
         <section className="comparison-preview">
           <h2>Two strategies, the same limits</h2>
           <div className="strategy-grid">

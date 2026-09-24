@@ -7,6 +7,9 @@ test("submits a real simulation and retrieves a worker-produced result", async (
   await expect(page.getByRole("heading", { name: "Stored result ready" })).toBeVisible({
     timeout: 25000,
   });
+  await expect(page.getByRole("heading", { name: "Result comparison" })).toBeVisible();
+  await expect(page.getByText("Modelled margin")).toBeVisible();
+  await expect(page.getByRole("table").nth(1).getByRole("row")).toHaveCount(289);
   const first = await page.locator(".simulation-status .revision").first().textContent();
   await page.getByRole("button", { name: "Run simulation" }).click();
   await expect(page.getByRole("heading", { name: "Stored result ready" })).toBeVisible();
