@@ -35,6 +35,10 @@ export function BatteryWorkspace() {
   const formRef = useRef<HTMLFormElement>(null);
   const statusRef = useRef<HTMLElement>(null);
   useEffect(() => () => active.current?.abort(), []);
+  useEffect(() => {
+    if (Object.keys(errors).length)
+      formRef.current?.querySelector<HTMLElement>("[aria-invalid=true]")?.focus();
+  }, [errors]);
 
   function change(key: keyof Form, value: string) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -44,18 +48,12 @@ export function BatteryWorkspace() {
     setProblem(false);
     setMessage("Scenario changed. Run both strategies to calculate a new comparison.");
   }
-  function focusInvalid(next: Errors) {
-    setErrors(next);
-    requestAnimationFrame(() =>
-      formRef.current?.querySelector<HTMLInputElement>("[aria-invalid=true]")?.focus(),
-    );
-  }
   async function run(event?: FormEvent, resume = false) {
     event?.preventDefault();
     if (active.current) return;
     const prepared = prepare(form);
     if (!prepared.request) {
-      focusInvalid(prepared.errors);
+      setErrors(prepared.errors);
       return;
     }
     const controller = new AbortController();
@@ -140,7 +138,7 @@ export function BatteryWorkspace() {
                 ? "efficiencyMode"
                 : key;
         if (mapped in form)
-          focusInvalid({
+          setErrors({
             [mapped]:
               "The service rejected this value or its bounds. Check this input and related fields.",
           });
