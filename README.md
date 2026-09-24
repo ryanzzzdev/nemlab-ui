@@ -4,6 +4,12 @@ The public React application for BatteryLab and GridReplay. This is a separate G
 repository from `../nemlab`, the Java API/worker backend. The current application has public navigation, feature descriptions and methodology.
 BatteryLab can read stored price days; simulation and replay workflows are not implemented yet.
 
+BatteryLab uses a centered workspace; GridReplay uses the viewport width, following the
+static mock's panel design. The header's Appearance control offers Light, Dark and Auto
+(device preference). The choice persists across pages/reloads and updates open charts.
+The visual direction and remaining integration tasks are recorded in
+[decision 018](../nemlab/docs/project/decisions/018-product-layouts-and-appearance.md).
+
 ## Local setup
 
 Use Node.js 22.23.1 (`nvm use` reads `.nvmrc`) and npm 10.9.8. From this repository:

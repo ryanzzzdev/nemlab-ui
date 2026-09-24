@@ -46,24 +46,79 @@ export function BatteryLab() {
       heading="What could a battery do?"
       introduction="Compare a fixed trading schedule with the best outcome available in hindsight, using the same battery limits and operating windows."
     >
-      <section className="notice" aria-labelledby="battery-status">
-        <h2 id="battery-status">The simulator is being built</h2>
-        <p>You cannot run a simulation here yet. This page describes the planned experience.</p>
-      </section>
-      <PriceExplorer />
-      <section className="prose" aria-labelledby="battery-plan">
-        <h2 id="battery-plan">A day, a battery, two strategies</h2>
-        <ol>
-          <li>Choose a historical region and day with complete price data.</li>
-          <li>Set battery capacity, power limits, operating windows and costs.</li>
-          <li>Compare charging, stored energy and simulated trading margin.</li>
-        </ol>
-        <p>
-          Hindsight knows the day’s prices in advance. It is a benchmark, not a forecast or a
-          promise of real returns.
-        </p>
-        <Link to="/methodology">Read the model assumptions</Link>
-      </section>
+      <div className="lab-layout">
+        <aside className="lab-guide" aria-label="BatteryLab workflow">
+          <p className="eyebrow">Your experiment</p>
+          <h2>
+            A day. A battery. <br />
+            Two strategies.
+          </h2>
+          <ol className="workflow">
+            <li>
+              <span className="step-number">01</span>
+              <div>
+                <strong>Choose a market day</strong>
+                <p>Start with a region and a complete day of five-minute prices.</p>
+              </div>
+            </li>
+            <li>
+              <span className="step-number">02</span>
+              <div>
+                <strong>Configure your battery</strong>
+                <p>Capacity, power, operating windows and costs.</p>
+                <span className="availability">Coming next</span>
+              </div>
+            </li>
+            <li>
+              <span className="step-number">03</span>
+              <div>
+                <strong>Compare the strategies</strong>
+                <p>The same battery and constraints. Two ways to trade.</p>
+                <span className="availability">Coming next</span>
+              </div>
+            </li>
+          </ol>
+          <div className="lab-note">
+            <strong>One market clock</strong>
+            <p>NEM time is always UTC+10. Each complete day has 288 five-minute intervals.</p>
+          </div>
+        </aside>
+        <div className="lab-workspace">
+          <PriceExplorer />
+          <section className="comparison-preview" aria-labelledby="comparison-heading">
+            <div className="section-heading">
+              <h2 id="comparison-heading">Strategy comparison</h2>
+              <span className="availability">Awaiting simulator</span>
+            </div>
+            <div className="strategy-grid">
+              <article>
+                <span className="strategy-label">Fixed schedule</span>
+                <h3>Follow a plan</h3>
+                <p>
+                  Charge and discharge within predetermined windows, without knowing future prices.
+                </p>
+              </article>
+              <article>
+                <span className="strategy-label">Perfect hindsight</span>
+                <h3>Find the benchmark</h3>
+                <p>Use the day’s prices to find the best outcome under the same limits.</p>
+              </article>
+            </div>
+          </section>
+          <section className="notice" aria-labelledby="battery-status">
+            <h2 id="battery-status">The simulator is being built</h2>
+            <p>You cannot run a simulation here yet. This page describes the planned experience.</p>
+          </section>
+          <section className="prose" aria-labelledby="battery-plan">
+            <h2 id="battery-plan">Reading the comparison</h2>
+            <p>
+              Hindsight knows the day’s prices in advance. It is a benchmark, not a forecast or a
+              promise of real returns.
+            </p>
+            <Link to="/methodology">Read the model assumptions</Link>
+          </section>
+        </div>
+      </div>
     </Page>
   );
 }
@@ -82,6 +137,50 @@ export function GridReplay() {
           The event catalogue and replay controls are not available yet. No market events are shown
           on this page.
         </p>
+      </section>
+      <section className="replay-catalogue" aria-labelledby="catalogue-heading">
+        <div className="section-heading">
+          <h2 id="catalogue-heading">Event catalogue</h2>
+          <span className="availability">Historical NEM observations</span>
+        </div>
+        <div className="event-types" aria-label="Planned event types">
+          <span>Negative-price runs</span>
+          <span>Price spikes</span>
+          <span>Renewable peaks</span>
+          <span>Demand ramps</span>
+        </div>
+        <div className="empty-state">
+          <span className="empty-symbol" aria-hidden="true">
+            ↗
+          </span>
+          <h3>The next market story starts here</h3>
+          <p>
+            Published events will appear here once the catalogue is connected.
+            <br />
+            There are no event results to display yet.
+          </p>
+        </div>
+      </section>
+      <section className="replay-preview" aria-labelledby="replay-heading">
+        <div className="section-heading">
+          <h2 id="replay-heading">A shared view of the day</h2>
+          <span className="availability">Replay coming later</span>
+        </div>
+        <div className="replay-panels">
+          {[
+            ["Regional reference price", "AUD/MWh"],
+            ["Scheduled demand", "MW"],
+            ["Generation by technology", "MW"],
+            ["Regional flows", "MW"],
+          ].map(([label, unit]) => (
+            <div className="replay-panel" key={label}>
+              <h3>
+                {label} <span>{unit}</span>
+              </h3>
+              <p>Waiting for replay data</p>
+            </div>
+          ))}
+        </div>
       </section>
       <section className="prose" aria-labelledby="grid-plan">
         <h2 id="grid-plan">Follow the evidence</h2>
@@ -119,8 +218,8 @@ export function Methodology() {
             days contain 288 intervals. Missing observations are kept distinct from zero.
           </p>
           <p>
-            Stored revisions preserve which data a calculation uses. This website does not display
-            the stored data yet.
+            Stored revisions preserve which data a calculation uses. BatteryLab lets you inspect
+            stored prices and their coverage before the simulation workflow is available.
           </p>
         </section>
         <section aria-labelledby="fair-comparison">

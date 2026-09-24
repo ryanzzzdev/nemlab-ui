@@ -5,6 +5,7 @@ import { LineChart } from "echarts/charts";
 import { GridComponent, MarkLineComponent, DataZoomInsideComponent } from "echarts/components";
 import { SVGRenderer } from "echarts/renderers";
 import type { Series } from "./client";
+import { useTheme } from "../components/Theme";
 
 use([LineChart, GridComponent, MarkLineComponent, DataZoomInsideComponent, SVGRenderer]);
 
@@ -22,6 +23,7 @@ const windows = [
 ];
 
 export default function PriceCharts({ series }: { series: Series }) {
+  const { dark } = useTheme();
   const host = useRef<HTMLDivElement>(null);
   const chart = useRef<EChartsType | null>(null);
   const [selected, setSelected] = useState(0);
@@ -47,6 +49,7 @@ export default function PriceCharts({ series }: { series: Series }) {
     });
     instance.setOption({
       animation: false,
+      textStyle: { color: dark ? "#9aa7b8" : "#5b6470" },
       grid: [
         { left: 65, right: 20, top: 35, height: 165 },
         { left: 65, right: 20, top: 285, height: 165 },
@@ -56,12 +59,18 @@ export default function PriceCharts({ series }: { series: Series }) {
         gridIndex: index,
         data: labels,
         boundaryGap: false,
-        axisLabel: { hideOverlap: true, fontSize: 11 },
+        axisLabel: { hideOverlap: true, fontSize: 11, color: dark ? "#9aa7b8" : "#5b6470" },
+        axisLine: { lineStyle: { color: dark ? "#596777" : "#b4bdc8" } },
       })),
       yAxis: [
         { type: "value", gridIndex: 0, name: "AUD/MWh", scale: true },
         { type: "value", gridIndex: 1, name: "Synthetic %", min: 0, max: 100 },
-      ],
+      ].map((axis) => ({
+        ...axis,
+        axisLabel: { color: dark ? "#9aa7b8" : "#5b6470" },
+        nameTextStyle: { color: dark ? "#9aa7b8" : "#5b6470" },
+        splitLine: { lineStyle: { color: dark ? "#303a47" : "#dce1e7" } },
+      })),
       dataZoom: [
         {
           type: "inside",
@@ -80,7 +89,7 @@ export default function PriceCharts({ series }: { series: Series }) {
           yAxisIndex: 0,
           showSymbol: false,
           connectNulls: false,
-          lineStyle: { color: "#163e35", width: 2 },
+          lineStyle: { color: dark ? "#69d8b6" : "#163e35", width: 2 },
           data: series.intervals.map((value) =>
             value.state === "VALUE" ? Number(value.price) : null,
           ),
@@ -91,7 +100,7 @@ export default function PriceCharts({ series }: { series: Series }) {
           xAxisIndex: 1,
           yAxisIndex: 1,
           showSymbol: false,
-          lineStyle: { color: "#526da0", type: "dashed", width: 2 },
+          lineStyle: { color: dark ? "#8abaff" : "#526da0", type: "dashed", width: 2 },
           data: series.intervals.map((_, index) => syntheticEnergy(index)),
         },
       ],
@@ -116,7 +125,7 @@ export default function PriceCharts({ series }: { series: Series }) {
       instance.dispose();
       chart.current = null;
     };
-  }, [series]);
+  }, [series, dark]);
 
   useEffect(() => {
     chart.current?.setOption({
@@ -126,12 +135,12 @@ export default function PriceCharts({ series }: { series: Series }) {
           silent: true,
           symbol: "none",
           label: { show: false },
-          lineStyle: { color: "#b04a2f", width: 2, type: "solid" },
+          lineStyle: { color: dark ? "#ffa48b" : "#b04a2f", width: 2, type: "solid" },
           data: [{ xAxis: selected }],
         },
       })),
     });
-  }, [selected, window, series]);
+  }, [selected, window, series, dark]);
 
   return (
     <section className="chart-prototype" aria-labelledby="chart-heading">

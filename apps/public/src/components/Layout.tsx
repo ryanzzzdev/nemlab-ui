@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router";
+import { ThemePicker } from "./Theme";
 
 export function Layout() {
   const { pathname } = useLocation();
@@ -16,13 +17,18 @@ export function Layout() {
   }, [pathname]);
 
   return (
-    <div className="site">
+    <div
+      className={`site ${pathname === "/gridreplay" ? "site-grid" : pathname === "/batterylab" ? "site-battery" : ""}`}
+    >
       <a className="skip-link" href="#main">
         Skip to content
       </a>
       <header className="site-header">
         <div className="brand">
           <Link className="wordmark" to="/" aria-label="NEMLab home">
+            <span className="brand-symbol" aria-hidden="true">
+              N
+            </span>{" "}
             NEMLab
           </Link>
           <span className="badge">In development</span>
@@ -38,6 +44,7 @@ export function Layout() {
             Methodology
           </NavLink>
         </nav>
+        <ThemePicker />
       </header>
       <main id="main" ref={main} tabIndex={-1}>
         <Outlet />
