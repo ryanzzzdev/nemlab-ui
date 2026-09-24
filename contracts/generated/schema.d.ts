@@ -415,7 +415,7 @@ export interface components {
         };
         SimulationError: {
             /** @enum {string} */
-            code: "INVALID_REQUEST" | "PRICE_DAY_UNAVAILABLE" | "PRICE_DAY_INCOMPLETE" | "SIMULATION_NOT_FOUND" | "RESULT_NOT_READY" | "SIMULATION_FAILED" | "QUEUE_FULL" | "REQUEST_TOO_LARGE" | "UNSUPPORTED_CONTENT_TYPE" | "STORAGE_UNAVAILABLE";
+            code: "INVALID_REQUEST" | "SIMULATION_NOT_FOUND" | "RESULT_NOT_READY" | "SIMULATION_FAILED" | "QUEUE_FULL" | "REQUEST_TOO_LARGE" | "UNSUPPORTED_CONTENT_TYPE" | "STORAGE_UNAVAILABLE" | "PRICE_REFRESH_PENDING" | "PRICE_REFRESH_FAILED" | "VISITOR_REFRESH_LIMIT";
             message: string;
             field: string;
             reason: string;
@@ -1008,7 +1008,7 @@ export interface operations {
                     "application/json": components["schemas"]["SimulationError"];
                 };
             };
-            /** @description Unavailable or incomplete stored prices */
+            /** @description Stored prices missing, incomplete, being fetched or fetch-exhausted */
             409: {
                 headers: {
                     "Cache-Control": string;

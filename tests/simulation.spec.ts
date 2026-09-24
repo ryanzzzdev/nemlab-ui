@@ -93,21 +93,75 @@ test("validates exact energy bounds, decimals, efficiency and ordered windows wi
   expect(requests).toBe(0);
 });
 
-test("incomplete coverage prevents submission", async ({ page }) => {
-  await page.route("**/api/v1/prices/**", (route) =>
-    route.fulfill({
-      json: route.request().url().includes("coverage?")
-        ? { region: "NSW1", days: [coverage("INCOMPLETE")] }
-        : series("INCOMPLETE"),
-    }),
-  );
-  let posted = false;
-  page.on("request", (r) => {
-    if (r.method() === "POST") posted = true;
+test("an uncovered day requests a price fetch then submits when coverage arrives", async ({
+  page,
+}) => {
+  let posts = 0;
+  await page.route("**/api/v1/simulations**", (route) => {
+    if (route.request().method() === "POST") {
+      posts++;
+      if (posts < 3)
+        return route.fulfill({
+          status: 409,
+          headers: { "Retry-After": "1" },
+          json: {
+            code: "PRICE_REFRESH_PENDING",
+            field: "day",
+            reason: "PRICE_REFRESH_PENDING",
+          },
+        });
+      return route.fulfill({
+        status: 202,
+        headers: { "Retry-After": "1" },
+        json: job("SUCCEEDED"),
+      });
+    }
+    if (route.request().url().endsWith("/result")) return route.fulfill({ json: result() });
+    return route.fulfill({ json: job("SUCCEEDED") });
   });
   await page.getByRole("button", { name: "Run simulation" }).click();
-  await expect(page.getByRole("alert")).toContainText("complete stored price day is required");
-  expect(posted).toBe(false);
+  await expect(page.getByText("Fetching stored prices")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Stored result ready" })).toBeVisible({
+    timeout: 15000,
+  });
+  expect(posts).toBe(3);
+});
+
+test("a failed visitor fetch and an exhausted visitor cap stop automatic resubmission", async ({
+  page,
+}) => {
+  let posts = 0;
+  await page.route("**/api/v1/simulations", (route) => {
+    posts++;
+    return route.fulfill({
+      status: 409,
+      headers: { "Retry-After": "1" },
+      json:
+        posts === 1
+          ? { code: "PRICE_REFRESH_PENDING", field: "day", reason: "PRICE_REFRESH_PENDING" }
+          : { code: "PRICE_REFRESH_FAILED", field: "day", reason: "PRICE_REFRESH_FAILED" },
+    });
+  });
+  await page.getByRole("button", { name: "Run simulation" }).click();
+  await expect(page.getByRole("alert")).toContainText("could not be fetched");
+  await expect(page.getByLabel("Simulation day")).toHaveAttribute("aria-invalid", "true");
+  expect(posts).toBe(2);
+});
+
+test("a saturated visitor queue retries briefly then pauses", async ({ page }) => {
+  let posts = 0;
+  await page.route("**/api/v1/simulations", (route) => {
+    posts++;
+    return route.fulfill({
+      status: 429,
+      headers: { "Retry-After": "1" },
+      json: { code: "VISITOR_REFRESH_LIMIT", field: "request", reason: "VISITOR_REFRESH_LIMIT" },
+    });
+  });
+  await page.getByRole("button", { name: "Run simulation" }).click();
+  await expect(page.getByText("retrying automatically")).toBeVisible();
+  await expect(page.getByRole("alert")).toContainText("still queued", { timeout: 20000 });
+  expect(posts).toBe(11);
 });
 
 test("separate efficiencies omit round trip and terminal duplicates do not restart failures", async ({
@@ -133,7 +187,7 @@ test("separate efficiencies omit round trip and terminal duplicates do not resta
 for (const [code, status, message] of [
   ["QUEUE_FULL", 429, "Try after 5 seconds"],
   ["STORAGE_UNAVAILABLE", 503, "temporarily unavailable"],
-  ["PRICE_DAY_INCOMPLETE", 409, "incomplete prices"],
+  ["PRICE_REFRESH_FAILED", 409, "could not be fetched"],
 ] as const) {
   test(`safe ${code} response without automatic resubmission`, async ({ page }) => {
     let posts = 0;

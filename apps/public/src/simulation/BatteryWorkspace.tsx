@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useSearchParams } from "react-router";
 import { PriceExplorer } from "../prices/PriceExplorer";
-import { readPriceDay, marketDay, nextDay } from "../prices/client";
+import { marketDay, nextDay } from "../prices/client";
 import { fields, initialForm, prepare, siteFields, costFields, windowFields } from "./scenario";
 import type { Field, Form, Errors, Request } from "./scenario";
 import { readResult, readStatus, submitSimulation, SimulationError, uuid } from "./client";
@@ -122,31 +122,46 @@ export function BatteryWorkspace() {
     setResult(null);
     setShareNote("");
     if (!resume) setJob(null);
-    setMessage(resume ? "Checking simulation…" : "Checking complete stored prices…");
+    setMessage(resume ? "Checking simulation…" : "Submitting scenario…");
     statusRef.current?.focus({ preventScroll: true });
     try {
       let first: Job;
       if (resume && job) first = (await readStatus(job.id, signal)).job;
-      else {
-        const prices = await readPriceDay(prepared.request.region, prepared.request.day, signal);
-        signal.throwIfAborted();
-        if (
-          prices.coverage.availability !== "COMPLETE" ||
-          prices.coverage.valid !== 288 ||
-          !prices.series ||
-          !prices.series.intervals.every((v) => v.state === "VALUE")
-        )
-          throw new SimulationError(
-            "A complete stored price day is required. Choose another day; this does not import new data.",
-          );
-        setMessage("Submitting scenario…");
-        first = (await submitSimulation(prepared.request, signal)).job;
-      }
+      else first = await submitThroughRefresh(prepared.request, signal);
       await monitor(first, signal, prepared.request);
     } catch (error) {
       report(error, signal);
     } finally {
       finish(controller);
+    }
+  }
+
+  // An uncovered but eligible day answers 409 PRICE_REFRESH_PENDING: the service
+  // deduplicates a bounded visitor fetch, so resubmitting the same scenario is safe.
+  async function submitThroughRefresh(request: Request, signal: AbortSignal) {
+    let waits = 0;
+    for (;;) {
+      try {
+        return (await submitSimulation(request, signal)).job;
+      } catch (error) {
+        const retryable =
+          error instanceof SimulationError &&
+          (error.code === "PRICE_REFRESH_PENDING" || error.code === "VISITOR_REFRESH_LIMIT");
+        if (!retryable) throw error;
+        const cap = error.code === "VISITOR_REFRESH_LIMIT" ? 10 : 20;
+        if (++waits > cap)
+          throw new SimulationError(
+            error.code === "VISITOR_REFRESH_LIMIT"
+              ? "Too many price fetches are still queued. Submit the same scenario again later."
+              : "Prices for this day are still being fetched. Submit the same scenario again to keep waiting.",
+          );
+        setMessage(
+          error.code === "VISITOR_REFRESH_LIMIT"
+            ? "Many price fetches are in progress — retrying automatically…"
+            : "Fetching stored prices for this day — the simulation starts once they arrive…",
+        );
+        await wait(Math.max(1, error.retryAfter || 30), signal);
+      }
     }
   }
 

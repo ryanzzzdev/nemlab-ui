@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "NEMLab shared API",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "description": "Independently enabled price reads, operator controls and simulation lifecycle. Disabled routes return 404. Market dates use fixed UTC+10. Simulation bodies are at most 16384 bytes and decimal inputs are strings. No GridReplay API is implemented."
   },
   "paths": {
@@ -1139,7 +1139,7 @@
             }
           },
           "409": {
-            "description": "Unavailable or incomplete stored prices",
+            "description": "Stored prices missing, incomplete, being fetched or fetch-exhausted",
             "content": {
               "application/json": {
                 "schema": {
@@ -2437,15 +2437,16 @@
             "type": "string",
             "enum": [
               "INVALID_REQUEST",
-              "PRICE_DAY_UNAVAILABLE",
-              "PRICE_DAY_INCOMPLETE",
               "SIMULATION_NOT_FOUND",
               "RESULT_NOT_READY",
               "SIMULATION_FAILED",
               "QUEUE_FULL",
               "REQUEST_TOO_LARGE",
               "UNSUPPORTED_CONTENT_TYPE",
-              "STORAGE_UNAVAILABLE"
+              "STORAGE_UNAVAILABLE",
+              "PRICE_REFRESH_PENDING",
+              "PRICE_REFRESH_FAILED",
+              "VISITOR_REFRESH_LIMIT"
             ]
           },
           "message": {

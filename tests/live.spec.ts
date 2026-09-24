@@ -28,13 +28,20 @@ test("submits a real simulation and retrieves a worker-produced result", async (
   });
 });
 
-test("an incomplete stored day and an unknown saved link both explain recovery", async ({
+test("an incomplete day requests a real price fetch and reports its terminal failure", async ({
   page,
 }) => {
+  test.setTimeout(210_000);
   await page.goto("/batterylab");
   await page.getByLabel("Simulation day").fill("2023-10-02");
   await page.getByRole("button", { name: "Run simulation" }).click();
-  await expect(page.getByRole("alert")).toContainText("complete stored price day");
+  // The submission enqueues a durable visitor fetch; the harness worker's
+  // placeholder OE credential fails permanently, so three bounded attempts
+  // end in an explicit terminal state rather than an endless pending loop.
+  await expect(page.getByText("Fetching stored prices")).toBeVisible({ timeout: 15000 });
+  await expect(page.getByRole("alert")).toContainText("could not be fetched", {
+    timeout: 190_000,
+  });
   await page.goto("/batterylab?simulation=99999999-9999-4999-8999-999999999999");
   await expect(page.getByRole("alert")).toContainText("could not be found");
 });

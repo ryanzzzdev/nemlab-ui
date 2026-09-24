@@ -11,6 +11,8 @@ export class SimulationError extends Error {
     message: string,
     public field = "",
     public reason = "",
+    public code = "",
+    public retryAfter = 0,
   ) {
     super(message);
   }
@@ -18,8 +20,10 @@ export class SimulationError extends Error {
 const messages: Record<string, string> = {
   INVALID_REQUEST:
     "The simulation service rejected an input. Check the highlighted field and try again.",
-  PRICE_DAY_UNAVAILABLE: "This day has no stored prices. Choose another day.",
-  PRICE_DAY_INCOMPLETE: "This day has incomplete prices. Choose a complete market day.",
+  PRICE_REFRESH_PENDING: "Stored prices for this day are being fetched.",
+  PRICE_REFRESH_FAILED:
+    "Stored prices could not be fetched for this day. Try again later or choose another day.",
+  VISITOR_REFRESH_LIMIT: "Too many price fetches are pending.",
   SIMULATION_NOT_FOUND: "This simulation could not be found. You can submit the scenario again.",
   RESULT_NOT_READY: "The result is not ready yet. Resume checking this simulation.",
   SIMULATION_FAILED: "The simulation failed. No proven comparison is available.",
@@ -51,14 +55,17 @@ async function request(path: string, signal: AbortSignal, body?: Request) {
   const value = response.headers.get("content-type")?.includes("application/json")
     ? await response.json().catch(() => null)
     : null;
-  const retryAfter = Math.min(30, Math.max(1, Number(response.headers.get("retry-after")) || 2));
+  const retryAfter = Math.min(120, Math.max(1, Number(response.headers.get("retry-after")) || 2));
+  const code = typeof value?.code === "string" ? value.code : "";
   if (!response.ok)
     throw new SimulationError(
-      (messages[value?.code] ??
+      (messages[code] ??
         `Simulation service unavailable (HTTP ${response.status}). Try again later.`) +
         (response.status === 429 ? ` Try after ${retryAfter} seconds.` : ""),
       typeof value?.field === "string" ? value.field : "",
       typeof value?.reason === "string" ? value.reason : "",
+      code,
+      retryAfter,
     );
   if (!value || ![200, 202].includes(response.status))
     throw new SimulationError("The simulation service returned an unreadable response.");
