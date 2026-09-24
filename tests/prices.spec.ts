@@ -107,7 +107,9 @@ test("loading and invalid dates do not display misleading results", async ({ pag
   await expect(page.getByRole("alert")).toContainText("Choose a completed NEM day");
   await page.getByLabel("Market day").fill(day);
   await page.getByRole("button", { name: "Check prices" }).click();
-  await expect(page.getByRole("status")).toContainText("Loading");
+  await expect(
+    page.getByRole("region", { name: "Explore stored prices" }).getByRole("status"),
+  ).toContainText("Loading");
   release();
   await expect(page.getByRole("heading", { name: "Not imported", exact: true })).toBeVisible();
 });

@@ -1,4 +1,4 @@
-import { PriceExplorer } from "./prices/PriceExplorer";
+import { BatteryWorkspace } from "./simulation/BatteryWorkspace";
 import { Link } from "react-router";
 import { Page } from "./components/Page";
 
@@ -46,79 +46,7 @@ export function BatteryLab() {
       heading="What could a battery do?"
       introduction="Compare a fixed trading schedule with the best outcome available in hindsight, using the same battery limits and operating windows."
     >
-      <div className="lab-layout">
-        <aside className="lab-guide" aria-label="BatteryLab workflow">
-          <p className="eyebrow">Your experiment</p>
-          <h2>
-            A day. A battery. <br />
-            Two strategies.
-          </h2>
-          <ol className="workflow">
-            <li>
-              <span className="step-number">01</span>
-              <div>
-                <strong>Choose a market day</strong>
-                <p>Start with a region and a complete day of five-minute prices.</p>
-              </div>
-            </li>
-            <li>
-              <span className="step-number">02</span>
-              <div>
-                <strong>Configure your battery</strong>
-                <p>Capacity, power, operating windows and costs.</p>
-                <span className="availability">Coming next</span>
-              </div>
-            </li>
-            <li>
-              <span className="step-number">03</span>
-              <div>
-                <strong>Compare the strategies</strong>
-                <p>The same battery and constraints. Two ways to trade.</p>
-                <span className="availability">Coming next</span>
-              </div>
-            </li>
-          </ol>
-          <div className="lab-note">
-            <strong>One market clock</strong>
-            <p>NEM time is always UTC+10. Each complete day has 288 five-minute intervals.</p>
-          </div>
-        </aside>
-        <div className="lab-workspace">
-          <PriceExplorer />
-          <section className="comparison-preview" aria-labelledby="comparison-heading">
-            <div className="section-heading">
-              <h2 id="comparison-heading">Strategy comparison</h2>
-              <span className="availability">Awaiting simulator</span>
-            </div>
-            <div className="strategy-grid">
-              <article>
-                <span className="strategy-label">Fixed schedule</span>
-                <h3>Follow a plan</h3>
-                <p>
-                  Charge and discharge within predetermined windows, without knowing future prices.
-                </p>
-              </article>
-              <article>
-                <span className="strategy-label">Perfect hindsight</span>
-                <h3>Find the benchmark</h3>
-                <p>Use the day’s prices to find the best outcome under the same limits.</p>
-              </article>
-            </div>
-          </section>
-          <section className="notice" aria-labelledby="battery-status">
-            <h2 id="battery-status">The simulator is being built</h2>
-            <p>You cannot run a simulation here yet. This page describes the planned experience.</p>
-          </section>
-          <section className="prose" aria-labelledby="battery-plan">
-            <h2 id="battery-plan">Reading the comparison</h2>
-            <p>
-              Hindsight knows the day’s prices in advance. It is a benchmark, not a forecast or a
-              promise of real returns.
-            </p>
-            <Link to="/methodology">Read the model assumptions</Link>
-          </section>
-        </div>
-      </div>
+      <BatteryWorkspace />
     </Page>
   );
 }
@@ -219,7 +147,7 @@ export function Methodology() {
           </p>
           <p>
             Stored revisions preserve which data a calculation uses. BatteryLab lets you inspect
-            stored prices and their coverage before the simulation workflow is available.
+            stored prices and their coverage, and submit a scenario for a complete market day.
           </p>
         </section>
         <section aria-labelledby="fair-comparison">

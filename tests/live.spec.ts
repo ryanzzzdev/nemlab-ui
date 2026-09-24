@@ -1,5 +1,23 @@
 import { expect, test } from "@playwright/test";
 
+test("submits a real simulation and retrieves a worker-produced result", async ({ page }, info) => {
+  await page.goto("/batterylab");
+  await page.getByLabel("Simulation day").fill("2023-10-01");
+  await page.getByRole("button", { name: "Run simulation" }).click();
+  await expect(page.getByRole("heading", { name: "Stored result ready" })).toBeVisible({
+    timeout: 25000,
+  });
+  const first = await page.locator(".simulation-status .revision").first().textContent();
+  await page.getByRole("button", { name: "Run simulation" }).click();
+  await expect(page.getByRole("heading", { name: "Stored result ready" })).toBeVisible();
+  await expect(page.locator(".simulation-status .revision").first()).toHaveText(first!);
+  await page.screenshot({
+    path: info.outputPath("live-simulation.png"),
+    fullPage: true,
+    scale: "css",
+  });
+});
+
 test("reads complete, incomplete and absent days through the real API proxy", async ({
   page,
 }, info) => {

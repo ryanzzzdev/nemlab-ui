@@ -53,11 +53,13 @@ test("appearance stays usable without storage and product layouts fit narrow scr
   await page.setViewportSize({ width: 1600, height: 1000 });
   await page.goto("/batterylab");
   expect((await page.locator(".site").boundingBox())!.width).toBe(1160);
+  const header = await page.locator(".site-header").boundingBox();
   const picker = page.getByRole("combobox", { name: "Appearance" });
   await picker.selectOption("dark");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await page.getByRole("navigation").getByRole("link", { name: "GridReplay" }).click();
-  expect((await page.locator(".site").boundingBox())!.width).toBe(1600);
+  expect((await page.locator(".site").boundingBox())!.width).toBe(1440);
+  expect(await page.locator(".site-header").boundingBox()).toEqual(header);
   await page.setViewportSize({ width: 320, height: 640 });
   for (const name of ["BatteryLab", "GridReplay"]) {
     await page.getByRole("navigation").getByRole("link", { name }).click();

@@ -2,10 +2,12 @@
 
 The public React application for BatteryLab and GridReplay. This is a separate Git
 repository from `../nemlab`, the Java API/worker backend. The current application has public navigation, feature descriptions and methodology.
-BatteryLab can read stored price days; simulation and replay workflows are not implemented yet.
+BatteryLab can read stored price days, validate a battery scenario, submit it and follow
+simulation progress through stored-result retrieval. Detailed comparison charts and saved-link
+reopening are the next slices; the GridReplay workflow is not implemented yet.
 
-BatteryLab uses a centered workspace; GridReplay uses the viewport width, following the
-static mock's panel design. The header's Appearance control offers Light, Dark and Auto
+BatteryLab uses a centered 1160px workspace; GridReplay uses a centered 1440px workspace,
+following the static mock's panel design. Both share aligned navigation. The header's Appearance control offers Light, Dark and Auto
 (device preference). The choice persists across pages/reloads and updates open charts.
 The visual direction and remaining integration tasks are recorded in
 [decision 018](../nemlab/docs/project/decisions/018-product-layouts-and-appearance.md).
@@ -79,7 +81,7 @@ matching Vite base and router basename settings.
 Configure the static host to serve `index.html` for page routes, including direct
 loads and reloads. Vite development/preview already provides this fallback; production
 hosting must configure it separately. Missing assets and `/api/` requests must **not**
-fall back to HTML. Route only public price requests to the backend and reject other API paths. A conceptual nginx static-only configuration:
+fall back to HTML. Route only public price and simulation requests to the backend and reject other API paths. A conceptual nginx static-only configuration:
 
 ```nginx
 root /srv/nemlab/public;
@@ -89,6 +91,14 @@ location ^~ /assets/ {
 }
 
 location ^~ /api/v1/prices/ {
+    proxy_pass http://127.0.0.1:8080;
+}
+
+location = /api/v1/simulations {
+    proxy_pass http://127.0.0.1:8080;
+}
+
+location ^~ /api/v1/simulations/ {
     proxy_pass http://127.0.0.1:8080;
 }
 
@@ -169,17 +179,38 @@ npm run test:live
 ```
 
 This requires Docker, the sibling backend (or `NEMLAB_BACKEND`), cached Java dependencies,
-installed frontend dependencies and Playwright Chromium. It builds the API jar and public
+installed frontend dependencies and Playwright Chromium. It builds the API/worker jars and public
 bundle, creates its own PostgreSQL 18.6 container on a random loopback port, applies the
 backend SQL migrations to that empty test database and seeds clearly synthetic days.
-It then verifies real API/proxy/browser behaviour for complete, incomplete and absent days
-on desktop/mobile. It does not use `.env`, a persistent database or OE. The API process
+It verifies real API/proxy/browser behaviour for complete, incomplete and absent days,
+plus simulation submission, worker execution, result retrieval and deduplication
+on desktop/mobile. It does not use `.env`, a persistent database or OE. The API/worker processes
 and container are cleaned up on success or failure. SQL application here is fixture setup;
 backend tests remain responsible for Flyway migration behaviour.
 
 `npm run check`/frontend CI use intercepted browser fixtures and need no Java/database.
 The real integration suite is an explicit local/coordinated check, not a claim of a hosted
 cross-repository CI run. Screenshots are in ignored `test-results/`.
+
+## Battery scenario and simulation progress
+
+Enable `NEMLAB_DATA_ENABLED=true` and `NEMLAB_SIMULATION_API_ENABLED=true` on the API,
+and `NEMLAB_SIMULATION_ENABLED=true` on the worker, with the same migrated database.
+The local Vite proxy forwards public price/simulation requests to `NEMLAB_API_TARGET`
+(default `http://127.0.0.1:8080`). It adds no operator credentials.
+
+The form sends exact decimal strings and integer five-minute boundaries in fixed UTC+10;
+24:00 means next midnight. Illustrative defaults are editable and are not recommendations.
+Coverage is checked before submission; the server remains authoritative if prices change.
+Inputs are locked during submission/polling. Stop checking aborts browser requests only;
+an accepted backend job continues. Resume checks the same ID. Automatic polling pauses
+after 60 waits (Retry-After bounded to 1–30 seconds); failed network/status/result reads
+leave a resume action. Requests have a 15-second timeout and never retry POST automatically.
+Equivalent submissions reuse the job, including a failed job. Editing inputs clears the
+displayed job/result to avoid showing a previous scenario as current.
+
+Result retrieval is connected, but comparison charts and saved-link reopening are not
+implemented yet. The existing price explorer's synthetic chart remains clearly identified.
 
 ## Linked-chart prototype
 

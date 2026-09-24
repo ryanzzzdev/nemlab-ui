@@ -45,9 +45,9 @@ test("skip link and keyboard navigation move focus to page content", async ({ pa
   await expect(page).toHaveURL(/\/batterylab$/);
   await expect(page.getByRole("heading", { level: 1 })).toBeFocused();
   await page.keyboard.press("Tab");
-  await expect(page.getByLabel("Region", { exact: true })).toBeFocused();
+  await expect(page.getByLabel("Simulation region", { exact: true })).toBeFocused();
   const methodology = page.getByRole("link", { name: "Read the model assumptions" });
-  for (let step = 0; step < 10; step++) {
+  for (let step = 0; step < 40; step++) {
     if (await methodology.evaluate((link) => link === document.activeElement)) break;
     await page.keyboard.press("Tab");
   }
@@ -60,7 +60,7 @@ test("skip link and keyboard navigation move focus to page content", async ({ pa
 test("navigation supports history and honest unavailable states", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("link", { name: "Explore BatteryLab" }).click();
-  await expect(page.getByRole("heading", { name: "The simulator is being built" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Simulation progress" })).toBeVisible();
   await page.getByRole("navigation").getByRole("link", { name: "GridReplay" }).click();
   await expect(page.getByRole("heading", { name: "Replay is being built" })).toBeVisible();
   await page.goBack();

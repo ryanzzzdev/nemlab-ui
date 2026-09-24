@@ -28,9 +28,10 @@ def sql(text):
 
 
 api = None
+worker = None
 try:
     run("node", "scripts/contract.mjs", "--backend", cwd=ROOT)
-    run("./gradlew", ":api:bootJar", "--offline", "--no-daemon", cwd=BACKEND)
+    run("./gradlew", ":api:bootJar", ":worker:bootJar", "--offline", "--no-daemon", cwd=BACKEND)
     run("npm", "run", "build", cwd=ROOT)
     run("docker", "run", "--rm", "--detach", "--name", NAME,
         "-e", "POSTGRES_USER=test", "-e", "POSTGRES_PASSWORD=test",
@@ -64,6 +65,8 @@ try:
     env = os.environ.copy()
     env.update({"PORT": str(api_port), "SERVER_ADDRESS": "127.0.0.1",
                 "NEMLAB_DATA_ENABLED": "true", "NEMLAB_ADMIN_ENABLED": "false",
+                "NEMLAB_SIMULATION_API_ENABLED": "true", "NEMLAB_SIMULATION_ENABLED": "true",
+                "NEMLAB_SIMULATION_POLL_MS": "1000", "NEMLAB_WORKER_ENABLED": "false",
                 "NEMLAB_DB_URL": f"jdbc:postgresql://127.0.0.1:{port}/test",
                 "NEMLAB_DB_USER": "test", "NEMLAB_DB_PASSWORD": "test"})
     java = str(Path(env["JAVA_HOME"]) / "bin/java") if "JAVA_HOME" in env else "java"
@@ -81,9 +84,18 @@ try:
         else:
             raise RuntimeError("Test API did not start")
         env["NEMLAB_API_TARGET"] = f"http://127.0.0.1:{api_port}"
+        worker = subprocess.Popen([java, "-jar", str(BACKEND / "worker/build/libs/worker.jar")],
+                                  env=env, stdout=log, stderr=subprocess.STDOUT)
         run("npx", "--no-install", "playwright", "test", "--config", "playwright.live.config.ts",
             cwd=ROOT, env=env)
 finally:
+    if worker is not None:
+        worker.terminate()
+        try:
+            worker.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            worker.kill()
+            worker.wait()
     if api is not None:
         api.terminate()
         try:

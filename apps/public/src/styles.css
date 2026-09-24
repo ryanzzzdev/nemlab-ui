@@ -136,6 +136,9 @@ main:focus-visible {
   outline-offset: 5px;
 }
 .site-header {
+  width: 100%;
+  max-width: 1112px;
+  margin-inline: auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -483,11 +486,85 @@ caption {
   padding: 8px 4px;
 }
 .site-grid {
-  max-width: none;
-  padding-inline: 28px;
+  max-width: 1440px;
+  padding-inline: 24px;
   --color-accent: light-dark(#925800, #ffb020);
   --color-accent-soft: light-dark(#fff3d9, #292211);
   --color-on-accent: light-dark(#ffffff, #1a1408);
+}
+
+.simulation-layout {
+  grid-template-columns: 340px minmax(0, 1fr);
+}
+.scenario-form,
+.simulation-status {
+  padding: 20px;
+  background: var(--color-panel);
+  border: 1px solid var(--color-rule);
+  border-radius: 10px;
+  font-size: 13px;
+  min-width: 0;
+}
+.scenario-form h2 {
+  font-size: 18px;
+  margin-top: 0;
+}
+.scenario-form fieldset {
+  border: 0;
+  padding: 0;
+  margin: 24px 0;
+  min-width: 0;
+}
+.scenario-form legend {
+  font-weight: 650;
+  margin-bottom: 12px;
+}
+.scenario-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.scenario-form label {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--color-muted);
+}
+.scenario-form input,
+.scenario-form select {
+  width: 100%;
+  min-width: 0;
+  padding-inline: 8px;
+}
+.scenario-form > button {
+  width: 100%;
+}
+.scenario-form [aria-invalid="true"] {
+  border-color: light-dark(#b3261e, #ffaaa2);
+}
+.field-error {
+  color: light-dark(#b3261e, #ffaaa2);
+}
+button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.simulation-status:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+.saved-result {
+  border-top: 1px solid var(--color-rule);
+  margin-top: 16px;
+}
+.simulation-layout .prose {
+  margin-block: 24px;
+}
+@media (max-width: 940px) {
+  .simulation-layout {
+    grid-template-columns: 1fr;
+  }
 }
 .site-grid h1 {
   font-size: 28px;
