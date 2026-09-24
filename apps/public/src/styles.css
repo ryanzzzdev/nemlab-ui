@@ -606,6 +606,19 @@ button:disabled {
   border-bottom: 0;
   font-weight: 700;
 }
+.method {
+  border: 1px solid var(--color-rule);
+  border-radius: 10px;
+  padding: 10px 16px;
+  margin-top: 16px;
+  font-size: 13px;
+  color: var(--color-muted);
+}
+.method summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--color-text);
+}
 .chart-legend {
   display: flex;
   flex-wrap: wrap;

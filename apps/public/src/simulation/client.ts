@@ -5,7 +5,7 @@ import { validDay } from "../prices/client";
 
 export type Job = components["schemas"]["SimulationStatus"];
 export type Result = components["schemas"]["SimulationResult"];
-const uuid = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
+export const uuid = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
 export class SimulationError extends Error {
   constructor(
     message: string,

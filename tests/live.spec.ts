@@ -14,11 +14,29 @@ test("submits a real simulation and retrieves a worker-produced result", async (
   await page.getByRole("button", { name: "Run simulation" }).click();
   await expect(page.getByRole("heading", { name: "Stored result ready" })).toBeVisible();
   await expect(page.locator(".simulation-status .revision").first()).toHaveText(first!);
+  // The saved link reopens the identical immutable result without resubmitting.
+  expect(page.url()).toContain("simulation=");
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "Result comparison" })).toBeVisible({
+    timeout: 25000,
+  });
+  await expect(page.locator(".simulation-status .revision").first()).toHaveText(first!);
   await page.screenshot({
     path: info.outputPath("live-simulation.png"),
     fullPage: true,
     scale: "css",
   });
+});
+
+test("an incomplete stored day and an unknown saved link both explain recovery", async ({
+  page,
+}) => {
+  await page.goto("/batterylab");
+  await page.getByLabel("Simulation day").fill("2023-10-02");
+  await page.getByRole("button", { name: "Run simulation" }).click();
+  await expect(page.getByRole("alert")).toContainText("complete stored price day");
+  await page.goto("/batterylab?simulation=99999999-9999-4999-8999-999999999999");
+  await expect(page.getByRole("alert")).toContainText("could not be found");
 });
 
 test("reads complete, incomplete and absent days through the real API proxy", async ({

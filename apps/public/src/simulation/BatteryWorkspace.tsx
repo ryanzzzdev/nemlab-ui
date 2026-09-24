@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { PriceExplorer } from "../prices/PriceExplorer";
 import { readPriceDay, marketDay, nextDay } from "../prices/client";
 import { fields, initialForm, prepare, siteFields, costFields, windowFields } from "./scenario";
-import type { Field, Form, Errors } from "./scenario";
-import { readResult, readStatus, submitSimulation, SimulationError } from "./client";
+import type { Field, Form, Errors, Request } from "./scenario";
+import { readResult, readStatus, submitSimulation, SimulationError, uuid } from "./client";
 import type { Job, Result } from "./client";
 import { ResultView } from "./ResultView";
 
@@ -32,14 +32,29 @@ export function BatteryWorkspace() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("Choose your scenario, then run both strategies.");
   const [problem, setProblem] = useState(false);
+  const [shareNote, setShareNote] = useState("");
   const active = useRef<AbortController | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const statusRef = useRef<HTMLElement>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const linkedId = searchParams.get("simulation");
   useEffect(() => () => active.current?.abort(), []);
   useEffect(() => {
     if (Object.keys(errors).length)
       formRef.current?.querySelector<HTMLElement>("[aria-invalid=true]")?.focus();
   }, [errors]);
+  useEffect(() => {
+    if (!linkedId) return;
+    if (!uuid.test(linkedId)) {
+      setProblem(true);
+      setMessage("This link does not identify a saved simulation.");
+      return;
+    }
+    if (linkedId === job?.id || linkedId === result?.id) return;
+    active.current?.abort();
+    active.current = null;
+    void restore(linkedId);
+  }, [linkedId]);
 
   function change(key: keyof Form, value: string) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -47,8 +62,49 @@ export function BatteryWorkspace() {
     setJob(null);
     setResult(null);
     setProblem(false);
+    setShareNote("");
     setMessage("Scenario changed. Run both strategies to calculate a new comparison.");
+    if (linkedId) setSearchParams({}, { replace: true });
   }
+  async function monitor(first: Job, signal: AbortSignal, request?: Request) {
+    let current = { job: first, retryAfter: 2 };
+    for (let check = 0; ; check++) {
+      signal.throwIfAborted();
+      setJob(current.job);
+      if (current.job.status === "FAILED") {
+        setProblem(true);
+        setMessage(
+          `Simulation failed${current.job.failureCode ? ` — ${current.job.failureCode}` : ""}. No proven comparison is available. Resubmitting unchanged inputs reuses this failed job; it does not restart it.`,
+        );
+        return null;
+      }
+      if (current.job.status === "SUCCEEDED") {
+        setMessage("Simulation succeeded. Loading the stored result…");
+        const saved = await readResult(current.job.id, signal);
+        signal.throwIfAborted();
+        if (request && (saved.inputs.region !== request.region || saved.inputs.day !== request.day))
+          throw new SimulationError(
+            "The stored result does not match the selected region and day.",
+          );
+        setResult(saved);
+        setSearchParams({ simulation: saved.id }, { replace: true });
+        setMessage("Simulation complete. Both strategies and their original inputs are stored.");
+        return saved;
+      }
+      if (check >= 60)
+        throw new SimulationError(
+          "Automatic checking paused. Your simulation may still be running; resume checking for an update.",
+        );
+      setMessage(
+        current.job.status === "QUEUED"
+          ? "Queued — waiting for a simulation worker."
+          : "Running — comparing fixed schedule and hindsight.",
+      );
+      await wait(current.retryAfter, signal);
+      current = await readStatus(current.job.id, signal);
+    }
+  }
+
   async function run(event?: FormEvent, resume = false) {
     event?.preventDefault();
     if (active.current) return;
@@ -64,12 +120,13 @@ export function BatteryWorkspace() {
     setProblem(false);
     setErrors({});
     setResult(null);
+    setShareNote("");
     if (!resume) setJob(null);
     setMessage(resume ? "Checking simulation…" : "Checking complete stored prices…");
     statusRef.current?.focus({ preventScroll: true });
     try {
-      let current;
-      if (resume && job) current = await readStatus(job.id, signal);
+      let first: Job;
+      if (resume && job) first = (await readStatus(job.id, signal)).job;
       else {
         const prices = await readPriceDay(prepared.request.region, prepared.request.day, signal);
         signal.throwIfAborted();
@@ -83,72 +140,95 @@ export function BatteryWorkspace() {
             "A complete stored price day is required. Choose another day; this does not import new data.",
           );
         setMessage("Submitting scenario…");
-        current = await submitSimulation(prepared.request, signal);
+        first = (await submitSimulation(prepared.request, signal)).job;
       }
-      for (let check = 0; ; check++) {
-        signal.throwIfAborted();
-        setJob(current.job);
-        if (current.job.status === "FAILED") {
-          setProblem(true);
-          setMessage(
-            "Simulation failed. No proven comparison is available. Resubmitting unchanged inputs reuses this failed job; it does not restart it.",
-          );
-          break;
-        }
-        if (current.job.status === "SUCCEEDED") {
-          setMessage("Simulation succeeded. Loading the stored result…");
-          const saved = await readResult(current.job.id, signal);
-          signal.throwIfAborted();
-          if (
-            saved.inputs.region !== prepared.request.region ||
-            saved.inputs.day !== prepared.request.day
-          )
-            throw new SimulationError(
-              "The stored result does not match the selected region and day.",
-            );
-          setResult(saved);
-          setMessage("Simulation complete. Both strategies and their original inputs are stored.");
-          break;
-        }
-        if (check >= 60)
-          throw new SimulationError(
-            "Automatic checking paused. Your simulation may still be running; resume checking for an update.",
-          );
-        setMessage(
-          current.job.status === "QUEUED"
-            ? "Queued — waiting for a simulation worker."
-            : "Running — comparing fixed schedule and hindsight.",
-        );
-        await wait(current.retryAfter, signal);
-        current = await readStatus(current.job.id, signal);
-      }
+      await monitor(first, signal, prepared.request);
     } catch (error) {
-      if (signal.aborted) return;
-      setProblem(true);
-      setMessage(
-        error instanceof Error ? error.message : "Simulation unavailable. Try again later.",
-      );
-      if (error instanceof SimulationError && error.field) {
-        const key = error.field.split(".").at(-1)!;
-        const mapped =
-          key === "site"
-            ? "capacityMWh"
-            : key === "windows"
-              ? "chargeStart"
-              : key === "efficiency"
-                ? "efficiencyMode"
-                : key;
-        if (mapped in form)
-          setErrors({
-            [mapped]:
-              "The service rejected this value or its bounds. Check this input and related fields.",
-          });
-      }
+      report(error, signal);
     } finally {
-      if (active.current === controller) {
-        active.current = null;
-        setBusy(false);
-      }
+      finish(controller);
+    }
+  }
+
+  async function restore(id: string) {
+    const controller = new AbortController();
+    active.current = controller;
+    const signal = controller.signal;
+    setBusy(true);
+    setProblem(false);
+    setErrors({});
+    setResult(null);
+    setJob(null);
+    setShareNote("");
+    setMessage("Opening the saved simulation…");
+    statusRef.current?.focus({ preventScroll: true });
+    try {
+      const first = (await readStatus(id, signal)).job;
+      const saved = await monitor(first, signal);
+      if (saved) applyInputs(saved);
+    } catch (error) {
+      report(error, signal);
+    } finally {
+      finish(controller);
+    }
+  }
+
+  function applyInputs(saved: Result) {
+    const hhmm = (minutes: number) =>
+      `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
+    setForm((current) => ({
+      ...current,
+      region: saved.inputs.region,
+      day: saved.inputs.day,
+      efficiencyMode: "legs",
+      charge: saved.inputs.efficiency.charge,
+      discharge: saved.inputs.efficiency.discharge,
+      ...saved.inputs.site,
+      ...saved.inputs.costs,
+      chargeStart: hhmm(saved.inputs.windows.chargeStart),
+      chargeEnd: hhmm(saved.inputs.windows.chargeEnd),
+      dischargeStart: hhmm(saved.inputs.windows.dischargeStart),
+      dischargeEnd: hhmm(saved.inputs.windows.dischargeEnd),
+    }));
+  }
+
+  async function copyResultLink() {
+    if (!result) return;
+    const url = `${window.location.origin}/batterylab?simulation=${result.id}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setShareNote("Result link copied to the clipboard.");
+    } catch {
+      setShareNote(`Copy this result link: ${url}`);
+    }
+  }
+
+  function report(error: unknown, signal: AbortSignal) {
+    if (signal.aborted) return;
+    setProblem(true);
+    setMessage(error instanceof Error ? error.message : "Simulation unavailable. Try again later.");
+    if (error instanceof SimulationError && error.field) {
+      const key = error.field.split(".").at(-1)!;
+      const mapped =
+        key === "site"
+          ? "capacityMWh"
+          : key === "windows"
+            ? "chargeStart"
+            : key === "efficiency"
+              ? "efficiencyMode"
+              : key;
+      if (mapped in form)
+        setErrors({
+          [mapped]:
+            "The service rejected this value or its bounds. Check this input and related fields.",
+        });
+    }
+  }
+
+  function finish(controller: AbortController) {
+    if (active.current === controller) {
+      active.current = null;
+      setBusy(false);
     }
   }
   function stop() {
@@ -317,6 +397,14 @@ export function BatteryWorkspace() {
               <p>288 intervals · fixed schedule and proven hindsight comparison.</p>
               <p className="revision">Price revision: {result.priceRevision}</p>
               <p>The full comparison and linked charts are below.</p>
+              <button type="button" onClick={() => void copyResultLink()}>
+                Copy result link
+              </button>
+              {shareNote && (
+                <p className="availability" role="status">
+                  {shareNote}
+                </p>
+              )}
             </div>
           )}
         </section>

@@ -1,4 +1,5 @@
 import { lazy, Suspense, useMemo, useState } from "react";
+import { Link } from "react-router";
 import type { Result } from "./client";
 import { aud, aud4, cumulativeMargins, endLabel, explain, mwh, netMW, signedMw } from "./compare";
 
@@ -189,6 +190,25 @@ export function ResultView({ result }: { result: Result }) {
         {aud4(result.solver.absoluteGap)} · limits {result.versions.limits.milliseconds} ms /{" "}
         {result.versions.limits.iterations} iterations
       </p>
+      <details className="method">
+        <summary>Methodology and scope</summary>
+        <p>
+          Each interval updates stored energy as E[t] = E[t−1] + ηc·imported − exported/ηd, with
+          exclusive charge/discharge, power and connection limits, and terminal energy equal to the
+          initial level.
+        </p>
+        <p>
+          Margin = discharge revenue − charging cost − variable fees − degradation. Importing at a
+          negative price earns a credit; conversion losses are physical and never charged twice.
+        </p>
+        <p>
+          Excluded: capital and financing, retail tariffs, network charges and loss factors, and
+          ancillary services. This is a simulated trading margin, not investment return.
+        </p>
+        <p>
+          <Link to="/methodology">Read the model assumptions</Link>
+        </p>
+      </details>
     </section>
   );
 }
