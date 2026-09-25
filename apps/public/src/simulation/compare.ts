@@ -32,6 +32,33 @@ export function cumulativeMargins(result: Result, strategy: Strategy) {
   );
 }
 
+// Explains the threshold rule's decision at one interval, including a binding
+// energy or power limit when the rule wanted to trade but could not fully.
+export function thresholdAction(result: Result, index: number) {
+  const t = result.threshold;
+  if (!t) return "";
+  const price = Number(result.prices[index]!.price);
+  const chargeBelow = Number(t.thresholds.chargeBelow);
+  const dischargeAbove = Number(t.thresholds.dischargeAbove);
+  const interval = t.dispatch.intervals[index]!;
+  const site = result.inputs.site;
+  if (price < chargeBelow) {
+    const cap = Math.min(Number(site.chargeMW), Number(site.importLimitMW)) / 12;
+    if (interval.importedMWh + 1e-9 >= cap) return "Charge: below threshold (power limit)";
+    return interval.importedMWh > 1e-9
+      ? "Charge: below threshold (energy limit)"
+      : "Hold: already full";
+  }
+  if (price > dischargeAbove) {
+    const cap = Math.min(Number(site.dischargeMW), Number(site.exportLimitMW)) / 12;
+    if (interval.exportedMWh + 1e-9 >= cap) return "Discharge: above threshold (power limit)";
+    return interval.exportedMWh > 1e-9
+      ? "Discharge: above threshold (energy limit)"
+      : "Hold: already empty";
+  }
+  return "Hold: price between thresholds";
+}
+
 export const endLabel = (instant: string, index: number) =>
   new Date(Date.parse(instant) + 10 * 3600000).toISOString().slice(11, 16) +
   (index === 287 ? " +1 day" : "");
@@ -99,5 +126,16 @@ export function explain(result: Result) {
   items.push(
     `Independently evaluated dual bound ${aud(result.solver.upperBound)} — gap ${aud4(result.solver.absoluteGap)}, within the $0.01 optimality tolerance.`,
   );
+  if (result.threshold) {
+    const t = result.threshold;
+    items.push(describe("The threshold rule", t, result));
+    const ending = t.dispatch.intervals.at(-1)!.endingEnergyMWh;
+    const initial = Number(result.inputs.site.initialMWh);
+    items.push(
+      `It charged below ${t.thresholds.chargeBelow} and discharged above ${t.thresholds.dischargeAbove} AUD/MWh all day, ending at ${mwh(ending)} MWh versus the ${mwh(initial)} MWh start` +
+        (Math.abs(ending - initial) > 1e-9 ? " — no forced end-of-day trade." : ".") +
+        " Different operating hours and ending energy mean it is not ranked against the fixed/hindsight pair.",
+    );
+  }
   return items;
 }

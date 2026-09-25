@@ -70,7 +70,7 @@ export function BatteryWorkspace() {
     void restore(linkedId);
   }, [linkedId]);
 
-  function change(key: keyof Form, value: string) {
+  function change(key: keyof Form, value: string | boolean) {
     setForm((current) => ({ ...current, [key]: value }));
     setErrors({});
     setJob(null);
@@ -218,6 +218,13 @@ export function BatteryWorkspace() {
       chargeEnd: hhmm(saved.inputs.windows.chargeEnd),
       dischargeStart: hhmm(saved.inputs.windows.dischargeStart),
       dischargeEnd: hhmm(saved.inputs.windows.dischargeEnd),
+      thresholdEnabled: Boolean(saved.inputs.thresholds),
+      ...(saved.inputs.thresholds
+        ? {
+            chargeBelow: saved.inputs.thresholds.chargeBelow,
+            dischargeAbove: saved.inputs.thresholds.dischargeAbove,
+          }
+        : {}),
     }));
   }
 
@@ -245,7 +252,9 @@ export function BatteryWorkspace() {
             ? "chargeStart"
             : key === "efficiency"
               ? "efficiencyMode"
-              : key;
+              : key === "thresholds"
+                ? "chargeBelow"
+                : key;
       if (mapped in form)
         setErrors({
           [mapped]:
@@ -406,6 +415,29 @@ export function BatteryWorkspace() {
         <fieldset disabled={busy}>
           <legend>Variable costs</legend>
           <div className="scenario-fields">{costFields.map(input)}</div>
+        </fieldset>
+        <fieldset disabled={busy}>
+          <legend>Price thresholds · optional</legend>
+          <div className="radio-row">
+            <label>
+              <input
+                type="checkbox"
+                checked={form.thresholdEnabled}
+                onChange={(e) => change("thresholdEnabled", e.target.checked)}
+              />
+              Run the threshold experiment
+            </label>
+          </div>
+          {form.thresholdEnabled && (
+            <div className="scenario-fields">
+              {input("chargeBelow")}
+              {input("dischargeAbove")}
+            </div>
+          )}
+          <p className="hint">
+            All-day price rule: charge below, discharge above, otherwise hold. It ignores the
+            windows above and may end the day at a different stored energy.
+          </p>
         </fieldset>
         <div className="btns">
           <button type="submit" className="primary" disabled={busy}>

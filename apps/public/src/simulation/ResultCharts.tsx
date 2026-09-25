@@ -11,7 +11,7 @@ import {
 } from "echarts/components";
 import { SVGRenderer } from "echarts/renderers";
 import type { Result } from "./client";
-import { aud, cumulativeMargins, endLabel, mwh, netMW, signedMw } from "./compare";
+import { aud, cumulativeMargins, endLabel, mwh, netMW, signedMw, thresholdAction } from "./compare";
 import { useTheme } from "../components/Theme";
 
 use([
@@ -31,7 +31,11 @@ const windows = [
   { label: "18:00–24:00", start: 216, end: 287 },
 ];
 
-type PanelConfig = { option: Record<string, unknown>; cursorOn: string };
+type PanelConfig = {
+  option: Record<string, unknown>;
+  cursorOn: string;
+  lines?: { yAxis: number; label: string; color: string }[] | undefined;
+};
 
 function Panel({
   config,
@@ -98,7 +102,20 @@ function Panel({
             symbol: "none",
             label: { show: false },
             lineStyle: { color: dark ? "#ffa48b" : "#b04a2f", width: 2, type: "solid" },
-            data: [{ xAxis: selected }],
+            data: [
+              { xAxis: selected },
+              ...(config.lines ?? []).map((level) => ({
+                yAxis: level.yAxis,
+                lineStyle: { color: level.color, width: 1, type: "dashed" as const },
+                label: {
+                  show: true,
+                  position: "insideEndTop" as const,
+                  fontSize: 9,
+                  color: level.color,
+                  formatter: level.label,
+                },
+              })),
+            ],
           },
         },
       ],
@@ -117,8 +134,11 @@ export default function ResultCharts({ result }: { result: Result }) {
   const { dark } = useTheme();
   const [selected, setSelected] = useState(0);
   const [windowIndex, setWindowIndex] = useState(0);
-  const [powerStrategy, setPowerStrategy] = useState<"fixed" | "hindsight">("hindsight");
+  const [powerStrategy, setPowerStrategy] = useState<"fixed" | "hindsight" | "threshold">(
+    "hindsight",
+  );
   const window = windows[windowIndex]!;
+  const threshold = result.threshold;
 
   const derived = useMemo(() => {
     const seconds = result.intervalSeconds;
@@ -143,6 +163,9 @@ export default function ResultCharts({ result }: { result: Result }) {
       hindEnergy: result.hindsight.dispatch.intervals.map((v) => v.endingEnergyMWh),
       fixedMargin: cumulativeMargins(result, result.fixed),
       hindMargin: cumulativeMargins(result, result.hindsight),
+      thresholdMW: threshold?.dispatch.intervals.map((v) => netMW(v, seconds)) ?? null,
+      thresholdEnergy: threshold?.dispatch.intervals.map((v) => v.endingEnergyMWh) ?? null,
+      thresholdMargin: threshold ? cumulativeMargins(result, threshold) : null,
       negativeRuns: runs,
     };
   }, [result]);
@@ -153,6 +176,7 @@ export default function ResultCharts({ result }: { result: Result }) {
     const axisLine = dark ? "#596777" : "#b4bdc8";
     const fixedColor = dark ? "#9aa7b8" : "#64748b";
     const hindColor = dark ? "#69d8b6" : "#0e7a5f";
+    const thresholdColor = dark ? "#c4b5fd" : "#7c3aed";
     const frame = (name: string, top: number) => ({
       grid: { left: 48, right: 12, top, bottom: 20 },
       xAxis: {
@@ -206,10 +230,30 @@ export default function ResultCharts({ result }: { result: Result }) {
       result.inputs.windows.dischargeEnd / 5 - 1,
       ...derived.negativeRuns.map(([, to]) => to),
     ];
-    const powerMW = powerStrategy === "fixed" ? derived.fixedMW : derived.hindMW;
+    const powerMW =
+      powerStrategy === "fixed"
+        ? derived.fixedMW
+        : powerStrategy === "threshold" && derived.thresholdMW
+          ? derived.thresholdMW
+          : derived.hindMW;
+    const thresholdLines = threshold
+      ? [
+          {
+            yAxis: Number(threshold.thresholds.chargeBelow),
+            label: `Charge < ${threshold.thresholds.chargeBelow}`,
+            color: dark ? "#8abaff" : "#2563eb",
+          },
+          {
+            yAxis: Number(threshold.thresholds.dischargeAbove),
+            label: `Discharge > ${threshold.thresholds.dischargeAbove}`,
+            color: dark ? "#69d8b6" : "#0e9f6e",
+          },
+        ]
+      : undefined;
     return {
       price: {
         cursorOn: "price",
+        lines: thresholdLines,
         option: {
           animation: false,
           textStyle: { color: text },
@@ -277,6 +321,17 @@ export default function ResultCharts({ result }: { result: Result }) {
           ...frame("MWh", 8),
           series: [
             line("energy-fixed", "Fixed schedule", derived.fixedEnergy, fixedColor, true),
+            ...(derived.thresholdEnergy
+              ? [
+                  line(
+                    "energy-threshold",
+                    "Threshold rule",
+                    derived.thresholdEnergy,
+                    thresholdColor,
+                    true,
+                  ),
+                ]
+              : []),
             {
               ...line("energy-hindsight", "Perfect hindsight", derived.hindEnergy, hindColor),
               markLine: {
@@ -301,6 +356,17 @@ export default function ResultCharts({ result }: { result: Result }) {
           ...frame("AUD", 8),
           series: [
             line("margin-fixed", "Fixed schedule", derived.fixedMargin, fixedColor, true),
+            ...(derived.thresholdMargin
+              ? [
+                  line(
+                    "margin-threshold",
+                    "Threshold rule",
+                    derived.thresholdMargin,
+                    thresholdColor,
+                    true,
+                  ),
+                ]
+              : []),
             line("margin-hindsight", "Perfect hindsight", derived.hindMargin, hindColor),
           ],
         },
@@ -375,6 +441,16 @@ export default function ResultCharts({ result }: { result: Result }) {
             >
               Hindsight
             </button>
+            {threshold && (
+              <button
+                type="button"
+                className={powerStrategy === "threshold" ? "on" : ""}
+                aria-pressed={powerStrategy === "threshold"}
+                onClick={() => setPowerStrategy("threshold")}
+              >
+                Threshold
+              </button>
+            )}
           </div>
         </Panel>
         <Panel
@@ -393,6 +469,12 @@ export default function ResultCharts({ result }: { result: Result }) {
               <i className="sw sw-fixed" />
               Fixed schedule
             </span>
+            {threshold && (
+              <span>
+                <i className="sw sw-threshold" />
+                Threshold rule
+              </span>
+            )}
             <span>
               <i className="sw sw-hindsight" />
               Perfect hindsight
@@ -415,6 +497,12 @@ export default function ResultCharts({ result }: { result: Result }) {
               <i className="sw sw-fixed" />
               Fixed schedule
             </span>
+            {threshold && (
+              <span>
+                <i className="sw sw-threshold" />
+                Threshold rule
+              </span>
+            )}
             <span>
               <i className="sw sw-hindsight" />
               Perfect hindsight
@@ -475,6 +563,19 @@ export default function ResultCharts({ result }: { result: Result }) {
           {signedMw(derived.hindMW[selected]!)} MW · {mwh(derived.hindEnergy[selected]!)} MWh stored
           · {aud(derived.hindMargin[selected]!)} cumulative
         </strong>
+        {threshold && (
+          <>
+            <br />
+            Threshold:{" "}
+            <strong>
+              {signedMw(derived.thresholdMW![selected]!)} MW ·{" "}
+              {mwh(derived.thresholdEnergy![selected]!)} MWh stored ·{" "}
+              {aud(derived.thresholdMargin![selected]!)} cumulative
+            </strong>
+            {" — "}
+            {thresholdAction(result, selected)}
+          </>
+        )}
       </p>
       <p className="hint">
         Point or tap any panel to move all four cursors. Use the controls to zoom the panels

@@ -314,6 +314,7 @@ export interface components {
             efficiency: components["schemas"]["SimulationEfficiency"];
             costs: components["schemas"]["SimulationCosts"];
             windows: components["schemas"]["SimulationWindows"];
+            thresholds?: components["schemas"]["SimulationThresholds"];
         };
         SimulationInputs: {
             region: components["schemas"]["Region"];
@@ -326,6 +327,7 @@ export interface components {
             efficiency: components["schemas"]["SimulationEfficiencyLegs"];
             costs: components["schemas"]["SimulationCosts"];
             windows: components["schemas"]["SimulationWindows"];
+            thresholds?: components["schemas"]["SimulationThresholds"];
         };
         SimulationStatus: {
             /** Format: uuid */
@@ -412,6 +414,7 @@ export interface components {
                 upperBound: number;
                 absoluteGap: number;
             };
+            threshold: components["schemas"]["SimulationThreshold"] | null;
         };
         SimulationError: {
             /** @enum {string} */
@@ -419,6 +422,20 @@ export interface components {
             message: string;
             field: string;
             reason: string;
+        };
+        /** @description Optional all-day price-rule experiment: charge when the interval price is strictly below chargeBelow, discharge when strictly above dischargeAbove, hold otherwise. */
+        SimulationThresholds: {
+            /** @description Exact decimal input; 38 digits precision and absolute scale <=18. Thresholds in AUD/MWh within [-1000000,1000000]; negative values allowed. Charge threshold must be below discharge threshold. */
+            chargeBelow: string;
+            /** @description Exact decimal input; 38 digits precision and absolute scale <=18. Thresholds in AUD/MWh within [-1000000,1000000]; negative values allowed. Charge threshold must be below discharge threshold. */
+            dischargeAbove: string;
+        };
+        /** @description Idealised same-interval price-rule replay over the whole market day. Ending energy may differ from initial energy; this is not a dispatch or forecast reconstruction. */
+        SimulationThreshold: {
+            version: string;
+            thresholds: components["schemas"]["SimulationThresholds"];
+            dispatch: components["schemas"]["SimulationDispatch"];
+            accounting: components["schemas"]["SimulationAccounting"];
         };
     };
     responses: never;
@@ -1042,7 +1059,7 @@ export interface operations {
             429: {
                 headers: {
                     "Cache-Control": string;
-                    "Retry-After": "5";
+                    "Retry-After": "5" | "60";
                     [name: string]: unknown;
                 };
                 content: {

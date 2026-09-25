@@ -72,6 +72,7 @@ export function result(): components["schemas"]["SimulationResult"] {
     })),
     fixed: strategy,
     hindsight: strategy,
+    threshold: null,
     solver: { status: "OPTIMAL", objective: 0, upperBound: 0, absoluteGap: 0 },
   };
 }
@@ -161,6 +162,56 @@ export function traded(): components["schemas"]["SimulationResult"] {
       objective: hindsightAccounting.margin,
       upperBound: hindsightAccounting.margin + 0.004,
       absoluteGap: 0.004,
+    },
+  };
+}
+
+// The all-day price rule on the same fixture day: charge below -5, discharge
+// above 50. It fills on the four -10 intervals (160–163), drains on the 80
+// prices (240–247) and discharges nothing at the 123… opener (energy is 0),
+// ending below its starting level only if it traded — here it returns to ~0.
+export function thresholded(): components["schemas"]["SimulationResult"] {
+  const base = traded();
+  const eta = 0.95;
+  const limit = 1 / 12;
+  let energy = 0;
+  const intervals = base.prices.map((slot) => {
+    const price = Number(slot.price);
+    let charge = 0,
+      discharge = 0;
+    if (price < -5) charge = Math.min(limit, Math.max(0, (2 - energy) / eta));
+    else if (price > 50) discharge = Math.min(limit, Math.max(0, energy * eta));
+    energy += eta * charge - discharge / eta;
+    return { importedMWh: charge, exportedMWh: discharge, endingEnergyMWh: energy };
+  });
+  const sum = (f: (v: (typeof intervals)[number], i: number) => number) =>
+    intervals.reduce((total, v, i) => total + f(v, i), 0);
+  const imported = sum((v) => v.importedMWh);
+  const exported = sum((v) => v.exportedMWh);
+  const chargingCost = sum((v, i) => Number(base.prices[i]!.price) * v.importedMWh);
+  const revenue = sum((v, i) => Number(base.prices[i]!.price) * v.exportedMWh);
+  const fees = 0.5 * imported + 0.5 * exported;
+  const degradation = 0.2 * exported;
+  return {
+    ...base,
+    inputs: {
+      ...base.inputs,
+      thresholds: { chargeBelow: "-5", dischargeAbove: "50" },
+    },
+    threshold: {
+      version: "price-threshold-v1",
+      thresholds: { chargeBelow: "-5", dischargeAbove: "50" },
+      dispatch: { intervals, limitingReason: "NOT_EVALUATED" },
+      accounting: {
+        importedMWh: imported,
+        exportedMWh: exported,
+        chargingCost,
+        revenue,
+        fees,
+        degradation,
+        margin: revenue - chargingCost - fees - degradation,
+        lossesMWh: (1 - eta) * imported + (1 / eta - 1) * exported,
+      },
     },
   };
 }

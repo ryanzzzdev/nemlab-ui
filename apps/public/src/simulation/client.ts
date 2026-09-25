@@ -99,11 +99,15 @@ export async function readResult(id: string, signal: AbortSignal): Promise<Resul
   const { value } = await request(`${resource(id)}/result`, signal);
   const result = value as Result;
   const finite = (n: unknown) => typeof n === "number" && Number.isFinite(n);
-  const decimals = (group: object | undefined, keys: readonly string[]) =>
+  const decimals = (group: object | undefined, keys: readonly string[], signed = false) =>
     group &&
     keys.every((key) => {
       const value = (group as Record<string, unknown>)[key];
-      return typeof value === "string" && value.length <= 80 && /^\d+(?:\.\d+)?$/.test(value);
+      return (
+        typeof value === "string" &&
+        value.length <= 80 &&
+        (signed ? /^-?\d+(?:\.\d+)?$/ : /^\d+(?:\.\d+)?$/).test(value)
+      );
     });
   const strategyValid = (strategy: Result["fixed"] | undefined) =>
     strategy &&
@@ -135,6 +139,8 @@ export async function readResult(id: string, signal: AbortSignal): Promise<Resul
     !decimals(result.inputs.site, siteFields) ||
     !decimals(result.inputs.costs, costFields) ||
     !decimals(result.inputs.efficiency, ["charge", "discharge"]) ||
+    (result.inputs.thresholds !== undefined &&
+      !decimals(result.inputs.thresholds, ["chargeBelow", "dischargeAbove"], true)) ||
     !windowFields.every(
       (key) =>
         Number.isInteger(result.inputs.windows?.[key]) &&
@@ -170,7 +176,12 @@ export async function readResult(id: string, signal: AbortSignal): Promise<Resul
         Number.isFinite(Date.parse(p.end)),
     ) ||
     !strategyValid(result.fixed) ||
-    !strategyValid(result.hindsight)
+    !strategyValid(result.hindsight) ||
+    Boolean(result.threshold) !== Boolean(result.inputs.thresholds) ||
+    (result.threshold != null &&
+      (typeof result.threshold.version !== "string" ||
+        !decimals(result.threshold.thresholds, ["chargeBelow", "dischargeAbove"], true) ||
+        !strategyValid(result.threshold)))
   )
     throw new SimulationError(
       "The simulation service returned an invalid result. Resume checking to try again.",

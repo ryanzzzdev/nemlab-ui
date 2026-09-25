@@ -800,6 +800,11 @@ button:disabled {
 .sw-hindsight {
   background: light-dark(#0e7a5f, #69d8b6);
 }
+.sw-threshold {
+  height: 0;
+  background: none;
+  border-top: 3px dotted light-dark(#7c3aed, #c4b5fd);
+}
 .sw-charge {
   background: light-dark(#2563eb, #8abaff);
 }

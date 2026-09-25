@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "NEMLab shared API",
-    "version": "1.2.0",
+    "version": "1.3.0",
     "description": "Independently enabled price reads, operator controls and simulation lifecycle. Disabled routes return 404. Market dates use fixed UTC+10. Simulation bodies are at most 16384 bytes and decimal inputs are strings. No GridReplay API is implemented."
   },
   "paths": {
@@ -1217,7 +1217,8 @@
                 "schema": {
                   "type": "string",
                   "enum": [
-                    "5"
+                    "5",
+                    "60"
                   ]
                 }
               }
@@ -2008,6 +2009,9 @@
           },
           "windows": {
             "$ref": "#/components/schemas/SimulationWindows"
+          },
+          "thresholds": {
+            "$ref": "#/components/schemas/SimulationThresholds"
           }
         }
       },
@@ -2042,6 +2046,9 @@
           },
           "windows": {
             "$ref": "#/components/schemas/SimulationWindows"
+          },
+          "thresholds": {
+            "$ref": "#/components/schemas/SimulationThresholds"
           }
         }
       },
@@ -2286,7 +2293,8 @@
           "prices",
           "fixed",
           "hindsight",
-          "solver"
+          "solver",
+          "threshold"
         ],
         "properties": {
           "id": {
@@ -2420,6 +2428,18 @@
                 "maximum": 0.01
               }
             }
+          },
+          "threshold": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SimulationThreshold"
+              },
+              {
+                "enum": [
+                  null
+                ]
+              }
+            ]
           }
         }
       },
@@ -2459,6 +2479,56 @@
             "type": "string"
           }
         }
+      },
+      "SimulationThresholds": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "chargeBelow",
+          "dischargeAbove"
+        ],
+        "properties": {
+          "chargeBelow": {
+            "type": "string",
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
+            "maxLength": 80,
+            "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Thresholds in AUD/MWh within [-1000000,1000000]; negative values allowed. Charge threshold must be below discharge threshold."
+          },
+          "dischargeAbove": {
+            "type": "string",
+            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
+            "maxLength": 80,
+            "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Thresholds in AUD/MWh within [-1000000,1000000]; negative values allowed. Charge threshold must be below discharge threshold."
+          }
+        },
+        "description": "Optional all-day price-rule experiment: charge when the interval price is strictly below chargeBelow, discharge when strictly above dischargeAbove, hold otherwise."
+      },
+      "SimulationThreshold": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "version",
+          "thresholds",
+          "dispatch",
+          "accounting"
+        ],
+        "properties": {
+          "version": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "thresholds": {
+            "$ref": "#/components/schemas/SimulationThresholds"
+          },
+          "dispatch": {
+            "$ref": "#/components/schemas/SimulationDispatch"
+          },
+          "accounting": {
+            "$ref": "#/components/schemas/SimulationAccounting"
+          }
+        },
+        "description": "Idealised same-interval price-rule replay over the whole market day. Ending energy may differ from initial energy; this is not a dispatch or forecast reconstruction."
       }
     }
   }

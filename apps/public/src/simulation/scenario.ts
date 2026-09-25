@@ -21,12 +21,15 @@ export const fields = {
   chargeEnd: ["Charge end (HH:MM)", "14:00"],
   dischargeStart: ["Discharge start (HH:MM)", "17:00"],
   dischargeEnd: ["Discharge end (HH:MM)", "21:00"],
+  chargeBelow: ["Charge below (AUD/MWh)", "30"],
+  dischargeAbove: ["Discharge above (AUD/MWh)", "150"],
 } as const;
 export type Field = keyof typeof fields;
 export type Form = Record<Field, string> & {
   region: Request["region"];
   day: string;
   efficiencyMode: "roundTrip" | "legs";
+  thresholdEnabled: boolean;
 };
 export type Errors = Partial<Record<keyof Form, string>>;
 export const initialForm = (): Form => ({
@@ -37,6 +40,7 @@ export const initialForm = (): Form => ({
   region: "NSW1",
   day: nextDay(marketDay(), -1),
   efficiencyMode: "roundTrip",
+  thresholdEnabled: false,
 });
 export const siteFields = [
   "capacityMWh",
@@ -52,8 +56,12 @@ export const costFields = ["importFee", "exportFee", "degradationPerExportedMWh"
 export const windowFields = ["chargeStart", "chargeEnd", "dischargeStart", "dischargeEnd"] as const;
 
 // Fixed-scale integers compare decimal bounds without rounding through a JS Number.
-function decimal(value: string): bigint | null {
-  if (!/^\d+(?:\.\d{1,18})?$/.test(value) || value.replace(".", "").replace(/^0+/, "").length > 38)
+function decimal(value: string, signed = false): bigint | null {
+  const pattern = signed ? /^-?\d+(?:\.\d{1,18})?$/ : /^\d+(?:\.\d{1,18})?$/;
+  if (
+    !pattern.test(value) ||
+    value.replace("-", "").replace(".", "").replace(/^0+/, "").length > 38
+  )
     return null;
   const [whole, fraction = ""] = value.split(".");
   return BigInt(whole! + fraction.padEnd(18, "0"));
@@ -113,6 +121,25 @@ export function prepare(form: Form): { errors: Errors; request?: Request } {
   )
     errors.chargeStart =
       "Use one nonempty charge window followed by one nonoverlapping discharge window.";
+  let thresholds: Request["thresholds"];
+  if (form.thresholdEnabled) {
+    const chargeBelow = decimal(form.chargeBelow, true);
+    const dischargeAbove = decimal(form.dischargeAbove, true);
+    const limit = decimal("1000000")!;
+    for (const [key, value] of [
+      ["chargeBelow", chargeBelow],
+      ["dischargeAbove", dischargeAbove],
+    ] as const) {
+      if (value === null)
+        errors[key] =
+          "Enter a decimal up to 18 decimal places and 38 significant digits; negative values allowed.";
+      else if (value < -limit || value > limit) errors[key] = "Enter a value within ±1,000,000.";
+    }
+    if (!errors.chargeBelow && !errors.dischargeAbove)
+      if (chargeBelow! >= dischargeAbove!)
+        errors.chargeBelow = "Charge threshold must be below the discharge threshold.";
+      else thresholds = { chargeBelow: form.chargeBelow, dischargeAbove: form.dischargeAbove };
+  }
   if (Object.keys(errors).length) return { errors };
   return {
     errors,
@@ -126,6 +153,7 @@ export function prepare(form: Form): { errors: Errors; request?: Request } {
           ? { roundTrip: form.roundTrip }
           : { charge: form.charge, discharge: form.discharge },
       windows,
+      ...(thresholds ? { thresholds } : {}),
     },
   };
 }

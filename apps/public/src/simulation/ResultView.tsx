@@ -19,24 +19,69 @@ const ResultCharts = lazy(() =>
 export function ResultView({ result }: { result: Result }) {
   const fixed = result.fixed.accounting;
   const hindsight = result.hindsight.accounting;
+  const threshold = result.threshold;
   const items = useMemo(() => explain(result), [result]);
   const margins = useMemo(
     () => ({
       fixed: cumulativeMargins(result, result.fixed),
       hindsight: cumulativeMargins(result, result.hindsight),
+      threshold: threshold ? cumulativeMargins(result, threshold) : null,
     }),
-    [result],
+    [result, threshold],
   );
   const seconds = result.intervalSeconds;
   const money = (value: number) => aud(value) + (value < 0 ? " (credit)" : "");
-  const rows: [string, string, string, string][] = [
-    ["Energy imported", "MWh", mwh(fixed.importedMWh), mwh(hindsight.importedMWh)],
-    ["Energy exported", "MWh", mwh(fixed.exportedMWh), mwh(hindsight.exportedMWh)],
-    ["Charging cost", "AUD", money(fixed.chargingCost), money(hindsight.chargingCost)],
-    ["Discharge revenue", "AUD", aud(fixed.revenue), aud(hindsight.revenue)],
-    ["Variable fees", "AUD", aud(fixed.fees), aud(hindsight.fees)],
-    ["Degradation", "AUD", aud(fixed.degradation), aud(hindsight.degradation)],
-    ["Energy losses (physical)", "MWh", mwh(fixed.lossesMWh), mwh(hindsight.lossesMWh)],
+  const thresholdAccounting = threshold?.accounting;
+  const rows: [string, string, string, string, string | undefined][] = [
+    [
+      "Energy imported",
+      "MWh",
+      mwh(fixed.importedMWh),
+      mwh(hindsight.importedMWh),
+      thresholdAccounting && mwh(thresholdAccounting.importedMWh),
+    ],
+    [
+      "Energy exported",
+      "MWh",
+      mwh(fixed.exportedMWh),
+      mwh(hindsight.exportedMWh),
+      thresholdAccounting && mwh(thresholdAccounting.exportedMWh),
+    ],
+    [
+      "Charging cost",
+      "AUD",
+      money(fixed.chargingCost),
+      money(hindsight.chargingCost),
+      thresholdAccounting && money(thresholdAccounting.chargingCost),
+    ],
+    [
+      "Discharge revenue",
+      "AUD",
+      aud(fixed.revenue),
+      aud(hindsight.revenue),
+      thresholdAccounting && aud(thresholdAccounting.revenue),
+    ],
+    [
+      "Variable fees",
+      "AUD",
+      aud(fixed.fees),
+      aud(hindsight.fees),
+      thresholdAccounting && aud(thresholdAccounting.fees),
+    ],
+    [
+      "Degradation",
+      "AUD",
+      aud(fixed.degradation),
+      aud(hindsight.degradation),
+      thresholdAccounting && aud(thresholdAccounting.degradation),
+    ],
+    [
+      "Energy losses (physical)",
+      "MWh",
+      mwh(fixed.lossesMWh),
+      mwh(hindsight.lossesMWh),
+      thresholdAccounting && mwh(thresholdAccounting.lossesMWh),
+    ],
   ];
   return (
     <section className="result-comparison" aria-labelledby="result-heading">
@@ -48,6 +93,8 @@ export function ResultView({ result }: { result: Result }) {
         Perfect hindsight is a benchmark, not a forecast — it saw every price before choosing. Both
         strategies used the same site limits and operating windows, and finish with the stored
         energy they started with.
+        {threshold &&
+          " The threshold rule is a separate all-day experiment that may end at a different stored energy — it is not a like-for-like comparison."}
       </p>
       <div className="stat-grid">
         <div className="stat">
@@ -70,6 +117,15 @@ export function ResultView({ result }: { result: Result }) {
           <strong className="stat-value">{mwh(hindsight.lossesMWh)} MWh</strong>
           <span className="stat-sub">physical loss, never a fee</span>
         </div>
+        {threshold && (
+          <div className="stat">
+            <span className="stat-label">Threshold rule margin</span>
+            <strong className="stat-value">{aud(threshold.accounting.margin)}</strong>
+            <span className="stat-sub">
+              all-day · ends {mwh(threshold.dispatch.intervals.at(-1)!.endingEnergyMWh)} MWh
+            </span>
+          </div>
+        )}
       </div>
       <ul className="result-explain">
         {items.map((item) => (
@@ -99,15 +155,17 @@ export function ResultView({ result }: { result: Result }) {
                 <th scope="col">Unit</th>
                 <th scope="col">Fixed schedule</th>
                 <th scope="col">Perfect hindsight</th>
+                {threshold && <th scope="col">Threshold rule</th>}
               </tr>
             </thead>
             <tbody>
-              {rows.map(([label, unit, fixedValue, hindsightValue]) => (
+              {rows.map(([label, unit, fixedValue, hindsightValue, thresholdValue]) => (
                 <tr key={label}>
                   <th scope="row">{label}</th>
                   <td>{unit}</td>
                   <td className="num">{fixedValue}</td>
                   <td className="num">{hindsightValue}</td>
+                  {threshold && <td className="num">{thresholdValue}</td>}
                 </tr>
               ))}
               <tr className="total">
@@ -115,6 +173,7 @@ export function ResultView({ result }: { result: Result }) {
                 <td>AUD</td>
                 <td className="num">{aud(fixed.margin)}</td>
                 <td className="num">{aud(hindsight.margin)}</td>
+                {threshold && <td className="num">{aud(threshold.accounting.margin)}</td>}
               </tr>
             </tbody>
           </table>
@@ -159,6 +218,13 @@ export function ResultView({ result }: { result: Result }) {
                 <th scope="col">Hindsight MW</th>
                 <th scope="col">Hindsight MWh</th>
                 <th scope="col">Hindsight margin (AUD)</th>
+                {threshold && (
+                  <>
+                    <th scope="col">Threshold MW</th>
+                    <th scope="col">Threshold MWh</th>
+                    <th scope="col">Threshold margin (AUD)</th>
+                  </>
+                )}
               </tr>
             </thead>
             <tbody>
@@ -180,6 +246,17 @@ export function ResultView({ result }: { result: Result }) {
                     {mwh(result.hindsight.dispatch.intervals[index]!.endingEnergyMWh)}
                   </td>
                   <td className="num">{aud(margins.hindsight[index]!)}</td>
+                  {threshold && (
+                    <>
+                      <td className="num">
+                        {signedMw(netMW(threshold.dispatch.intervals[index]!, seconds))}
+                      </td>
+                      <td className="num">
+                        {mwh(threshold.dispatch.intervals[index]!.endingEnergyMWh)}
+                      </td>
+                      <td className="num">{aud(margins.threshold![index]!)}</td>
+                    </>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -201,6 +278,15 @@ export function ResultView({ result }: { result: Result }) {
           Excluded: capital and financing, retail tariffs, network charges and loss factors, and
           ancillary services. This is a simulated trading margin, not investment return.
         </p>
+        {threshold && (
+          <p>
+            The threshold rule is an idealised same-interval replay: each stored interval price
+            decides charge/discharge/hold and settles that interval&apos;s energy. It is not a live
+            controller or a reconstruction of actual NEM dispatch — publication timing, bidding,
+            latency, ramps and dispatch uncertainty are abstracted away, and ending energy may
+            differ from the initial level.
+          </p>
+        )}
         <p>
           <Link to="/methodology">Read the model assumptions</Link>
         </p>
