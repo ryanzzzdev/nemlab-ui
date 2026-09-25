@@ -170,7 +170,7 @@ export function traded(): components["schemas"]["SimulationResult"] {
 // above 50. It fills on the four -10 intervals (160–163), drains on the 80
 // prices (240–247) and discharges nothing at the 123… opener (energy is 0),
 // ending below its starting level only if it traded — here it returns to ~0.
-export function thresholded(): components["schemas"]["SimulationResult"] {
+export function thresholded(dischargeAbove = 50): components["schemas"]["SimulationResult"] {
   const base = traded();
   const eta = 0.95;
   const limit = 1 / 12;
@@ -180,7 +180,7 @@ export function thresholded(): components["schemas"]["SimulationResult"] {
     let charge = 0,
       discharge = 0;
     if (price < -5) charge = Math.min(limit, Math.max(0, (2 - energy) / eta));
-    else if (price > 50) discharge = Math.min(limit, Math.max(0, energy * eta));
+    else if (price > dischargeAbove) discharge = Math.min(limit, Math.max(0, energy * eta));
     energy += eta * charge - discharge / eta;
     return { importedMWh: charge, exportedMWh: discharge, endingEnergyMWh: energy };
   });
@@ -196,11 +196,11 @@ export function thresholded(): components["schemas"]["SimulationResult"] {
     ...base,
     inputs: {
       ...base.inputs,
-      thresholds: { chargeBelow: "-5", dischargeAbove: "50" },
+      thresholds: { chargeBelow: "-5", dischargeAbove: String(dischargeAbove) },
     },
     threshold: {
       version: "price-threshold-v1",
-      thresholds: { chargeBelow: "-5", dischargeAbove: "50" },
+      thresholds: { chargeBelow: "-5", dischargeAbove: String(dischargeAbove) },
       dispatch: { intervals, limitingReason: "NOT_EVALUATED" },
       accounting: {
         importedMWh: imported,

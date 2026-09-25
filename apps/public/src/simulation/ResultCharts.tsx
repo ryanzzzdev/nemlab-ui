@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { init, use } from "echarts/core";
 import type { EChartsType } from "echarts/core";
-import { LineChart } from "echarts/charts";
+import { BarChart, LineChart } from "echarts/charts";
 import {
   GridComponent,
   MarkAreaComponent,
@@ -15,6 +15,7 @@ import { aud, cumulativeMargins, endLabel, mwh, netMW, signedMw, thresholdAction
 import { useTheme } from "../components/Theme";
 
 use([
+  BarChart,
   LineChart,
   GridComponent,
   MarkAreaComponent,
@@ -183,6 +184,9 @@ export default function ResultCharts({ result }: { result: Result }) {
         type: "category",
         data: derived.labels,
         boundaryGap: false,
+        // Keep identical interval coordinates across line and bar panels,
+        // including zoomed endpoints (bars otherwise add half-band padding).
+        containShape: false,
         axisLabel: { hideOverlap: true, fontSize: 10, color: text },
         axisLine: { lineStyle: { color: axisLine } },
       },
@@ -298,18 +302,28 @@ export default function ResultCharts({ result }: { result: Result }) {
           textStyle: { color: text },
           ...frame("MW", 8),
           series: [
-            line(
-              "power-charge",
-              "Charging",
-              powerMW.map((value) => (value > 0 ? value : null)),
-              dark ? "#8abaff" : "#2563eb",
-            ),
-            line(
-              "power-discharge",
-              "Discharging",
-              powerMW.map((value) => (value < 0 ? value : null)),
-              dark ? "#69d8b6" : "#0e9f6e",
-            ),
+            ...[
+              {
+                id: "power-charge",
+                name: "Charging",
+                positive: true,
+                color: dark ? "#8abaff" : "#2563eb",
+              },
+              {
+                id: "power-discharge",
+                name: "Discharging",
+                positive: false,
+                color: dark ? "#69d8b6" : "#0e9f6e",
+              },
+            ].map(({ id, name, positive, color }) => ({
+              id,
+              name,
+              type: "bar",
+              stack: "power",
+              barWidth: "80%",
+              itemStyle: { color },
+              data: powerMW.map((value) => (positive ? Math.max(0, value) : Math.min(0, value))),
+            })),
           ],
         },
       },

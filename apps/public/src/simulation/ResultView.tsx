@@ -93,7 +93,7 @@ export function ResultView({
     <section className="result-comparison" aria-labelledby="result-heading">
       <div className="section-heading">
         <h2 id="result-heading">Result comparison</h2>
-        <span className="badge">Proven optimal</span>
+        <span className="badge">Hindsight · proven optimal</span>
       </div>
       <p>
         Perfect hindsight is a benchmark, not a forecast — it saw every price before choosing. The
@@ -113,14 +113,14 @@ export function ResultView({
           to start a new scenario with illustrative thresholds.
         </p>
       )}
-      <div className="stat-grid">
-        <div className="stat">
+      <div className={`stat-grid strategy-stats ${threshold ? "three-strategies" : ""}`}>
+        <div className="stat strategy-fixed">
           <span className="stat-label">Fixed schedule margin</span>
           <strong className="stat-value">{aud(fixed.margin)}</strong>
           <span className="stat-sub">ordered windows, no foresight</span>
         </div>
         {threshold && (
-          <div className="stat">
+          <div className="stat strategy-threshold">
             <span className="stat-label">Price thresholds margin</span>
             <strong className="stat-value">{aud(threshold.accounting.margin)}</strong>
             <span className="stat-sub">
@@ -128,27 +128,31 @@ export function ResultView({
             </span>
           </div>
         )}
-        <div className="stat">
+        <div className="stat strategy-hindsight">
           <span className="stat-label">Perfect hindsight margin</span>
           <strong className="stat-value">{aud(hindsight.margin)}</strong>
           <span className="stat-sub">optimal · bound gap {aud4(result.solver.absoluteGap)}</span>
         </div>
+      </div>
+      <div className="supporting-stats">
         <div className="stat">
           <span className="stat-label">Hindsight advantage</span>
           <strong className="stat-value">{aud(hindsight.margin - fixed.margin)}</strong>
-          <span className="stat-sub">under identical limits</span>
+          <span className="stat-sub">over fixed schedule · same windows</span>
         </div>
         <div className="stat">
-          <span className="stat-label">Energy losses</span>
+          <span className="stat-label">Hindsight energy losses</span>
           <strong className="stat-value">{mwh(hindsight.lossesMWh)} MWh</strong>
           <span className="stat-sub">physical loss, never a fee</span>
         </div>
       </div>
-      <ul className="result-explain">
-        {items.map((item) => (
-          <li key={item}>{item}</li>
-        ))}
-      </ul>
+      <div className="card explanation-card">
+        <ul className="result-explain">
+          {items.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      </div>
       <div className="card breakdown">
         <h3>Financial breakdown</h3>
         <p className="availability">

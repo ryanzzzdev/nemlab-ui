@@ -154,3 +154,14 @@ test("an older saved result offers an explicit compare-all-three path", async ({
   await expect(page).not.toHaveURL(/simulation=/);
   await expect(page.getByText(/Illustrative thresholds/)).toBeVisible();
 });
+
+test("a charge-only day explains zero exports without an invalid average", async ({ page }) => {
+  await page.route("**/api/v1/simulations/*/result", (route) =>
+    route.fulfill({ json: thresholded(1000) }),
+  );
+  await page.getByRole("button", { name: "Run simulation" }).click();
+  const explanation = page.locator(".result-explain");
+  await expect(explanation).toContainText("exported 0.000 MWh across 0 intervals.");
+  await expect(explanation).not.toContainText(/NaN|Infinity/);
+  await expect(page.getByRole("region", { name: "Comparison charts" })).toBeVisible();
+});

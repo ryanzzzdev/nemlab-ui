@@ -367,7 +367,7 @@ export function BatteryWorkspace() {
         <fieldset disabled={busy}>
           <legend>Aggregate site</legend>
           <div className="scenario-fields">
-            {input("capacityMWh")}
+            <div className="field-full">{input("capacityMWh")}</div>
             {input("chargeMW")}
             {input("dischargeMW")}
             {input("importLimitMW")}
@@ -425,16 +425,16 @@ export function BatteryWorkspace() {
           </p>
         </fieldset>
         <fieldset disabled={busy}>
+          <legend>Variable costs</legend>
+          <div className="scenario-fields">{costFields.map(input)}</div>
+        </fieldset>
+        <fieldset disabled={busy}>
           <legend>Schedule windows — fixed schedule and hindsight only</legend>
           <div className="scenario-fields">{windowFields.map(input)}</div>
           <p className="hint">
             NEM UTC+10, five-minute steps. One charge window, then one discharge window. Use 24:00
             for next midnight. Price thresholds run all day and ignore these windows.
           </p>
-        </fieldset>
-        <fieldset disabled={busy}>
-          <legend>Variable costs</legend>
-          <div className="scenario-fields">{costFields.map(input)}</div>
         </fieldset>
         <fieldset disabled={busy}>
           <legend>Price thresholds</legend>
@@ -492,7 +492,9 @@ export function BatteryWorkspace() {
           {result && (
             <div className="saved-result">
               <h3>Stored result ready</h3>
-              <p>288 intervals · fixed schedule and proven hindsight comparison.</p>
+              <p>
+                288 intervals · {result.threshold ? "three strategies" : "two strategies"} compared.
+              </p>
               <button type="button" className="ghost" onClick={() => void copyResultLink()}>
                 Copy result link
               </button>
@@ -512,14 +514,19 @@ export function BatteryWorkspace() {
         ) : (
           <>
             <section className="comparison-preview">
-              <h2>Two strategies, the same limits</h2>
+              <h2>Three strategies, one battery</h2>
               <div className="strategy-grid">
-                <article>
+                <article className="strategy-fixed">
                   <span className="strategy-label">Fixed schedule</span>
                   <h3>Follow a plan</h3>
                   <p>Trade within your windows without knowing future prices.</p>
                 </article>
-                <article>
+                <article className="strategy-threshold">
+                  <span className="strategy-label">Price thresholds</span>
+                  <h3>React to the price</h3>
+                  <p>Charge below your buy price and discharge above your sell price, all day.</p>
+                </article>
+                <article className="strategy-hindsight">
                   <span className="strategy-label">Perfect hindsight</span>
                   <h3>Find the benchmark</h3>
                   <p>

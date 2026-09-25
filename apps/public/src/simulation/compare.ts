@@ -89,8 +89,10 @@ function describe(name: string, strategy: Strategy, result: Result) {
   if (!imported && !exported) return `${name} did not trade.`;
   let text =
     `${name} imported ${mwh(accounting.importedMWh)} MWh across ${imported} interval${imported === 1 ? "" : "s"}` +
-    ` (avg ${aud(inSum / inQty)}/MWh) and exported ${mwh(accounting.exportedMWh)} MWh across ${exported}` +
-    ` interval${exported === 1 ? "" : "s"} (avg ${aud(outSum / outQty)}/MWh).`;
+    (inQty ? ` (avg ${aud(inSum / inQty)}/MWh)` : "") +
+    ` and exported ${mwh(accounting.exportedMWh)} MWh across ${exported}` +
+    ` interval${exported === 1 ? "" : "s"}` +
+    (outQty ? ` (avg ${aud(outSum / outQty)}/MWh).` : ".");
   if (negative)
     text += ` ${negative} charged interval${negative === 1 ? "" : "s"} had negative prices — a credit, not a cost.`;
   return text;
