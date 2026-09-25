@@ -176,7 +176,7 @@ test("separate efficiencies omit round trip and terminal duplicates do not resta
     });
     return route.fulfill({ json: job("FAILED") });
   });
-  await page.getByLabel("Efficiency input").selectOption("legs");
+  await page.getByRole("radio", { name: "Separate legs" }).check();
   await page.getByRole("button", { name: "Run simulation" }).click();
   await expect(page.getByRole("alert")).toContainText("does not restart it");
   await page.getByRole("button", { name: "Run simulation" }).click();

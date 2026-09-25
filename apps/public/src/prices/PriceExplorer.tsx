@@ -27,7 +27,6 @@ const marketTime = (instant: string) =>
   new Date(Date.parse(instant) + 10 * 3600000).toISOString().slice(11, 16);
 
 export function PriceExplorer() {
-  const [showCharts, setShowCharts] = useState(false);
   const [region, setRegion] = useState<Region>("NSW1");
   const [day, setDay] = useState(nextDay(marketDay(), -1));
   const [selection, setSelection] = useState<{ region: Region; day: string } | null>(null);
@@ -55,7 +54,7 @@ export function PriceExplorer() {
 
   return (
     <section className="price-explorer" aria-labelledby="prices-heading">
-      <h2 id="prices-heading">Explore stored prices</h2>
+      <h2 id="prices-heading">Check stored prices</h2>
       <p>
         Check one completed market day. Reading prices does not import new data or run a simulation.
       </p>
@@ -103,7 +102,7 @@ export function PriceExplorer() {
           <button onClick={() => void query.refetch()}>Try again</button>
         </div>
       )}
-      {query.data && !query.isError && !query.isFetching && (
+      {query.data && !query.isError && (
         <div>
           <h3 aria-live="polite">{availability[query.data.coverage.availability]}</h3>
           {query.data.series === null ? (
@@ -127,54 +126,56 @@ export function PriceExplorer() {
                 <br />
                 Retrieved: {query.data.coverage.retrievedAt}
               </p>
-              <button
-                type="button"
-                aria-expanded={showCharts}
-                onClick={() => setShowCharts(!showCharts)}
+              <Suspense
+                fallback={
+                  <div className="chart-loading" role="status">
+                    Loading chart…
+                  </div>
+                }
               >
-                {showCharts ? "Hide chart prototype" : "Show chart prototype"}
-              </button>
-              {showCharts && (
-                <Suspense fallback={<p role="status">Loading charts…</p>}>
-                  <PriceCharts key={query.data.coverage.revision} series={query.data.series} />
-                </Suspense>
-              )}
-              <div
-                className="price-table"
-                tabIndex={0}
-                role="region"
-                aria-label="Price intervals (scrollable)"
-              >
-                <table>
-                  <caption>
-                    288 five-minute intervals · NEM UTC+10 · final 00:00 is the following day
-                  </caption>
-                  <thead>
-                    <tr>
-                      <th scope="col">Start</th>
-                      <th scope="col">End</th>
-                      <th scope="col">Price (AUD/MWh)</th>
-                      <th scope="col">State</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {query.data.series.intervals.map((slot) => (
-                      <tr key={slot.start}>
-                        <td>{marketTime(slot.start)}</td>
-                        <td>{marketTime(slot.end)}</td>
-                        <td>{slot.price ?? "—"}</td>
-                        <td>
-                          {slot.state === "VALUE"
-                            ? "Value"
-                            : slot.state === "MISSING"
-                              ? "Missing"
-                              : "Source null"}
-                        </td>
+                <PriceCharts key={query.data.coverage.revision} series={query.data.series} />
+              </Suspense>
+              <details className="method">
+                <summary>Exact interval values · 288 five-minute intervals</summary>
+                <p className="availability">
+                  Exact stored price strings; missing observations stay distinct from zero. Interval
+                  times in NEM UTC+10; the final 00:00 is the following day.
+                </p>
+                <div
+                  className="price-table"
+                  tabIndex={0}
+                  role="region"
+                  aria-label="Price intervals (scrollable)"
+                >
+                  <table>
+                    <caption>288 five-minute intervals · NEM UTC+10</caption>
+                    <thead>
+                      <tr>
+                        <th scope="col">Start</th>
+                        <th scope="col">End</th>
+                        <th scope="col">Price (AUD/MWh)</th>
+                        <th scope="col">State</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {query.data.series.intervals.map((slot) => (
+                        <tr key={slot.start}>
+                          <td>{marketTime(slot.start)}</td>
+                          <td>{marketTime(slot.end)}</td>
+                          <td>{slot.price ?? "—"}</td>
+                          <td>
+                            {slot.state === "VALUE"
+                              ? "Value"
+                              : slot.state === "MISSING"
+                                ? "Missing"
+                                : "Source null"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </details>
             </>
           )}
         </div>

@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useSearchParams } from "react-router";
-import { PriceExplorer } from "../prices/PriceExplorer";
 import { marketDay, nextDay } from "../prices/client";
-import { fields, initialForm, prepare, siteFields, costFields, windowFields } from "./scenario";
+import { fields, initialForm, prepare, costFields, windowFields } from "./scenario";
 import type { Field, Form, Errors, Request } from "./scenario";
 import { readResult, readStatus, submitSimulation, SimulationError, uuid } from "./client";
 import type { Job, Result } from "./client";
@@ -38,6 +37,21 @@ export function BatteryWorkspace() {
   const statusRef = useRef<HTMLElement>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const linkedId = searchParams.get("simulation");
+  const chip: [string, string] = result
+    ? ["complete", "Complete"]
+    : problem
+      ? ["failed", "Failed"]
+      : busy
+        ? job?.status === "RUNNING"
+          ? ["running", "Running"]
+          : ["queued", job ? "Queued" : "Working"]
+        : job?.status === "FAILED"
+          ? ["failed", "Failed"]
+          : job?.status === "RUNNING"
+            ? ["running", "Running"]
+            : job
+              ? ["queued", "Queued"]
+              : ["ready", "Ready"];
   useEffect(() => () => active.current?.abort(), []);
   useEffect(() => {
     if (Object.keys(errors).length)
@@ -288,8 +302,7 @@ export function BatteryWorkspace() {
         noValidate
         aria-label="Battery scenario"
       >
-        <h2>Your scenario</h2>
-        <p className="availability">Illustrative defaults, not investment recommendations.</p>
+        <h2>Scenario</h2>
         <fieldset disabled={busy}>
           <legend>Market day</legend>
           <div className="scenario-fields">
@@ -327,92 +340,120 @@ export function BatteryWorkspace() {
         </fieldset>
         <fieldset disabled={busy}>
           <legend>Aggregate site</legend>
-          <div className="scenario-fields">{siteFields.map(input)}</div>
-          <p className="availability">Terminal energy equals initial energy for both strategies.</p>
+          <div className="scenario-fields">
+            {input("capacityMWh")}
+            {input("chargeMW")}
+            {input("dischargeMW")}
+            {input("importLimitMW")}
+            {input("exportLimitMW")}
+          </div>
+        </fieldset>
+        <fieldset disabled={busy}>
+          <legend>Stored energy</legend>
+          <div className="scenario-fields">
+            {input("minimumMWh")}
+            {input("maximumMWh")}
+            {input("initialMWh")}
+          </div>
+          <p className="hint">Terminal energy equals initial energy for both strategies.</p>
         </fieldset>
         <fieldset disabled={busy}>
           <legend>Efficiency</legend>
-          <label>
-            <span id="label-efficiency">Efficiency input</span>
-            <select
-              aria-labelledby="label-efficiency"
-              aria-invalid={Boolean(errors.efficiencyMode)}
-              aria-describedby={errors.efficiencyMode ? "error-efficiency" : undefined}
-              value={form.efficiencyMode}
-              onChange={(e) => change("efficiencyMode", e.target.value)}
-            >
-              <option value="roundTrip">Round trip</option>
-              <option value="legs">Separate charge / discharge</option>
-            </select>
-            {errors.efficiencyMode && (
-              <span className="field-error" id="error-efficiency">
-                {errors.efficiencyMode}
-              </span>
-            )}
-          </label>
+          <div className="radio-row">
+            <label>
+              <input
+                type="radio"
+                name="efficiency-mode"
+                checked={form.efficiencyMode === "roundTrip"}
+                aria-invalid={Boolean(errors.efficiencyMode)}
+                aria-describedby={errors.efficiencyMode ? "error-efficiency" : undefined}
+                onChange={() => change("efficiencyMode", "roundTrip")}
+              />
+              Round trip
+            </label>
+            <label>
+              <input
+                type="radio"
+                name="efficiency-mode"
+                checked={form.efficiencyMode === "legs"}
+                onChange={() => change("efficiencyMode", "legs")}
+              />
+              Separate legs
+            </label>
+          </div>
+          {errors.efficiencyMode && (
+            <span className="field-error" id="error-efficiency">
+              {errors.efficiencyMode}
+            </span>
+          )}
           <div className="scenario-fields">
             {form.efficiencyMode === "roundTrip"
               ? input("roundTrip")
               : ["charge", "discharge"].map((key) => input(key as Field))}
           </div>
-          <p className="availability">
+          <p className="hint">
             Round-trip efficiency is split into equal square-root charge and discharge efficiencies.
           </p>
         </fieldset>
         <fieldset disabled={busy}>
-          <legend>Operating windows · NEM UTC+10</legend>
+          <legend>Operating windows</legend>
           <div className="scenario-fields">{windowFields.map(input)}</div>
-          <p className="availability">
-            Five-minute steps. One charge window, then one discharge window. Use 24:00 for next
-            midnight.
+          <p className="hint">
+            NEM UTC+10, five-minute steps. One charge window, then one discharge window. Use 24:00
+            for next midnight.
           </p>
         </fieldset>
         <fieldset disabled={busy}>
           <legend>Variable costs</legend>
           <div className="scenario-fields">{costFields.map(input)}</div>
         </fieldset>
-        <button type="submit" disabled={busy}>
-          Run simulation
-        </button>
-      </form>
-      <div className="lab-workspace">
-        <section
-          ref={statusRef}
-          tabIndex={-1}
-          className="simulation-status"
-          aria-labelledby="simulation-heading"
-        >
-          <div className="section-heading">
-            <h2 id="simulation-heading">Simulation progress</h2>
-            <span className="badge">
-              {result ? "Complete" : (job?.status ?? (busy ? "Preparing" : "Ready"))}
-            </span>
-          </div>
-          <p role={problem ? "alert" : "status"}>{message}</p>
+        <div className="btns">
+          <button type="submit" className="primary" disabled={busy}>
+            Run simulation
+          </button>
+        </div>
+        <section ref={statusRef} tabIndex={-1} className="job" aria-label="Simulation progress">
+          <p className="job-state" role={problem ? "alert" : "status"}>
+            <span className={`job-chip ${chip[0]}`}>{chip[1]}</span>
+            <span className="job-message">{message}</span>
+          </p>
           {job && (
-            <p className="revision">
-              Simulation: {job.id}
+            <p className="job-id">
+              Simulation <span className="revision">{job.id}</span>
               <br />
-              Scenario: {form.region} · {form.day} · NEM UTC+10
+              {(result ? result.inputs : form).region} · {(result ? result.inputs : form).day} · NEM
+              UTC+10
             </p>
           )}
-          {busy && (
-            <button type="button" onClick={stop}>
-              Stop checking
-            </button>
+          {result && (
+            <p className="job-id">
+              Prices: Open Electricity · revision{" "}
+              <span className="revision">{result.priceRevision}</span>
+              <br />
+              <span className="revision">
+                request {result.versions.request} · model {result.versions.model} · fixed{" "}
+                {result.versions.fixed} · hindsight {result.versions.hindsight} · solver{" "}
+                {result.versions.solver} · execution {result.versions.executionProfile}
+              </span>
+            </p>
           )}
-          {!busy && job && !result && job.status !== "FAILED" && (
-            <button type="button" onClick={() => void run(undefined, true)}>
-              Resume checking
-            </button>
-          )}
+          <div className="job-actions">
+            {busy && (
+              <button type="button" className="ghost" onClick={stop}>
+                Stop checking
+              </button>
+            )}
+            {!busy && job && !result && job.status !== "FAILED" && (
+              <button type="button" className="ghost" onClick={() => void run(undefined, true)}>
+                Resume checking
+              </button>
+            )}
+          </div>
           {result && (
             <div className="saved-result">
               <h3>Stored result ready</h3>
               <p>288 intervals · fixed schedule and proven hindsight comparison.</p>
-              <p className="revision">Price revision: {result.priceRevision}</p>
-              <p>The full comparison and linked charts are below.</p>
-              <button type="button" onClick={() => void copyResultLink()}>
+              <button type="button" className="ghost" onClick={() => void copyResultLink()}>
                 Copy result link
               </button>
               {shareNote && (
@@ -423,31 +464,40 @@ export function BatteryWorkspace() {
             </div>
           )}
         </section>
-        {result && <ResultView result={result} />}
-        <section className="comparison-preview">
-          <h2>Two strategies, the same limits</h2>
-          <div className="strategy-grid">
-            <article>
-              <span className="strategy-label">Fixed schedule</span>
-              <h3>Follow a plan</h3>
-              <p>Trade within your windows without knowing future prices.</p>
-            </article>
-            <article>
-              <span className="strategy-label">Perfect hindsight</span>
-              <h3>Find the benchmark</h3>
-              <p>Optimise against the day’s prices with the same limits. This is not a forecast.</p>
-            </article>
-          </div>
-        </section>
-        <section className="prose">
-          <h2>Understand the result</h2>
-          <p>
-            Trading margin excludes capital and financing costs, household tariffs and
-            ancillary-service revenue.
-          </p>
-          <Link to="/methodology">Read the model assumptions</Link>
-        </section>
-        <PriceExplorer />
+        <p className="hint">Illustrative defaults, not investment recommendations.</p>
+      </form>
+      <div className="lab-workspace">
+        {result ? (
+          <ResultView result={result} />
+        ) : (
+          <>
+            <section className="comparison-preview">
+              <h2>Two strategies, the same limits</h2>
+              <div className="strategy-grid">
+                <article>
+                  <span className="strategy-label">Fixed schedule</span>
+                  <h3>Follow a plan</h3>
+                  <p>Trade within your windows without knowing future prices.</p>
+                </article>
+                <article>
+                  <span className="strategy-label">Perfect hindsight</span>
+                  <h3>Find the benchmark</h3>
+                  <p>
+                    Optimise against the day’s prices with the same limits. This is not a forecast.
+                  </p>
+                </article>
+              </div>
+            </section>
+            <section className="prose">
+              <h2>Understand the result</h2>
+              <p>
+                Trading margin excludes capital and financing costs, household tariffs and
+                ancillary-service revenue.
+              </p>
+              <Link to="/methodology">Read the model assumptions</Link>
+            </section>
+          </>
+        )}
       </div>
     </div>
   );

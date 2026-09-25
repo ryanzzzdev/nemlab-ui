@@ -41,7 +41,7 @@ test("a result link restores the identical saved comparison on reload", async ({
     "$54.28",
   );
   // The form reflects the immutable stored inputs, not the current defaults.
-  await expect(page.getByLabel("Efficiency input")).toHaveValue("legs");
+  await expect(page.getByRole("radio", { name: "Separate legs" })).toBeChecked();
   await expect(page.getByLabel("Import fee (AUD/MWh)")).toHaveValue("0.5");
   await expect(page.getByLabel("Charge end (HH:MM)", { exact: true })).toHaveValue("14:00");
   await expect(page.getByLabel("Simulation day")).toHaveValue(day);

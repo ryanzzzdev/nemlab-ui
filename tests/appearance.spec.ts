@@ -61,7 +61,7 @@ test("appearance stays usable without storage and product layouts fit narrow scr
   expect((await page.locator(".site").boundingBox())!.width).toBe(1440);
   expect(await page.locator(".site-header").boundingBox()).toEqual(header);
   await page.setViewportSize({ width: 320, height: 640 });
-  for (const name of ["BatteryLab", "GridReplay"]) {
+  for (const name of ["BatteryLab", "Prices", "GridReplay"]) {
     await page.getByRole("navigation").getByRole("link", { name }).click();
     await expect(picker).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
@@ -81,19 +81,18 @@ test("charts keep the selected interval and window when appearance changes", asy
         : series("INCOMPLETE"),
     }),
   );
-  await page.goto("/batterylab");
+  await page.goto("/prices");
   await page.getByLabel("Market day").fill(day);
   await page.getByRole("button", { name: "Check prices" }).click();
-  await page.getByRole("button", { name: "Show chart prototype" }).click();
   await page.getByLabel("Visible window").selectOption("1");
   const slider = page.getByRole("slider", { name: "Selected interval" });
   await slider.focus();
   await slider.press("End");
   const readout = await page.locator(".chart-readout").textContent();
   await page.getByRole("combobox", { name: "Appearance" }).selectOption("dark");
-  await expect(page.locator('.linked-chart path[stroke="#69d8b6"]')).toHaveCount(1);
-  await expect(page.locator('.linked-chart path[stroke="#ffa48b"]')).toHaveCount(2);
+  await expect(page.locator('.chart-plot path[stroke="#ffb020"]')).toHaveCount(1);
+  await expect(page.locator('.chart-plot path[stroke="#ffa48b"]')).toHaveCount(1);
   await expect(page.locator(".chart-readout")).toHaveText(readout!);
   await expect(page.getByLabel("Visible window")).toHaveValue("1");
-  await page.screenshot({ path: info.outputPath("batterylab-dark-charts.png"), fullPage: true });
+  await page.screenshot({ path: info.outputPath("prices-dark-chart.png"), fullPage: true });
 });

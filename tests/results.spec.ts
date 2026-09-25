@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import type { Page } from "@playwright/test";
 import { coverage, day, series } from "./fixtures/prices";
 import { job, traded } from "./fixtures/simulation";
 
@@ -19,13 +20,17 @@ test.beforeEach(async ({ page }) => {
   });
   await page.goto("/batterylab");
   await page.getByLabel("Simulation day").fill(day);
+});
+
+async function submit(page: Page) {
   await page.getByRole("button", { name: "Run simulation" }).click();
   await expect(page.getByRole("heading", { name: "Stored result ready" })).toBeVisible();
-});
+}
 
 test("comparison totals, breakdown and explanation agree with the stored result", async ({
   page,
 }, info) => {
+  await submit(page);
   const comparison = page.locator(".result-comparison");
   await expect(comparison.getByRole("heading", { name: "Result comparison" })).toBeVisible();
   await expect(comparison).toContainText("benchmark, not a forecast");
@@ -40,6 +45,7 @@ test("comparison totals, breakdown and explanation agree with the stored result"
   await expect(explain).toContainText("negative prices — a credit, not a cost");
   await expect(explain).toContainText("earned $56.67 more than the fixed schedule");
   await expect(explain).toContainText("dual bound $54.29");
+  // The financial breakdown precedes the charts in the result column.
   const breakdown = comparison.getByRole("table").first();
   await expect(breakdown).toContainText("2.105");
   await expect(breakdown).toContainText("1.900");
@@ -48,7 +54,10 @@ test("comparison totals, breakdown and explanation agree with the stored result"
   await expect(breakdown).toContainText("$2.00");
   await expect(breakdown).toContainText("$0.38");
   await expect(breakdown).toContainText("Modelled margin");
-  // The exact stored price string survives verbatim in the interval table.
+  // The exact stored price string survives verbatim in the collapsed interval table.
+  const detail = page.locator("summary", { hasText: "Interval detail" });
+  await expect(detail).toBeVisible();
+  await detail.click();
   const intervals = comparison.getByRole("table").last();
   await expect(intervals).toContainText("123.4567890123456789");
   const negative = intervals.getByRole("row").filter({ hasText: "13:25" });
@@ -58,14 +67,19 @@ test("comparison totals, breakdown and explanation agree with the stored result"
   await page.screenshot({ path: info.outputPath("result-comparison.png"), fullPage: true });
 });
 
-test("result charts share one cursor, window and keyboard interval control", async ({
+test("result charts render automatically and share one cursor and window", async ({
   page,
   isMobile,
 }, info) => {
-  await page.getByRole("button", { name: "Show comparison charts" }).click();
-  const canvas = page.locator(".result-chart");
-  await expect(canvas.locator("svg")).toBeVisible();
-  const cursors = canvas.locator('path[stroke="#b04a2f"], path[stroke="#ffa48b"]');
+  await submit(page);
+  // No show/hide control — the four panels arrive with the result.
+  await expect(
+    page.getByRole("button", { name: /comparison charts|chart prototype/i }),
+  ).toHaveCount(0);
+  const plots = page.locator(".chart-plot");
+  await expect(plots).toHaveCount(4);
+  await expect(plots.first().locator("svg")).toBeVisible();
+  const cursors = page.locator('.chart-plot path[stroke="#b04a2f"]');
   await expect(cursors).toHaveCount(4);
   const readout = page.locator(".result-comparison .chart-readout");
   await expect(readout).toContainText("00:05 NEM UTC+10");
@@ -95,30 +109,44 @@ test("result charts share one cursor, window and keyboard interval control", asy
   );
   expect(Math.max(...zoomed) - Math.min(...zoomed)).toBeLessThan(1);
   await page.getByLabel("Visible window").selectOption("0");
-  await canvas.scrollIntoViewIfNeeded();
-  const box = (await canvas.boundingBox())!;
+  // Pointing inside any one panel moves all four cursors together.
+  const firstPlot = plots.first();
+  await firstPlot.scrollIntoViewIfNeeded();
+  const box = (await firstPlot.boundingBox())!;
   const tap = isMobile
     ? page.touchscreen.tap.bind(page.touchscreen)
     : page.mouse.move.bind(page.mouse);
-  await tap(box.x + 65 + (box.width - 85) * 0.6, box.y + 100);
+  await tap(box.x + 48 + (box.width - 60) * 0.6, box.y + box.height / 2);
   await expect.poll(async () => Number(await range.inputValue())).toBeGreaterThan(150);
-  await tap(box.x + 65 + (box.width - 85) * 0.3, box.y + 700);
+  const lastPlot = plots.nth(3);
+  await lastPlot.scrollIntoViewIfNeeded();
+  const marginBox = (await lastPlot.boundingBox())!;
+  await tap(marginBox.x + 48 + (marginBox.width - 60) * 0.3, marginBox.y + marginBox.height / 2);
   await expect.poll(async () => Number(await range.inputValue())).toBeLessThan(120);
   await page.screenshot({ path: info.outputPath("result-charts.png"), fullPage: true });
 });
 
-test("result charts keep the shared cursor when appearance changes", async ({ page }, info) => {
-  await page.getByRole("button", { name: "Show comparison charts" }).click();
-  const canvas = page.locator(".result-chart");
-  await expect(canvas.locator("svg")).toBeVisible();
+test("the power panel switches strategies and the shared cursor survives appearance changes", async ({
+  page,
+}, info) => {
+  await submit(page);
+  const plots = page.locator(".chart-plot");
+  await expect(plots).toHaveCount(4);
   const readout = page.locator(".result-comparison .chart-readout");
+  // The demo's segmented control swaps the power panel between strategies.
+  const fixed = page.getByRole("button", { name: "Fixed", exact: true });
+  const hindsight = page.getByRole("button", { name: "Hindsight", exact: true });
+  await expect(hindsight).toHaveAttribute("aria-pressed", "true");
+  await fixed.click();
+  await expect(fixed).toHaveAttribute("aria-pressed", "true");
+  await hindsight.click();
   const range = page.getByRole("slider", { name: "Selected interval" });
   await range.focus();
   await range.press("ArrowRight");
   await page.getByRole("combobox", { name: "Appearance" }).selectOption("dark");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-  await expect(canvas.locator("svg")).toBeVisible();
-  const cursors = canvas.locator('path[stroke="#ffa48b"]');
+  await expect(plots.first().locator("svg")).toBeVisible();
+  const cursors = page.locator('.chart-plot path[stroke="#ffa48b"]');
   await expect(cursors).toHaveCount(4);
   await range.press("ArrowRight");
   await expect(readout).toContainText("00:15 NEM UTC+10");
@@ -131,7 +159,8 @@ test("result charts keep the shared cursor when appearance changes", async ({ pa
   await page.screenshot({ path: info.outputPath("result-charts-dark.png"), fullPage: true });
 });
 
-test("result layout and tables stay usable at 320px", async ({ page }) => {
+test("result layout and disclosures stay usable at 320px", async ({ page }) => {
+  await submit(page);
   await page.setViewportSize({ width: 320, height: 740 });
   await expect(
     page.locator(".result-comparison").getByRole("heading", { name: "Result comparison" }),
@@ -139,18 +168,28 @@ test("result layout and tables stay usable at 320px", async ({ page }) => {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(
     true,
   );
-  await page.getByRole("button", { name: "Show comparison charts" }).click();
-  const canvas = page.locator(".result-chart");
-  await expect(canvas.locator("svg")).toBeVisible();
+  // The long simulation identifier wraps inside the narrow scenario panel.
+  const job = page.locator(".job");
+  await expect(job.locator(".revision").first()).toBeVisible();
+  const wrap = await job.evaluate(
+    (el) => el.scrollWidth <= el.clientWidth + 1 && el.clientWidth <= 320,
+  );
+  expect(wrap).toBe(true);
+  const plots = page.locator(".chart-plot");
+  await expect(plots).toHaveCount(4);
   await expect
-    .poll(async () => Number(await canvas.locator("svg").getAttribute("width")))
-    .toBeLessThanOrEqual(288);
+    .poll(async () => Number(await plots.first().locator("svg").getAttribute("width")))
+    .toBeLessThanOrEqual(290);
+  await page.locator("summary", { hasText: "Interval detail" }).click();
+  await expect(page.getByRole("table").last().getByRole("row").first()).toBeVisible();
 });
 
 test("a failed chart download keeps the comparison tables", async ({ page }) => {
+  // Abort the lazy chunk before submission so the import fails on first render.
   await page.route("**/assets/ResultCharts-*.js", (route) => route.abort());
-  await page.getByRole("button", { name: "Show comparison charts" }).click();
+  await page.getByRole("button", { name: "Run simulation" }).click();
   await expect(page.getByRole("alert")).toContainText("Charts could not load");
   await expect(page.getByText("Modelled margin")).toBeVisible();
+  await page.locator("summary", { hasText: "Interval detail" }).click();
   await expect(page.getByText("123.4567890123456789")).toBeVisible();
 });

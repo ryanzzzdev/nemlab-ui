@@ -33,7 +33,7 @@ for (const state of ["COMPLETE", "INCOMPLETE", "NOT_IMPORTED"] as const) {
         await route.fulfill({ json: series(state as "COMPLETE" | "INCOMPLETE") });
       }
     });
-    await page.goto("/batterylab");
+    await page.goto("/prices");
     await page.getByLabel("Market day").fill(day);
     await page.getByRole("button", { name: "Check prices" }).click();
     if (state === "NOT_IMPORTED") {
@@ -43,6 +43,9 @@ for (const state of ["COMPLETE", "INCOMPLETE", "NOT_IMPORTED"] as const) {
       expect(requests).toBe(1);
       await expect(page.getByRole("table")).toHaveCount(0);
     } else {
+      // The real price chart renders automatically; the exact table is collapsed.
+      await expect(page.locator(".chart-plot svg")).toBeVisible();
+      await page.locator("summary", { hasText: "Exact interval values" }).click();
       await expect(
         page.getByRole("cell", { name: "123.4567890123456789", exact: true }),
       ).toBeVisible();
@@ -78,7 +81,7 @@ for (const failure of ["http", "network", "html", "json"] as const) {
           body: failure === "html" ? "<h1>internal-secret</h1>" : "{",
         });
     });
-    await page.goto("/batterylab");
+    await page.goto("/prices");
     await page.getByLabel("Market day").fill(day);
     await page.getByRole("button", { name: "Check prices" }).click();
     await expect(page.getByRole("alert")).toBeVisible();
@@ -101,14 +104,14 @@ test("loading and invalid dates do not display misleading results", async ({ pag
     await gate;
     await route.fulfill({ json: { region: "NSW1", days: [coverage("NOT_IMPORTED")] } });
   });
-  await page.goto("/batterylab");
+  await page.goto("/prices");
   await page.getByLabel("Market day").fill("2020-01-01");
   await page.getByRole("button", { name: "Check prices" }).click();
   await expect(page.getByRole("alert")).toContainText("Choose a completed NEM day");
   await page.getByLabel("Market day").fill(day);
   await page.getByRole("button", { name: "Check prices" }).click();
   await expect(
-    page.getByRole("region", { name: "Explore stored prices" }).getByRole("status"),
+    page.getByRole("region", { name: "Check stored prices" }).getByRole("status"),
   ).toContainText("Loading");
   release();
   await expect(page.getByRole("heading", { name: "Not imported", exact: true })).toBeVisible();
@@ -130,10 +133,11 @@ test("a corrected series uses its own revision and explicit recheck refreshes th
       await route.fulfill({ json: data });
     }
   });
-  await page.goto("/batterylab");
+  await page.goto("/prices");
   await page.getByLabel("Market day").fill(day);
   await page.getByRole("button", { name: "Check prices" }).click();
   await expect(page.getByText(`Revision: ${corrected}`, { exact: false })).toBeVisible();
+  await page.locator("summary", { hasText: "Exact interval values" }).click();
   await expect(page.getByRole("cell", { name: "123.4567890123456789", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Check prices" }).click();
   await expect(page.getByRole("cell", { name: "999.99", exact: true })).toBeVisible();

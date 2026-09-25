@@ -37,6 +37,9 @@ export function Layout() {
           <NavLink to="/batterylab" end>
             BatteryLab
           </NavLink>
+          <NavLink to="/prices" end>
+            Prices
+          </NavLink>
           <NavLink to="/gridreplay" end>
             GridReplay
           </NavLink>

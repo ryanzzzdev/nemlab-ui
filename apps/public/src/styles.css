@@ -304,32 +304,27 @@ caption {
   font-size: 13px;
 }
 
-.chart-prototype {
-  margin: 24px 0;
-  padding-block: 20px;
-  border-block: 1px solid var(--color-rule);
-}
 .chart-controls {
   display: flex;
   flex-wrap: wrap;
-  gap: 24px;
+  gap: 10px 20px;
+  margin-top: 10px;
+  font-size: 12px;
 }
 .chart-controls label {
   display: grid;
-  gap: 8px;
-  min-width: 180px;
+  gap: 6px;
+  min-width: 170px;
+  color: var(--color-muted);
 }
 .chart-controls input {
   padding: 0;
-  min-height: 44px;
+  min-height: 40px;
 }
 .chart-readout {
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
-}
-.linked-chart {
-  width: 100%;
-  height: 510px;
+  font-size: 13px;
 }
 
 .brand-symbol {
@@ -365,57 +360,7 @@ caption {
   grid-template-columns: 280px minmax(0, 1fr);
   gap: 24px;
   align-items: start;
-  margin-top: 32px;
-}
-.lab-guide {
-  background: var(--color-panel);
-  border: 1px solid var(--color-rule);
-  border-radius: 10px;
-  padding: 24px;
-}
-.lab-guide > .eyebrow {
-  margin-top: 0;
-}
-.lab-guide h2 {
-  font-size: 22px;
-  line-height: 1.3;
-}
-.workflow {
-  list-style: none;
-  padding: 0;
-  margin: 28px 0;
-}
-.workflow li {
-  display: flex;
-  align-items: start;
-  gap: 12px;
-  margin-bottom: 24px;
-  font-size: 13px;
-}
-.workflow p {
-  margin: 6px 0;
-  color: var(--color-muted);
-}
-.step-number {
-  flex-shrink: 0;
-  font-size: 11px;
-  padding: 4px 7px;
-  border-radius: 5px;
-  background: var(--color-soft);
-  color: var(--color-muted);
-}
-.workflow li:first-child .step-number {
-  background: var(--color-accent-soft);
-  color: var(--color-accent);
-}
-.lab-note {
-  border-top: 1px solid var(--color-rule);
-  padding-top: 18px;
-  color: var(--color-muted);
-  font-size: 12px;
-}
-.lab-note p {
-  margin-bottom: 0;
+  margin-top: 24px;
 }
 .lab-workspace {
   min-width: 0;
@@ -494,11 +439,23 @@ caption {
 }
 
 .simulation-layout {
-  grid-template-columns: 340px minmax(0, 1fr);
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 20px;
 }
-.scenario-form,
-.simulation-status {
-  padding: 20px;
+.site-battery .eyebrow {
+  margin-bottom: 0;
+}
+.site-battery h1 {
+  font-size: 26px;
+  letter-spacing: -0.025em;
+  margin: 6px 0 8px;
+  max-width: none;
+}
+.site-battery .intro {
+  margin: 0;
+}
+.scenario-form {
+  padding: 16px 18px;
   background: var(--color-panel);
   border: 1px solid var(--color-rule);
   border-radius: 10px;
@@ -506,28 +463,35 @@ caption {
   min-width: 0;
 }
 .scenario-form h2 {
-  font-size: 18px;
-  margin-top: 0;
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  margin: 0 0 14px;
 }
 .scenario-form fieldset {
   border: 0;
   padding: 0;
-  margin: 24px 0;
+  margin: 0 0 16px;
   min-width: 0;
 }
 .scenario-form legend {
-  font-weight: 650;
-  margin-bottom: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-muted);
+  margin-bottom: 8px;
+  padding: 0;
 }
 .scenario-fields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 8px 10px;
 }
 .scenario-form label {
   display: grid;
   align-content: start;
-  gap: 6px;
+  gap: 4px;
   font-size: 12px;
   color: var(--color-muted);
 }
@@ -535,10 +499,56 @@ caption {
 .scenario-form select {
   width: 100%;
   min-width: 0;
-  padding-inline: 8px;
+  min-height: 0;
+  padding: 7px 9px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--color-text);
 }
-.scenario-form > button {
-  width: 100%;
+.radio-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-bottom: 10px;
+}
+.radio-row label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--color-text);
+}
+.radio-row input {
+  width: auto;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+}
+.hint {
+  font-size: 12px;
+  color: var(--color-muted);
+  margin: 8px 0 0;
+}
+.btns {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+.btns .primary {
+  flex: 1;
+}
+button.ghost {
+  background: transparent;
+  color: var(--color-text);
+  border: 1px solid var(--color-rule);
+  font-size: 12px;
+  padding: 6px 12px;
+  min-height: 36px;
+}
+button.ghost:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
 }
 .scenario-form [aria-invalid="true"] {
   border-color: light-dark(#b3261e, #ffaaa2);
@@ -550,21 +560,127 @@ button:disabled {
   opacity: 0.6;
   cursor: default;
 }
-.simulation-status:focus-visible {
+.job {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-rule);
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.job:focus-visible {
   outline: 3px solid var(--color-focus);
   outline-offset: 3px;
 }
+.job-state {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 0;
+}
+.job-chip {
+  font-size: 11px;
+  font-weight: 650;
+  padding: 2px 9px;
+  border-radius: 20px;
+  border: 1px solid var(--color-rule);
+  background: var(--color-soft);
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+.job-chip.queued {
+  color: light-dark(#8a5a00, #ffca7a);
+  background: light-dark(#fff6e0, #2e2410);
+  border-color: light-dark(#ecd9a8, #4a3a18);
+}
+.job-chip.running {
+  color: light-dark(#1d4ed8, #9ec1ff);
+  background: light-dark(#e8f0fe, #16243d);
+  border-color: light-dark(#c3d4f7, #2c3e63);
+}
+.job-chip.complete {
+  color: var(--color-accent);
+  background: var(--color-accent-soft);
+  border-color: light-dark(#bfe3d8, #1e4a3d);
+}
+.job-chip.failed {
+  color: light-dark(#b3261e, #ff9d94);
+  background: light-dark(#fdeceb, #3a1a17);
+  border-color: light-dark(#f5c6c2, #5c2b27);
+}
+.job-message {
+  font-size: 12px;
+  color: var(--color-muted);
+  overflow-wrap: anywhere;
+}
+.job-state[role="alert"] .job-message {
+  color: light-dark(#b3261e, #ff9d94);
+}
+.job-id {
+  font-size: 12px;
+  color: var(--color-muted);
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.job-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.job-actions:empty {
+  display: none;
+}
 .saved-result {
-  border-top: 1px solid var(--color-rule);
-  margin-top: 16px;
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--color-rule);
+  border-radius: 8px;
+  background: var(--color-accent-soft);
+}
+.saved-result h3 {
+  font-size: 13px;
+  margin: 0;
+}
+.saved-result p {
+  font-size: 12px;
+  color: var(--color-muted);
+  margin: 0;
+}
+.saved-result .ghost {
+  justify-self: start;
 }
 .result-comparison {
-  margin-top: 28px;
   min-width: 0;
+}
+.result-comparison > p {
+  font-size: 13px;
+  color: var(--color-muted);
+}
+.card {
+  background: var(--color-panel);
+  border: 1px solid var(--color-rule);
+  border-radius: 10px;
+  padding: 14px 16px;
+  min-width: 0;
+}
+.card h3 {
+  font-size: 13px;
+  margin: 0 0 6px;
+}
+.breakdown {
+  margin-top: 14px;
+}
+.breakdown .price-table th,
+.breakdown .price-table td {
+  padding: 5px 10px;
+  font-size: 12px;
 }
 .stat-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 12px;
   margin: 16px 0;
 }
@@ -610,19 +726,58 @@ button:disabled {
   border: 1px solid var(--color-rule);
   border-radius: 10px;
   padding: 10px 16px;
-  margin-top: 16px;
+  margin-top: 14px;
   font-size: 13px;
   color: var(--color-muted);
 }
 .method summary {
   cursor: pointer;
   font-weight: 600;
+  font-size: 13px;
   color: var(--color-text);
+}
+.method .price-table {
+  margin-top: 8px;
+}
+.charts {
+  margin-top: 14px;
+  min-width: 0;
+}
+.chart-grid {
+  display: grid;
+  gap: 14px;
+}
+.chart-card {
+  background: var(--color-panel);
+  border: 1px solid var(--color-rule);
+  border-radius: 10px;
+  padding: 12px 14px;
+  min-width: 0;
+}
+.price-explorer .chart-card {
+  margin-top: 14px;
+}
+.chart-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin-bottom: 6px;
+}
+.chart-title {
+  font-size: 13px;
+  font-weight: 650;
+  margin: 0;
+}
+.chart-title span {
+  color: var(--color-muted);
+  font-weight: 500;
 }
 .chart-legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 8px 14px;
+  margin-left: auto;
   font-size: 12px;
   color: var(--color-muted);
 }
@@ -635,18 +790,71 @@ button:disabled {
   vertical-align: middle;
 }
 .sw-price {
-  background: light-dark(#925800, #ffb020);
+  background: light-dark(#b45309, #ffb020);
 }
 .sw-fixed {
   height: 0;
   background: none;
-  border-top: 3px dashed light-dark(#526da0, #8abaff);
+  border-top: 3px dashed light-dark(#64748b, #9aa7b8);
 }
 .sw-hindsight {
   background: light-dark(#0e7a5f, #69d8b6);
 }
-.linked-chart.result-chart {
-  height: 800px;
+.sw-charge {
+  background: light-dark(#2563eb, #8abaff);
+}
+.sw-discharge {
+  background: light-dark(#0e9f6e, #69d8b6);
+}
+.sw-band {
+  width: 12px;
+  height: 10px;
+  border-radius: 2px;
+}
+.sw-window {
+  background: light-dark(rgba(82, 109, 160, 0.25), rgba(138, 186, 255, 0.25));
+}
+.sw-neg {
+  background: light-dark(rgba(179, 38, 30, 0.22), rgba(255, 110, 90, 0.28));
+}
+.sw-gap {
+  height: 0;
+  background: none;
+  border-top: 2px dashed var(--color-rule);
+}
+.seg {
+  display: inline-flex;
+  border: 1px solid var(--color-rule);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.seg button {
+  min-height: 0;
+  padding: 4px 10px;
+  font-size: 11px;
+  background: transparent;
+  color: var(--color-muted);
+  border: 0;
+  border-radius: 0;
+}
+.seg button.on {
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+  font-weight: 650;
+}
+.chart-plot {
+  width: 100%;
+  height: 180px;
+}
+.chart-loading {
+  min-height: 800px;
+  display: grid;
+  place-items: center;
+  color: var(--color-muted);
+  font-size: 13px;
+}
+.price-explorer .chart-loading {
+  min-height: 220px;
 }
 .simulation-layout .prose {
   margin-block: 24px;
@@ -737,21 +945,6 @@ button:disabled {
   .lab-layout {
     grid-template-columns: 1fr;
   }
-  .lab-guide {
-    padding: 20px;
-  }
-  .lab-guide h2 br {
-    display: none;
-  }
-  .workflow {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 20px;
-    margin-bottom: 0;
-  }
-  .lab-note {
-    display: none;
-  }
   .site-header {
     gap: 16px;
   }
@@ -778,15 +971,6 @@ button:disabled {
     height: 1px;
     overflow: hidden;
     clip-path: inset(50%);
-  }
-  .workflow {
-    display: block;
-  }
-  .workflow li:not(:first-child) {
-    display: none;
-  }
-  .workflow li {
-    margin-bottom: 0;
   }
   .strategy-grid {
     grid-template-columns: 1fr;

@@ -1,4 +1,5 @@
 import { BatteryWorkspace } from "./simulation/BatteryWorkspace";
+import { PriceExplorer } from "./prices/PriceExplorer";
 import { Link } from "react-router";
 import { Page } from "./components/Page";
 
@@ -47,6 +48,19 @@ export function BatteryLab() {
       introduction="Compare a fixed trading schedule with the best outcome available in hindsight, using the same battery limits and operating windows."
     >
       <BatteryWorkspace />
+    </Page>
+  );
+}
+
+export function Prices() {
+  return (
+    <Page
+      title="Prices — NEMLab"
+      eyebrow="Prices"
+      heading="Explore electricity prices"
+      introduction="Read stored five-minute prices for a completed NEM market day. Missing observations stay visible as gaps; reading prices never imports data or runs a simulation."
+    >
+      <PriceExplorer />
     </Page>
   );
 }

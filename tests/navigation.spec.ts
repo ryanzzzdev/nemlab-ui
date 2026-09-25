@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 const pages = [
   { path: "/batterylab", title: "BatteryLab", heading: "What could a battery do?" },
+  { path: "/prices", title: "Prices", heading: "Explore electricity prices" },
   { path: "/gridreplay", title: "GridReplay", heading: "See the story behind a market day." },
   { path: "/methodology", title: "Methodology", heading: "Understand what the numbers mean." },
 ];
@@ -60,7 +61,7 @@ test("skip link and keyboard navigation move focus to page content", async ({ pa
 test("navigation supports history and honest unavailable states", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("link", { name: "Explore BatteryLab" }).click();
-  await expect(page.getByRole("heading", { name: "Simulation progress" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Simulation progress" })).toBeVisible();
   await page.getByRole("navigation").getByRole("link", { name: "GridReplay" }).click();
   await expect(page.getByRole("heading", { name: "Replay is being built" })).toBeVisible();
   await page.goBack();

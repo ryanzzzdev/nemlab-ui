@@ -12,8 +12,6 @@ use([LineChart, GridComponent, MarkLineComponent, DataZoomInsideComponent, SVGRe
 const endLabel = (instant: string, index: number) =>
   new Date(Date.parse(instant) + 10 * 3600000).toISOString().slice(11, 16) +
   (index === 287 ? " +1 day" : "");
-const syntheticEnergy = (index: number) =>
-  Math.round(100 * (index <= 143 ? index / 143 : (287 - index) / 144));
 const windows = [
   { label: "Full day", start: 0, end: 287 },
   { label: "00:00–06:00", start: 0, end: 71 },
@@ -47,34 +45,30 @@ export default function PriceCharts({ series }: { series: Series }) {
         });
       }
     });
+    const text = dark ? "#9aa7b8" : "#5b6470";
     instance.setOption({
       animation: false,
-      textStyle: { color: dark ? "#9aa7b8" : "#5b6470" },
-      grid: [
-        { left: 65, right: 20, top: 35, height: 165 },
-        { left: 65, right: 20, top: 285, height: 165 },
-      ],
-      xAxis: [0, 1].map((index) => ({
+      textStyle: { color: text },
+      grid: [{ left: 48, right: 12, top: 14, bottom: 22 }],
+      xAxis: {
         type: "category",
-        gridIndex: index,
         data: labels,
         boundaryGap: false,
-        axisLabel: { hideOverlap: true, fontSize: 11, color: dark ? "#9aa7b8" : "#5b6470" },
+        axisLabel: { hideOverlap: true, fontSize: 10, color: text },
         axisLine: { lineStyle: { color: dark ? "#596777" : "#b4bdc8" } },
-      })),
-      yAxis: [
-        { type: "value", gridIndex: 0, name: "AUD/MWh", scale: true },
-        { type: "value", gridIndex: 1, name: "Synthetic %", min: 0, max: 100 },
-      ].map((axis) => ({
-        ...axis,
-        axisLabel: { color: dark ? "#9aa7b8" : "#5b6470" },
-        nameTextStyle: { color: dark ? "#9aa7b8" : "#5b6470" },
+      },
+      yAxis: {
+        type: "value",
+        name: "AUD/MWh",
+        scale: true,
+        axisLabel: { color: text, fontSize: 10 },
+        nameTextStyle: { color: text },
         splitLine: { lineStyle: { color: dark ? "#303a47" : "#dce1e7" } },
-      })),
+      },
       dataZoom: [
         {
           type: "inside",
-          xAxisIndex: [0, 1],
+          xAxisIndex: 0,
           disabled: true,
           filterMode: "none",
           startValue: 0,
@@ -83,37 +77,23 @@ export default function PriceCharts({ series }: { series: Series }) {
       ],
       series: [
         {
+          id: "price",
           name: "Stored price",
           type: "line",
-          xAxisIndex: 0,
-          yAxisIndex: 0,
           showSymbol: false,
           connectNulls: false,
-          lineStyle: { color: dark ? "#69d8b6" : "#163e35", width: 2 },
+          lineStyle: { color: dark ? "#ffb020" : "#b45309", width: 1.6 },
           data: series.intervals.map((value) =>
             value.state === "VALUE" ? Number(value.price) : null,
           ),
-        },
-        {
-          name: "Synthetic energy",
-          type: "line",
-          xAxisIndex: 1,
-          yAxisIndex: 1,
-          showSymbol: false,
-          lineStyle: { color: dark ? "#8abaff" : "#526da0", type: "dashed", width: 2 },
-          data: series.intervals.map((_, index) => syntheticEnergy(index)),
         },
       ],
     });
     function selectAt(event: { offsetX: number; offsetY: number }) {
       const point = [event.offsetX, event.offsetY];
-      for (const gridIndex of [0, 1]) {
-        if (instance.containPixel({ gridIndex }, point)) {
-          const coordinate = instance.convertFromPixel({ gridIndex }, point) as number[];
-          const index = Math.max(0, Math.min(287, Math.round(coordinate[0]!)));
-          setSelected(index);
-          break;
-        }
+      if (instance.containPixel({ gridIndex: 0 }, point)) {
+        const coordinate = instance.convertFromPixel({ gridIndex: 0 }, point) as number[];
+        setSelected(Math.max(0, Math.min(287, Math.round(coordinate[0]!))));
       }
     }
     instance.getZr().on("mousemove", selectAt);
@@ -130,29 +110,44 @@ export default function PriceCharts({ series }: { series: Series }) {
   useEffect(() => {
     chart.current?.setOption({
       dataZoom: [{ startValue: window.start, endValue: window.end }],
-      series: [0, 1].map(() => ({
-        markLine: {
-          silent: true,
-          symbol: "none",
-          label: { show: false },
-          lineStyle: { color: dark ? "#ffa48b" : "#b04a2f", width: 2, type: "solid" },
-          data: [{ xAxis: selected }],
+      series: [
+        {
+          id: "price",
+          markLine: {
+            silent: true,
+            symbol: "none",
+            label: { show: false },
+            lineStyle: { color: dark ? "#ffa48b" : "#b04a2f", width: 2, type: "solid" },
+            data: [{ xAxis: selected }],
+          },
         },
-      })),
+      ],
     });
   }, [selected, window, series, dark]);
 
   return (
-    <section className="chart-prototype" aria-labelledby="chart-heading">
-      <h3 id="chart-heading">Linked-chart prototype</h3>
-      <p>
-        Top: stored prices. Bottom: <strong>synthetic energy trace</strong> for interaction testing
-        only. It is not a battery simulation or observed energy data.
-      </p>
-      <p>
-        Both panels use the same interval-end times in NEM UTC+10. Gaps stay disconnected. Charts
-        use approximate plotting numbers; the readout and price table retain exact values.
-      </p>
+    <div className="chart-card">
+      <div className="chart-head">
+        <h3 className="chart-title">
+          Stored price <span>AUD/MWh</span>
+        </h3>
+        <div className="chart-legend" aria-hidden="true">
+          <span>
+            <i className="sw sw-price" />
+            Price
+          </span>
+          <span>
+            <i className="sw sw-band sw-gap" />
+            Gap
+          </span>
+        </div>
+      </div>
+      <div
+        ref={host}
+        className="chart-plot"
+        role="img"
+        aria-label="Stored price chart. Gaps stay disconnected. Use the interval and window controls or the exact interval table for an accessible alternative."
+      />
       <div className="chart-controls">
         <label>
           Visible window
@@ -196,19 +191,12 @@ export default function PriceCharts({ series }: { series: Series }) {
               ? "Missing"
               : "Source null"}
         </strong>
-        <br />
-        Synthetic energy: <strong>{syntheticEnergy(selected)}%</strong>
       </p>
-      <div
-        ref={host}
-        className="linked-chart"
-        role="img"
-        aria-label="Two linked charts: stored prices and a synthetic energy trace. Use the interval and window controls or the exact price table below for an accessible alternative."
-      />
-      <p>
-        Point or tap either panel to move both cursors. Use the controls to zoom both panels
-        together; scroll and pinch remain available to navigate the page.
+      <p className="hint">
+        Point or tap the chart to move the cursor. Use the controls to zoom; scroll and pinch remain
+        available to navigate the page. The chart uses approximate plotting numbers; the readout and
+        exact table keep the stored values.
       </p>
-    </section>
+    </div>
   );
 }
