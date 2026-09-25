@@ -3,9 +3,8 @@ import { expect, test } from "@playwright/test";
 test("submits a real simulation and retrieves a worker-produced result", async ({ page }, info) => {
   await page.goto("/batterylab");
   await page.getByLabel("Simulation day").fill("2023-10-01");
-  // The threshold experiment exercises the real worker engine and the stored
-  // result's optional strategy fields end to end.
-  await page.getByRole("checkbox", { name: "Run the threshold experiment" }).check();
+  // Price thresholds are a default third strategy — the real worker runs the
+  // threshold engine and the stored result carries all three strategies.
   await page.getByLabel("Charge below (AUD/MWh)").fill("-50");
   await page.getByLabel("Discharge above (AUD/MWh)").fill("200");
   await page.getByRole("button", { name: "Run simulation" }).click();
@@ -14,11 +13,11 @@ test("submits a real simulation and retrieves a worker-produced result", async (
   });
   await expect(page.getByRole("heading", { name: "Result comparison" })).toBeVisible();
   await expect(page.getByText("Modelled margin")).toBeVisible();
-  await expect(page.locator(".stat").filter({ hasText: "Threshold rule margin" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Threshold", exact: true })).toBeVisible();
+  await expect(page.locator(".stat").filter({ hasText: "Price thresholds margin" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Thresholds", exact: true })).toBeVisible();
   await page.locator("summary", { hasText: "Interval detail" }).click();
   await expect(
-    page.getByRole("table").nth(1).getByRole("columnheader", { name: "Threshold MW" }).first(),
+    page.getByRole("table").nth(1).getByRole("columnheader", { name: "Thresholds MW" }).first(),
   ).toBeVisible();
   await expect(page.getByRole("table").nth(1).getByRole("row")).toHaveCount(289);
   const first = await page.locator(".job .revision").first().textContent();

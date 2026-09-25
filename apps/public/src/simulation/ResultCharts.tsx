@@ -325,7 +325,7 @@ export default function ResultCharts({ result }: { result: Result }) {
               ? [
                   line(
                     "energy-threshold",
-                    "Threshold rule",
+                    "Price thresholds",
                     derived.thresholdEnergy,
                     thresholdColor,
                     true,
@@ -360,7 +360,7 @@ export default function ResultCharts({ result }: { result: Result }) {
               ? [
                   line(
                     "margin-threshold",
-                    "Threshold rule",
+                    "Price thresholds",
                     derived.thresholdMargin,
                     thresholdColor,
                     true,
@@ -433,6 +433,16 @@ export default function ResultCharts({ result }: { result: Result }) {
             >
               Fixed
             </button>
+            {threshold && (
+              <button
+                type="button"
+                className={powerStrategy === "threshold" ? "on" : ""}
+                aria-pressed={powerStrategy === "threshold"}
+                onClick={() => setPowerStrategy("threshold")}
+              >
+                Thresholds
+              </button>
+            )}
             <button
               type="button"
               className={powerStrategy === "hindsight" ? "on" : ""}
@@ -441,16 +451,6 @@ export default function ResultCharts({ result }: { result: Result }) {
             >
               Hindsight
             </button>
-            {threshold && (
-              <button
-                type="button"
-                className={powerStrategy === "threshold" ? "on" : ""}
-                aria-pressed={powerStrategy === "threshold"}
-                onClick={() => setPowerStrategy("threshold")}
-              >
-                Threshold
-              </button>
-            )}
           </div>
         </Panel>
         <Panel
@@ -459,7 +459,7 @@ export default function ResultCharts({ result }: { result: Result }) {
           window={window}
           onSelect={setSelected}
           dark={dark}
-          aria="Stored energy for both strategies with minimum and maximum site limits marked."
+          aria="Stored energy for each strategy with minimum and maximum site limits marked."
         >
           <h3 className="chart-title">
             Stored energy <span>MWh</span>
@@ -472,7 +472,7 @@ export default function ResultCharts({ result }: { result: Result }) {
             {threshold && (
               <span>
                 <i className="sw sw-threshold" />
-                Threshold rule
+                Price thresholds
               </span>
             )}
             <span>
@@ -487,7 +487,7 @@ export default function ResultCharts({ result }: { result: Result }) {
           window={window}
           onSelect={setSelected}
           dark={dark}
-          aria="Cumulative trading margin for both strategies."
+          aria="Cumulative trading margin for each strategy."
         >
           <h3 className="chart-title">
             Cumulative margin <span>AUD</span>
@@ -500,7 +500,7 @@ export default function ResultCharts({ result }: { result: Result }) {
             {threshold && (
               <span>
                 <i className="sw sw-threshold" />
-                Threshold rule
+                Price thresholds
               </span>
             )}
             <span>
@@ -566,7 +566,7 @@ export default function ResultCharts({ result }: { result: Result }) {
         {threshold && (
           <>
             <br />
-            Threshold:{" "}
+            Thresholds:{" "}
             <strong>
               {signedMw(derived.thresholdMW![selected]!)} MW ·{" "}
               {mwh(derived.thresholdEnergy![selected]!)} MWh stored ·{" "}

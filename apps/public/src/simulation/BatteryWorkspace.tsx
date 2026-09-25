@@ -29,7 +29,7 @@ export function BatteryWorkspace() {
   const [job, setJob] = useState<Job | null>(null);
   const [result, setResult] = useState<Result | null>(null);
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState("Choose your scenario, then run both strategies.");
+  const [message, setMessage] = useState("Choose your scenario, then run all three strategies.");
   const [problem, setProblem] = useState(false);
   const [shareNote, setShareNote] = useState("");
   const active = useRef<AbortController | null>(null);
@@ -77,7 +77,7 @@ export function BatteryWorkspace() {
     setResult(null);
     setProblem(false);
     setShareNote("");
-    setMessage("Scenario changed. Run both strategies to calculate a new comparison.");
+    setMessage("Scenario changed. Run all three strategies to calculate a new comparison.");
     if (linkedId) setSearchParams({}, { replace: true });
   }
   async function monitor(first: Job, signal: AbortSignal, request?: Request) {
@@ -102,7 +102,7 @@ export function BatteryWorkspace() {
           );
         setResult(saved);
         setSearchParams({ simulation: saved.id }, { replace: true });
-        setMessage("Simulation complete. Both strategies and their original inputs are stored.");
+        setMessage("Simulation complete. All strategies and their original inputs are stored.");
         return saved;
       }
       if (check >= 60)
@@ -112,7 +112,7 @@ export function BatteryWorkspace() {
       setMessage(
         current.job.status === "QUEUED"
           ? "Queued — waiting for a simulation worker."
-          : "Running — comparing fixed schedule and hindsight.",
+          : "Running — comparing fixed schedule, thresholds and hindsight.",
       );
       await wait(current.retryAfter, signal);
       current = await readStatus(current.job.id, signal);
@@ -218,14 +218,31 @@ export function BatteryWorkspace() {
       chargeEnd: hhmm(saved.inputs.windows.chargeEnd),
       dischargeStart: hhmm(saved.inputs.windows.dischargeStart),
       dischargeEnd: hhmm(saved.inputs.windows.dischargeEnd),
-      thresholdEnabled: Boolean(saved.inputs.thresholds),
-      ...(saved.inputs.thresholds
-        ? {
-            chargeBelow: saved.inputs.thresholds.chargeBelow,
-            dischargeAbove: saved.inputs.thresholds.dischargeAbove,
-          }
-        : {}),
+      // A pre-threshold saved result shows empty threshold fields: the saved
+      // inputs did not include them, and defaults are only inserted by the
+      // explicit "Compare all three" action below.
+      chargeBelow: saved.inputs.thresholds?.chargeBelow ?? "",
+      dischargeAbove: saved.inputs.thresholds?.dischargeAbove ?? "",
     }));
+  }
+
+  // Explicit opt-in to rerun an old two-strategy result with the illustrative
+  // threshold defaults — the saved result stays untouched server-side.
+  function compareAll() {
+    setForm((current) => ({
+      ...current,
+      chargeBelow: fields.chargeBelow[1],
+      dischargeAbove: fields.dischargeAbove[1],
+    }));
+    setErrors({});
+    setJob(null);
+    setResult(null);
+    setShareNote("");
+    setProblem(false);
+    setMessage(
+      `Illustrative thresholds ${fields.chargeBelow[1]}/${fields.dischargeAbove[1]} AUD/MWh added — edit freely, then run to compare all three strategies as a new scenario.`,
+    );
+    if (linkedId) setSearchParams({}, { replace: true });
   }
 
   async function copyResultLink() {
@@ -364,7 +381,10 @@ export function BatteryWorkspace() {
             {input("maximumMWh")}
             {input("initialMWh")}
           </div>
-          <p className="hint">Terminal energy equals initial energy for both strategies.</p>
+          <p className="hint">
+            Terminal energy equals initial energy for the fixed schedule and hindsight strategies;
+            price thresholds may differ.
+          </p>
         </fieldset>
         <fieldset disabled={busy}>
           <legend>Efficiency</legend>
@@ -405,11 +425,11 @@ export function BatteryWorkspace() {
           </p>
         </fieldset>
         <fieldset disabled={busy}>
-          <legend>Operating windows</legend>
+          <legend>Schedule windows — fixed schedule and hindsight only</legend>
           <div className="scenario-fields">{windowFields.map(input)}</div>
           <p className="hint">
             NEM UTC+10, five-minute steps. One charge window, then one discharge window. Use 24:00
-            for next midnight.
+            for next midnight. Price thresholds run all day and ignore these windows.
           </p>
         </fieldset>
         <fieldset disabled={busy}>
@@ -417,26 +437,14 @@ export function BatteryWorkspace() {
           <div className="scenario-fields">{costFields.map(input)}</div>
         </fieldset>
         <fieldset disabled={busy}>
-          <legend>Price thresholds · optional</legend>
-          <div className="radio-row">
-            <label>
-              <input
-                type="checkbox"
-                checked={form.thresholdEnabled}
-                onChange={(e) => change("thresholdEnabled", e.target.checked)}
-              />
-              Run the threshold experiment
-            </label>
+          <legend>Price thresholds</legend>
+          <div className="scenario-fields">
+            {input("chargeBelow")}
+            {input("dischargeAbove")}
           </div>
-          {form.thresholdEnabled && (
-            <div className="scenario-fields">
-              {input("chargeBelow")}
-              {input("dischargeAbove")}
-            </div>
-          )}
           <p className="hint">
             All-day price rule: charge below, discharge above, otherwise hold. It ignores the
-            windows above and may end the day at a different stored energy.
+            schedule windows and may finish with different stored energy.
           </p>
         </fieldset>
         <div className="btns">
@@ -500,7 +508,7 @@ export function BatteryWorkspace() {
       </form>
       <div className="lab-workspace">
         {result ? (
-          <ResultView result={result} />
+          <ResultView result={result} compareAll={result.threshold ? undefined : compareAll} />
         ) : (
           <>
             <section className="comparison-preview">

@@ -16,7 +16,13 @@ const ResultCharts = lazy(() =>
   })),
 );
 
-export function ResultView({ result }: { result: Result }) {
+export function ResultView({
+  result,
+  compareAll,
+}: {
+  result: Result;
+  compareAll?: (() => void) | undefined;
+}) {
   const fixed = result.fixed.accounting;
   const hindsight = result.hindsight.accounting;
   const threshold = result.threshold;
@@ -90,18 +96,38 @@ export function ResultView({ result }: { result: Result }) {
         <span className="badge">Proven optimal</span>
       </div>
       <p>
-        Perfect hindsight is a benchmark, not a forecast — it saw every price before choosing. Both
-        strategies used the same site limits and operating windows, and finish with the stored
-        energy they started with.
-        {threshold &&
-          " The threshold rule is a separate all-day experiment that may end at a different stored energy — it is not a like-for-like comparison."}
+        Perfect hindsight is a benchmark, not a forecast — it saw every price before choosing. The
+        fixed schedule and hindsight strategies used the same site limits and operating windows, and
+        finish with the stored energy they started with.
+        {threshold
+          ? " Price thresholds are a separate all-day rule that may end at a different stored energy — it is not a like-for-like comparison."
+          : ""}
       </p>
+      {compareAll && (
+        <p>
+          This saved comparison predates the price-threshold strategy — it holds the two original
+          strategies unchanged.{" "}
+          <button type="button" onClick={compareAll}>
+            Compare all three
+          </button>{" "}
+          to start a new scenario with illustrative thresholds.
+        </p>
+      )}
       <div className="stat-grid">
         <div className="stat">
           <span className="stat-label">Fixed schedule margin</span>
           <strong className="stat-value">{aud(fixed.margin)}</strong>
           <span className="stat-sub">ordered windows, no foresight</span>
         </div>
+        {threshold && (
+          <div className="stat">
+            <span className="stat-label">Price thresholds margin</span>
+            <strong className="stat-value">{aud(threshold.accounting.margin)}</strong>
+            <span className="stat-sub">
+              all-day · ends {mwh(threshold.dispatch.intervals.at(-1)!.endingEnergyMWh)} MWh
+            </span>
+          </div>
+        )}
         <div className="stat">
           <span className="stat-label">Perfect hindsight margin</span>
           <strong className="stat-value">{aud(hindsight.margin)}</strong>
@@ -117,15 +143,6 @@ export function ResultView({ result }: { result: Result }) {
           <strong className="stat-value">{mwh(hindsight.lossesMWh)} MWh</strong>
           <span className="stat-sub">physical loss, never a fee</span>
         </div>
-        {threshold && (
-          <div className="stat">
-            <span className="stat-label">Threshold rule margin</span>
-            <strong className="stat-value">{aud(threshold.accounting.margin)}</strong>
-            <span className="stat-sub">
-              all-day · ends {mwh(threshold.dispatch.intervals.at(-1)!.endingEnergyMWh)} MWh
-            </span>
-          </div>
-        )}
       </div>
       <ul className="result-explain">
         {items.map((item) => (
@@ -155,7 +172,7 @@ export function ResultView({ result }: { result: Result }) {
                 <th scope="col">Unit</th>
                 <th scope="col">Fixed schedule</th>
                 <th scope="col">Perfect hindsight</th>
-                {threshold && <th scope="col">Threshold rule</th>}
+                {threshold && <th scope="col">Price thresholds</th>}
               </tr>
             </thead>
             <tbody>
@@ -220,9 +237,9 @@ export function ResultView({ result }: { result: Result }) {
                 <th scope="col">Hindsight margin (AUD)</th>
                 {threshold && (
                   <>
-                    <th scope="col">Threshold MW</th>
-                    <th scope="col">Threshold MWh</th>
-                    <th scope="col">Threshold margin (AUD)</th>
+                    <th scope="col">Thresholds MW</th>
+                    <th scope="col">Thresholds MWh</th>
+                    <th scope="col">Thresholds margin (AUD)</th>
                   </>
                 )}
               </tr>
@@ -280,11 +297,11 @@ export function ResultView({ result }: { result: Result }) {
         </p>
         {threshold && (
           <p>
-            The threshold rule is an idealised same-interval replay: each stored interval price
-            decides charge/discharge/hold and settles that interval&apos;s energy. It is not a live
-            controller or a reconstruction of actual NEM dispatch — publication timing, bidding,
-            latency, ramps and dispatch uncertainty are abstracted away, and ending energy may
-            differ from the initial level.
+            The price-threshold strategy is an idealised same-interval replay: each stored interval
+            price decides charge/discharge/hold and settles that interval&apos;s energy. It is not a
+            live controller or a reconstruction of actual NEM dispatch — publication timing,
+            bidding, latency, ramps and dispatch uncertainty are abstracted away, and ending energy
+            may differ from the initial level.
           </p>
         )}
         <p>

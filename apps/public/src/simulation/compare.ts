@@ -128,7 +128,7 @@ export function explain(result: Result) {
   );
   if (result.threshold) {
     const t = result.threshold;
-    items.push(describe("The threshold rule", t, result));
+    items.push(describe("The price-threshold strategy", t, result));
     const ending = t.dispatch.intervals.at(-1)!.endingEnergyMWh;
     const initial = Number(result.inputs.site.initialMWh);
     items.push(

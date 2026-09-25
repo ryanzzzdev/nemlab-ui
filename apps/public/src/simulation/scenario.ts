@@ -29,7 +29,6 @@ export type Form = Record<Field, string> & {
   region: Request["region"];
   day: string;
   efficiencyMode: "roundTrip" | "legs";
-  thresholdEnabled: boolean;
 };
 export type Errors = Partial<Record<keyof Form, string>>;
 export const initialForm = (): Form => ({
@@ -40,7 +39,6 @@ export const initialForm = (): Form => ({
   region: "NSW1",
   day: nextDay(marketDay(), -1),
   efficiencyMode: "roundTrip",
-  thresholdEnabled: false,
 });
 export const siteFields = [
   "capacityMWh",
@@ -122,24 +120,22 @@ export function prepare(form: Form): { errors: Errors; request?: Request } {
     errors.chargeStart =
       "Use one nonempty charge window followed by one nonoverlapping discharge window.";
   let thresholds: Request["thresholds"];
-  if (form.thresholdEnabled) {
-    const chargeBelow = decimal(form.chargeBelow, true);
-    const dischargeAbove = decimal(form.dischargeAbove, true);
-    const limit = decimal("1000000")!;
-    for (const [key, value] of [
-      ["chargeBelow", chargeBelow],
-      ["dischargeAbove", dischargeAbove],
-    ] as const) {
-      if (value === null)
-        errors[key] =
-          "Enter a decimal up to 18 decimal places and 38 significant digits; negative values allowed.";
-      else if (value < -limit || value > limit) errors[key] = "Enter a value within ±1,000,000.";
-    }
-    if (!errors.chargeBelow && !errors.dischargeAbove)
-      if (chargeBelow! >= dischargeAbove!)
-        errors.chargeBelow = "Charge threshold must be below the discharge threshold.";
-      else thresholds = { chargeBelow: form.chargeBelow, dischargeAbove: form.dischargeAbove };
+  const chargeBelow = decimal(form.chargeBelow, true);
+  const dischargeAbove = decimal(form.dischargeAbove, true);
+  const limit = decimal("1000000")!;
+  for (const [key, value] of [
+    ["chargeBelow", chargeBelow],
+    ["dischargeAbove", dischargeAbove],
+  ] as const) {
+    if (value === null)
+      errors[key] =
+        "Enter a decimal up to 18 decimal places and 38 significant digits; negative values allowed.";
+    else if (value < -limit || value > limit) errors[key] = "Enter a value within ±1,000,000.";
   }
+  if (!errors.chargeBelow && !errors.dischargeAbove)
+    if (chargeBelow! >= dischargeAbove!)
+      errors.chargeBelow = "Charge threshold must be below the discharge threshold.";
+    else thresholds = { chargeBelow: form.chargeBelow, dischargeAbove: form.dischargeAbove };
   if (Object.keys(errors).length) return { errors };
   return {
     errors,
