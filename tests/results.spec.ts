@@ -109,13 +109,14 @@ test("result charts render automatically and share one cursor and window", async
   );
   expect(Math.max(...zoomed) - Math.min(...zoomed)).toBeLessThan(1);
   await page.getByLabel("Visible window").selectOption("0");
-  // Pointing inside any one panel moves all four cursors together.
+  // Clicking inside any one panel moves all four selected cursors together;
+  // hover alone only shows the native tooltips.
   const firstPlot = plots.first();
   await firstPlot.scrollIntoViewIfNeeded();
   const box = (await firstPlot.boundingBox())!;
   const tap = isMobile
     ? page.touchscreen.tap.bind(page.touchscreen)
-    : page.mouse.move.bind(page.mouse);
+    : (x: number, y: number) => page.mouse.click(x, y);
   await tap(box.x + 48 + (box.width - 60) * 0.6, box.y + box.height / 2);
   await expect.poll(async () => Number(await range.inputValue())).toBeGreaterThan(150);
   const lastPlot = plots.nth(3);
@@ -133,13 +134,29 @@ test("the power panel switches strategies and the shared cursor survives appeara
   const plots = page.locator(".chart-plot");
   await expect(plots).toHaveCount(4);
   const readout = page.locator(".result-comparison .chart-readout");
-  // The demo's segmented control swaps the power panel between strategies.
-  const fixed = page.getByRole("button", { name: "Fixed", exact: true });
-  const hindsight = page.getByRole("button", { name: "Hindsight", exact: true });
+  // The same segmented control sits on all three strategy panels and stays in
+  // sync; the energy and margin panels emphasise the selected strategy.
+  const cards = page.locator(".chart-card");
+  const power = cards.nth(1);
+  const fixed = power.getByRole("button", { name: "Fixed", exact: true });
+  const hindsight = power.getByRole("button", { name: "Hindsight", exact: true });
   await expect(hindsight).toHaveAttribute("aria-pressed", "true");
   await fixed.click();
   await expect(fixed).toHaveAttribute("aria-pressed", "true");
+  await expect(cards.nth(2).getByRole("button", { name: "Fixed", exact: true })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await expect(cards.nth(3).getByRole("button", { name: "Fixed", exact: true })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
   await hindsight.click();
+  // Hovering a panel shows a per-panel tooltip; connected charts follow.
+  await plots.first().hover({ position: { x: 200, y: 60 } });
+  await expect(plots.first()).toContainText(/interval \d+\/288/);
+  await expect(plots.first()).toContainText("AUD/MWh");
+  await expect(plots.nth(1)).toContainText(/interval \d+\/288/);
   const range = page.getByRole("slider", { name: "Selected interval" });
   await range.focus();
   await range.press("ArrowRight");

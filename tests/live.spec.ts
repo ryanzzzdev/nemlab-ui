@@ -16,7 +16,9 @@ test("submits a real simulation and retrieves a worker-produced result", async (
   await expect(page.getByRole("heading", { name: "Result comparison" })).toBeVisible();
   await expect(page.getByText("Modelled margin")).toBeVisible();
   await expect(page.locator(".stat").filter({ hasText: "Price thresholds margin" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Thresholds", exact: true })).toBeVisible();
+  await expect(
+    page.locator(".chart-card").nth(1).getByRole("button", { name: "Thresholds", exact: true }),
+  ).toBeVisible();
   await page.locator("summary", { hasText: "Interval detail" }).click();
   await expect(
     page.getByRole("table").nth(1).getByRole("columnheader", { name: "Thresholds MW" }).first(),

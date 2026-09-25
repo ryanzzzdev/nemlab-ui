@@ -82,11 +82,15 @@ test("threshold results share equal prominence with the other strategies", async
   // The financial breakdown gains a Price thresholds column.
   const breakdown = comparison.getByRole("table").first();
   await expect(breakdown.getByRole("columnheader", { name: "Price thresholds" })).toBeVisible();
-  // The power panel offers the third strategy; legends name the series.
-  const seg = page.getByRole("button", { name: "Thresholds", exact: true });
+  // The three strategy panels offer the third strategy; the selection syncs.
+  const cards = page.locator(".chart-card");
+  const seg = cards.nth(1).getByRole("button", { name: "Thresholds", exact: true });
   await expect(seg).toBeVisible();
   await seg.click();
   await expect(seg).toHaveAttribute("aria-pressed", "true");
+  await expect(
+    cards.nth(2).getByRole("button", { name: "Thresholds", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
   await expect(page.locator(".sw-threshold")).toHaveCount(2);
   // Labelled dashed threshold lines mark the two levels on the price panel.
   const pricePanel = page.locator(".chart-plot").first();

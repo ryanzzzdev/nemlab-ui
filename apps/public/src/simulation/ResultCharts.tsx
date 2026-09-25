@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { init, use } from "echarts/core";
+import { connect, init, use } from "echarts/core";
 import type { EChartsType } from "echarts/core";
 import { BarChart, LineChart } from "echarts/charts";
 import {
@@ -8,6 +8,7 @@ import {
   MarkAreaComponent,
   MarkLineComponent,
   DataZoomInsideComponent,
+  TooltipComponent,
 } from "echarts/components";
 import { SVGRenderer } from "echarts/renderers";
 import type { Result } from "./client";
@@ -21,6 +22,7 @@ use([
   MarkAreaComponent,
   MarkLineComponent,
   DataZoomInsideComponent,
+  TooltipComponent,
   SVGRenderer,
 ]);
 
@@ -73,16 +75,18 @@ function Panel({
         });
       }
     });
+    // Grouped charts share axis pointers natively — hover tooltips never touch
+    // React state; only a click commits a selection.
+    instance.group = "nemlab-charts";
+    connect("nemlab-charts");
     instance.setOption(config.option);
-    function pick(event: { offsetX: number; offsetY: number }) {
+    instance.getZr().on("click", (event: { offsetX: number; offsetY: number }) => {
       const point = [event.offsetX, event.offsetY];
       if (instance.containPixel({ gridIndex: 0 }, point)) {
         const coordinate = instance.convertFromPixel({ gridIndex: 0 }, point) as number[];
         onSelect(Math.max(0, Math.min(287, Math.round(coordinate[0]!))));
       }
-    }
-    instance.getZr().on("mousemove", pick);
-    instance.getZr().on("click", pick);
+    });
     const observer = new ResizeObserver(() => instance.resize());
     observer.observe(host.current);
     return () => {
@@ -131,13 +135,47 @@ function Panel({
   );
 }
 
+type StrategyKey = "fixed" | "threshold" | "hindsight";
+
+// Synced segmented control shared by the three strategy-dependent panels.
+function Seg({
+  label,
+  value,
+  threshold,
+  onChange,
+}: {
+  label: string;
+  value: StrategyKey;
+  threshold: boolean;
+  onChange: (next: StrategyKey) => void;
+}) {
+  const options: [StrategyKey, string][] = [
+    ["fixed", "Fixed"],
+    ...(threshold ? ([["threshold", "Thresholds"]] as [StrategyKey, string][]) : []),
+    ["hindsight", "Hindsight"],
+  ];
+  return (
+    <div className="seg" role="group" aria-label={label}>
+      {options.map(([key, name]) => (
+        <button
+          key={key}
+          type="button"
+          className={value === key ? "on" : ""}
+          aria-pressed={value === key}
+          onClick={() => onChange(key)}
+        >
+          {name}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export default function ResultCharts({ result }: { result: Result }) {
   const { dark } = useTheme();
   const [selected, setSelected] = useState(0);
   const [windowIndex, setWindowIndex] = useState(0);
-  const [powerStrategy, setPowerStrategy] = useState<"fixed" | "hindsight" | "threshold">(
-    "hindsight",
-  );
+  const [strategy, setStrategy] = useState<StrategyKey>("hindsight");
   const window = windows[windowIndex]!;
   const threshold = result.threshold;
 
@@ -215,13 +253,14 @@ export default function ResultCharts({ result }: { result: Result }) {
       data: (number | null)[],
       color: string,
       dashed = false,
+      opacity = 1,
     ) => ({
       id,
       name,
       type: "line",
       showSymbol: false,
       connectNulls: false,
-      lineStyle: { color, width: 1.6, ...(dashed ? { type: "dashed" as const } : {}) },
+      lineStyle: { color, width: 1.6, opacity, ...(dashed ? { type: "dashed" as const } : {}) },
       data,
     });
     const bands = [
@@ -235,9 +274,9 @@ export default function ResultCharts({ result }: { result: Result }) {
       ...derived.negativeRuns.map(([, to]) => to),
     ];
     const powerMW =
-      powerStrategy === "fixed"
+      strategy === "fixed"
         ? derived.fixedMW
-        : powerStrategy === "threshold" && derived.thresholdMW
+        : strategy === "threshold" && derived.thresholdMW
           ? derived.thresholdMW
           : derived.hindMW;
     const thresholdLines = threshold
@@ -254,6 +293,51 @@ export default function ResultCharts({ result }: { result: Result }) {
           },
         ]
       : undefined;
+    // Demo-style hover tooltips: a dark card beside the axis cursor showing the
+    // panel's own values at that interval. Native ECharts — no React update per
+    // mousemove.
+    const ttColors = {
+      fixed: "#94a3b8",
+      threshold: "#c4b5fd",
+      hindsight: "#34d399",
+      price: "#fbbf24",
+    };
+    const title = (index: number) =>
+      `${index === 0 ? "00:00" : endLabel(result.prices[index - 1]!.end, index - 1)}–${endLabel(
+        result.prices[index]!.end,
+        index,
+      )} · interval ${index + 1}/288`;
+    const rows = (entries: [name: string, color: string, value: string][]) =>
+      `<table style="border-collapse:collapse;width:100%">${entries
+        .map(
+          ([name, color, value]) =>
+            `<tr><td style="color:${color};padding:0 12px 1px 0">${name}</td><td style="text-align:right">${value}</td></tr>`,
+        )
+        .join("")}</table>`;
+    const strategyRows = (value: (key: StrategyKey) => string) => {
+      const entries: [string, string, string][] = [["Fixed", ttColors.fixed, value("fixed")]];
+      if (threshold) entries.push(["Thresholds", ttColors.threshold, value("threshold")]);
+      entries.push(["Hindsight", ttColors.hindsight, value("hindsight")]);
+      return entries;
+    };
+    const tip = (body: (index: number) => string) => ({
+      trigger: "axis" as const,
+      confine: true,
+      transitionDuration: 0,
+      backgroundColor: "rgba(15,23,42,0.94)",
+      borderWidth: 0,
+      padding: [8, 10],
+      textStyle: { color: "#e8ecf1", fontSize: 11 },
+      axisPointer: {
+        type: "line" as const,
+        label: { show: false },
+        lineStyle: { color: dark ? "#ffa48b" : "#b04a2f", width: 1 },
+      },
+      formatter: (params: { dataIndex?: number }[]) => {
+        const index = Math.max(0, Math.min(287, params[0]?.dataIndex ?? 0));
+        return `<div style="font-weight:700;color:#93c5fd;margin-bottom:3px">${title(index)}</div>${body(index)}`;
+      },
+    });
     return {
       price: {
         cursorOn: "price",
@@ -262,6 +346,9 @@ export default function ResultCharts({ result }: { result: Result }) {
           animation: false,
           textStyle: { color: text },
           ...frame("AUD/MWh", 24),
+          tooltip: tip((i) =>
+            rows([["Price", ttColors.price, `${result.prices[i]!.price} AUD/MWh`]]),
+          ),
           series: [
             {
               ...line("price", "Stored price", derived.prices, dark ? "#ffb020" : "#b45309"),
@@ -301,6 +388,21 @@ export default function ResultCharts({ result }: { result: Result }) {
           animation: false,
           textStyle: { color: text },
           ...frame("MW", 8),
+          tooltip: tip(
+            (i) =>
+              rows(
+                strategyRows((key) =>
+                  signedMw(
+                    (key === "fixed"
+                      ? derived.fixedMW
+                      : key === "threshold"
+                        ? derived.thresholdMW!
+                        : derived.hindMW)[i]!,
+                  ),
+                ),
+              ) +
+              (threshold ? `<div style="margin-top:2px">${thresholdAction(result, i)}</div>` : ""),
+          ),
           series: [
             ...[
               {
@@ -333,8 +435,29 @@ export default function ResultCharts({ result }: { result: Result }) {
           animation: false,
           textStyle: { color: text },
           ...frame("MWh", 8),
+          tooltip: tip((i) =>
+            rows(
+              strategyRows(
+                (key) =>
+                  mwh(
+                    (key === "fixed"
+                      ? derived.fixedEnergy
+                      : key === "threshold"
+                        ? derived.thresholdEnergy!
+                        : derived.hindEnergy)[i]!,
+                  ) + " MWh",
+              ),
+            ),
+          ),
           series: [
-            line("energy-fixed", "Fixed schedule", derived.fixedEnergy, fixedColor, true),
+            line(
+              "energy-fixed",
+              "Fixed schedule",
+              derived.fixedEnergy,
+              fixedColor,
+              true,
+              strategy === "fixed" ? 1 : 0.25,
+            ),
             ...(derived.thresholdEnergy
               ? [
                   line(
@@ -343,11 +466,19 @@ export default function ResultCharts({ result }: { result: Result }) {
                     derived.thresholdEnergy,
                     thresholdColor,
                     true,
+                    strategy === "threshold" ? 1 : 0.25,
                   ),
                 ]
               : []),
             {
-              ...line("energy-hindsight", "Perfect hindsight", derived.hindEnergy, hindColor),
+              ...line(
+                "energy-hindsight",
+                "Perfect hindsight",
+                derived.hindEnergy,
+                hindColor,
+                false,
+                strategy === "hindsight" ? 1 : 0.25,
+              ),
               markLine: {
                 silent: true,
                 symbol: "none",
@@ -368,8 +499,28 @@ export default function ResultCharts({ result }: { result: Result }) {
           animation: false,
           textStyle: { color: text },
           ...frame("AUD", 8),
+          tooltip: tip((i) =>
+            rows(
+              strategyRows((key) =>
+                aud(
+                  (key === "fixed"
+                    ? derived.fixedMargin
+                    : key === "threshold"
+                      ? derived.thresholdMargin!
+                      : derived.hindMargin)[i]!,
+                ),
+              ),
+            ),
+          ),
           series: [
-            line("margin-fixed", "Fixed schedule", derived.fixedMargin, fixedColor, true),
+            line(
+              "margin-fixed",
+              "Fixed schedule",
+              derived.fixedMargin,
+              fixedColor,
+              true,
+              strategy === "fixed" ? 1 : 0.25,
+            ),
             ...(derived.thresholdMargin
               ? [
                   line(
@@ -378,18 +529,38 @@ export default function ResultCharts({ result }: { result: Result }) {
                     derived.thresholdMargin,
                     thresholdColor,
                     true,
+                    strategy === "threshold" ? 1 : 0.25,
                   ),
                 ]
               : []),
-            line("margin-hindsight", "Perfect hindsight", derived.hindMargin, hindColor),
+            line(
+              "margin-hindsight",
+              "Perfect hindsight",
+              derived.hindMargin,
+              hindColor,
+              false,
+              strategy === "hindsight" ? 1 : 0.25,
+            ),
           ],
         },
       },
     };
-  }, [derived, result, dark, powerStrategy]);
+  }, [derived, result, dark, strategy]);
 
   return (
-    <section className="charts" aria-label="Comparison charts">
+    <section
+      className="charts"
+      aria-label="Comparison charts; use left and right arrow keys to move the selected interval"
+      tabIndex={0}
+      onKeyDown={(event) => {
+        if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+        if (event.target instanceof HTMLInputElement) return;
+        event.preventDefault();
+        setSelected((current) =>
+          Math.max(0, Math.min(287, current + (event.key === "ArrowRight" ? 1 : -1))),
+        );
+      }}
+    >
       <div className="chart-grid">
         <Panel
           config={configs.price!}
@@ -438,34 +609,12 @@ export default function ResultCharts({ result }: { result: Result }) {
               Discharging
             </span>
           </div>
-          <div className="seg" role="group" aria-label="Power strategy">
-            <button
-              type="button"
-              className={powerStrategy === "fixed" ? "on" : ""}
-              aria-pressed={powerStrategy === "fixed"}
-              onClick={() => setPowerStrategy("fixed")}
-            >
-              Fixed
-            </button>
-            {threshold && (
-              <button
-                type="button"
-                className={powerStrategy === "threshold" ? "on" : ""}
-                aria-pressed={powerStrategy === "threshold"}
-                onClick={() => setPowerStrategy("threshold")}
-              >
-                Thresholds
-              </button>
-            )}
-            <button
-              type="button"
-              className={powerStrategy === "hindsight" ? "on" : ""}
-              aria-pressed={powerStrategy === "hindsight"}
-              onClick={() => setPowerStrategy("hindsight")}
-            >
-              Hindsight
-            </button>
-          </div>
+          <Seg
+            label="Power strategy"
+            value={strategy}
+            threshold={Boolean(threshold)}
+            onChange={setStrategy}
+          />
         </Panel>
         <Panel
           config={configs.energy!}
@@ -494,6 +643,12 @@ export default function ResultCharts({ result }: { result: Result }) {
               Perfect hindsight
             </span>
           </div>
+          <Seg
+            label="Energy strategy"
+            value={strategy}
+            threshold={Boolean(threshold)}
+            onChange={setStrategy}
+          />
         </Panel>
         <Panel
           config={configs.margin!}
@@ -522,12 +677,19 @@ export default function ResultCharts({ result }: { result: Result }) {
               Perfect hindsight
             </span>
           </div>
+          <Seg
+            label="Margin strategy"
+            value={strategy}
+            threshold={Boolean(threshold)}
+            onChange={setStrategy}
+          />
         </Panel>
       </div>
       <p className="hint">
         Price, grid-side power (positive imports, negative exports), stored energy and cumulative
-        margin share one cursor. Charts use approximate plotting numbers; the readout and tables
-        keep the stored values.
+        margin share one cursor. Hover a panel for its interval values; the energy and margin
+        selectors emphasise the same strategy on every panel. Charts use approximate plotting
+        numbers; the readout and tables keep the stored values.
       </p>
       <div className="chart-controls">
         <label>
@@ -592,8 +754,9 @@ export default function ResultCharts({ result }: { result: Result }) {
         )}
       </p>
       <p className="hint">
-        Point or tap any panel to move all four cursors. Use the controls to zoom the panels
-        together; scroll and pinch remain available to navigate the page.
+        Point or tap any panel to move all four cursors; hover also shows each panel's interval
+        values. Use the controls to zoom the panels together; scroll and pinch remain available to
+        navigate the page.
       </p>
     </section>
   );
