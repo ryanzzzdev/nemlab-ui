@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 import { coverage, day, series } from "./fixtures/prices";
 import { job, traded } from "./fixtures/simulation";
+import { hoverChartInterval } from "./helpers";
 
 test.use({ timezoneId: "Australia/Sydney" });
 
@@ -67,7 +68,7 @@ test("comparison totals, breakdown and explanation agree with the stored result"
   await page.screenshot({ path: info.outputPath("result-comparison.png"), fullPage: true });
 });
 
-test("result charts render automatically and share one cursor and window", async ({
+test("result charts render automatically at full day and share one cursor", async ({
   page,
   isMobile,
 }, info) => {
@@ -79,36 +80,45 @@ test("result charts render automatically and share one cursor and window", async
   const plots = page.locator(".chart-plot");
   await expect(plots).toHaveCount(4);
   await expect(plots.first().locator("svg")).toBeVisible();
-  const cursors = page.locator('.chart-plot path[stroke="#b04a2f"]');
+  const cursors = page.locator('.chart-plot path[stroke="#b04a2f"][stroke-width="2"]');
   await expect(cursors).toHaveCount(4);
-  const readout = page.locator(".result-comparison .chart-readout");
-  await expect(readout).toContainText("00:05 NEM UTC+10");
-  await expect(readout).toContainText("123.4567890123456789 AUD/MWh");
-  const range = page.getByRole("slider", { name: "Selected interval" });
-  await range.focus();
-  await range.press("ArrowRight");
-  await expect(readout).toContainText("00:10 NEM UTC+10");
-  await range.evaluate((el: HTMLInputElement, value: string) => {
-    const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!;
-    setter.call(el, value);
-    el.dispatchEvent(new Event("input", { bubbles: true }));
-  }, "160");
-  await expect(readout).toContainText("13:25 NEM UTC+10");
-  await expect(readout).toContainText("-10 AUD/MWh");
-  await expect(readout).toContainText("Hindsight: +1.000 MW");
-  const aligned = await cursors.evaluateAll((paths) =>
-    paths.map((path) => path.getBoundingClientRect().x),
-  );
-  expect(Math.max(...aligned) - Math.min(...aligned)).toBeLessThan(1);
-  await page.getByLabel("Visible window").selectOption("4");
-  await range.focus();
-  await range.press("End");
-  await expect(readout).toContainText("00:00 +1 day NEM UTC+10");
-  const zoomed = await cursors.evaluateAll((paths) =>
-    paths.map((path) => path.getBoundingClientRect().x),
-  );
-  expect(Math.max(...zoomed) - Math.min(...zoomed)).toBeLessThan(1);
-  await page.getByLabel("Visible window").selectOption("0");
+  // No visible-window or interval-slider controls: the panels always cover the
+  // full day and interval values come from the connected axis tooltips.
+  await expect(page.getByLabel("Visible window")).toHaveCount(0);
+  await expect(page.getByRole("slider")).toHaveCount(0);
+  await expect(page.locator(".chart-readout")).toHaveCount(0);
+  // Hovering the price panel shows the exact stored price at that interval,
+  // and the connected panels show their own values for the same interval.
+  await hoverChartInterval(page, { panel: 0, interval: 0 });
+  await expect(plots.first()).toContainText("interval 1/288");
+  await expect(plots.first()).toContainText("123.4567890123456789 AUD/MWh");
+  await expect(plots.nth(1)).toContainText("interval 1/288");
+  await expect(plots.nth(3)).toContainText("interval 1/288");
+  // The negative-price interval reports the price and the hindsight dispatch.
+  await hoverChartInterval(page, { panel: 1, interval: 160 });
+  await expect(plots.nth(1)).toContainText("interval 161/288");
+  await expect(plots.nth(1)).toContainText("+1.000");
+  // The domain always ends at 00:00 +1 day — no window narrows it.
+  await hoverChartInterval(page, { panel: 0, interval: 287 });
+  await expect(plots.first()).toContainText("interval 288/288");
+  await expect(plots.first()).toContainText("00:00 +1 day");
+  // The selected mark lines stay aligned; arrow keys move them one interval.
+  const aligned = async () =>
+    Math.max(
+      ...(await cursors.evaluateAll((paths) => paths.map((p) => p.getBoundingClientRect().x))),
+    ) -
+    Math.min(
+      ...(await cursors.evaluateAll((paths) => paths.map((p) => p.getBoundingClientRect().x))),
+    );
+  expect(await aligned()).toBeLessThan(1);
+  const before = (await cursors.first().boundingBox())!.x;
+  await page.locator(".charts").focus();
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowRight");
+  await expect
+    .poll(async () => (await cursors.first().boundingBox())!.x - before)
+    .toBeGreaterThan(0);
+  expect(await aligned()).toBeLessThan(1);
   // Clicking inside any one panel moves all four selected cursors together;
   // hover alone only shows the native tooltips.
   const firstPlot = plots.first();
@@ -118,12 +128,17 @@ test("result charts render automatically and share one cursor and window", async
     ? page.touchscreen.tap.bind(page.touchscreen)
     : (x: number, y: number) => page.mouse.click(x, y);
   await tap(box.x + 48 + (box.width - 60) * 0.6, box.y + box.height / 2);
-  await expect.poll(async () => Number(await range.inputValue())).toBeGreaterThan(150);
+  await expect
+    .poll(async () => (await cursors.first().boundingBox())!.x - (box.x + 48))
+    .toBeGreaterThan((box.width - 60) * 0.55);
   const lastPlot = plots.nth(3);
   await lastPlot.scrollIntoViewIfNeeded();
   const marginBox = (await lastPlot.boundingBox())!;
   await tap(marginBox.x + 48 + (marginBox.width - 60) * 0.3, marginBox.y + marginBox.height / 2);
-  await expect.poll(async () => Number(await range.inputValue())).toBeLessThan(120);
+  await expect
+    .poll(async () => (await cursors.first().boundingBox())!.x - (marginBox.x + 48))
+    .toBeLessThan((marginBox.width - 60) * 0.35);
+  expect(await aligned()).toBeLessThan(1);
   await page.screenshot({ path: info.outputPath("result-charts.png"), fullPage: true });
 });
 
@@ -133,7 +148,6 @@ test("the power panel switches strategies and the shared cursor survives appeara
   await submit(page);
   const plots = page.locator(".chart-plot");
   await expect(plots).toHaveCount(4);
-  const readout = page.locator(".result-comparison .chart-readout");
   // The same segmented control sits on all three strategy panels and stays in
   // sync; the energy and margin panels emphasise the selected strategy.
   const cards = page.locator(".chart-card");
@@ -157,18 +171,23 @@ test("the power panel switches strategies and the shared cursor survives appeara
   await expect(plots.first()).toContainText(/interval \d+\/288/);
   await expect(plots.first()).toContainText("AUD/MWh");
   await expect(plots.nth(1)).toContainText(/interval \d+\/288/);
-  const range = page.getByRole("slider", { name: "Selected interval" });
-  await range.focus();
-  await range.press("ArrowRight");
+  // Arrow keys move the shared selected cursor without a slider.
+  await page.locator(".charts").focus();
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowRight");
+  const lightCursors = page.locator('.chart-plot path[stroke="#b04a2f"][stroke-width="2"]');
+  const beforeX = (await lightCursors.first().boundingBox())!.x;
   await page.getByRole("combobox", { name: "Appearance" }).selectOption("dark");
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await expect(plots.first().locator("svg")).toBeVisible();
-  const cursors = page.locator('.chart-plot path[stroke="#ffa48b"]');
+  const cursors = page.locator('.chart-plot path[stroke="#ffa48b"][stroke-width="2"]');
   await expect(cursors).toHaveCount(4);
-  await range.press("ArrowRight");
-  await expect(readout).toContainText("00:15 NEM UTC+10");
-  await expect(readout).toContainText("Price: 0 AUD/MWh");
-  await page.getByLabel("Visible window").selectOption("4");
+  // The selected interval survives the theme swap at the same position.
+  expect(Math.abs((await cursors.first().boundingBox())!.x - beforeX)).toBeLessThan(1);
+  // Hovering the first interval still reports its exact price in the dark card.
+  await hoverChartInterval(page, { panel: 0, interval: 0 });
+  await expect(plots.first()).toContainText("interval 1/288");
+  await expect(plots.first()).toContainText("123.4567890123456789 AUD/MWh");
   const aligned = await cursors.evaluateAll((paths) =>
     paths.map((path) => path.getBoundingClientRect().x),
   );

@@ -101,19 +101,22 @@ nowrap`) with the full value duplicated in `title`. Note: the global
   hover through React state: a `mousemove → setState → setOption` loop per
   panel is what made the cursor feel heavy. Tooltips render per mousemove for
   free in ECharts.
-- The **selected** interval is a discrete state (mark line + slider +
-  `.chart-readout`) set by click, arrow keys on the charts region, or the
-  window/slider controls. `aria-live` belongs only on these discrete updates —
-  never on per-hover text.
+- Charts always cover the **full day** (all 288 intervals). Do not add
+  visible-window selectors or zoom controls — a market day fits comfortably in
+  one panel width and windowing was not worth the extra controls.
+- The **selected** interval is a discrete state (mark line on every panel)
+  set by click/tap or arrow keys on the charts region — no slider, no
+  `.chart-readout`. Interval data lives in the axis tooltips and the exact
+  interval tables; `aria-live` text was retired with the readout.
 - **Emphasise, don't hide**: when a panel shows multiple strategy series and
   one is selected, dim the rest (`lineStyle.opacity ≈ 0.25`) — comparison is
   the chart's purpose. Power bars are the exception (single strategy can't
   overlay).
-- Chart values shown in tooltips/readouts keep exact stored precision; a hint
-  notes "charts use approximate plotting numbers; the readout and tables keep
-  the stored values."
+- Chart values shown in tooltips keep exact stored precision; a hint notes
+  "charts use approximate plotting numbers; the exact table keeps the stored
+  values."
 - Every chart gets `role="img"` + `aria-label` describing what it plots and
-  pointing keyboard/AT users to the readout, slider, and detail table.
+  pointing keyboard/AT users to hover, arrow keys, and the detail table.
 
 ## Strategy colour language
 

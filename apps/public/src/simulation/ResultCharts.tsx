@@ -7,7 +7,6 @@ import {
   GridComponent,
   MarkAreaComponent,
   MarkLineComponent,
-  DataZoomInsideComponent,
   TooltipComponent,
 } from "echarts/components";
 import { SVGRenderer } from "echarts/renderers";
@@ -21,18 +20,9 @@ use([
   GridComponent,
   MarkAreaComponent,
   MarkLineComponent,
-  DataZoomInsideComponent,
   TooltipComponent,
   SVGRenderer,
 ]);
-
-const windows = [
-  { label: "Full day", start: 0, end: 287 },
-  { label: "00:00–06:00", start: 0, end: 71 },
-  { label: "06:00–12:00", start: 72, end: 143 },
-  { label: "12:00–18:00", start: 144, end: 215 },
-  { label: "18:00–24:00", start: 216, end: 287 },
-];
 
 type PanelConfig = {
   option: Record<string, unknown>;
@@ -43,7 +33,6 @@ type PanelConfig = {
 function Panel({
   config,
   selected,
-  window,
   onSelect,
   dark,
   aria,
@@ -51,7 +40,6 @@ function Panel({
 }: {
   config: PanelConfig;
   selected: number;
-  window: { start: number; end: number };
   onSelect: (index: number) => void;
   dark: boolean;
   aria: string;
@@ -80,14 +68,22 @@ function Panel({
     instance.group = "nemlab-charts";
     connect("nemlab-charts");
     instance.setOption(config.option);
-    instance.getZr().on("click", (event: { offsetX: number; offsetY: number }) => {
+    // mousedown, not click: taps on touch devices never produce a click when
+    // the page shifts mid-gesture, but every press starts with mousedown.
+    instance.getZr().on("mousedown", (event: { offsetX: number; offsetY: number }) => {
       const point = [event.offsetX, event.offsetY];
       if (instance.containPixel({ gridIndex: 0 }, point)) {
         const coordinate = instance.convertFromPixel({ gridIndex: 0 }, point) as number[];
         onSelect(Math.max(0, Math.min(287, Math.round(coordinate[0]!))));
       }
     });
-    const observer = new ResizeObserver(() => instance.resize());
+    // A resize re-renders the axis pointer at its stale hover coordinates,
+    // which can re-show the tooltip outside the new grid — clear the pointer
+    // state after resizing so it cannot stick out of the viewport.
+    const observer = new ResizeObserver(() => {
+      instance.resize();
+      instance.dispatchAction({ type: "updateAxisPointer", currTrigger: "leave" });
+    });
     observer.observe(host.current);
     return () => {
       observer.disconnect();
@@ -98,7 +94,6 @@ function Panel({
 
   useEffect(() => {
     chart.current?.setOption({
-      dataZoom: [{ startValue: window.start, endValue: window.end }],
       series: [
         {
           id: config.cursorOn,
@@ -125,7 +120,7 @@ function Panel({
         },
       ],
     });
-  }, [config, selected, window, dark]);
+  }, [config, selected, dark]);
 
   return (
     <div className="chart-card">
@@ -174,9 +169,7 @@ function Seg({
 export default function ResultCharts({ result }: { result: Result }) {
   const { dark } = useTheme();
   const [selected, setSelected] = useState(0);
-  const [windowIndex, setWindowIndex] = useState(0);
   const [strategy, setStrategy] = useState<StrategyKey>("hindsight");
-  const window = windows[windowIndex]!;
   const threshold = result.threshold;
 
   const derived = useMemo(() => {
@@ -222,8 +215,8 @@ export default function ResultCharts({ result }: { result: Result }) {
         type: "category",
         data: derived.labels,
         boundaryGap: false,
-        // Keep identical interval coordinates across line and bar panels,
-        // including zoomed endpoints (bars otherwise add half-band padding).
+        // Keep identical interval coordinates across line and bar panels
+        // (bars otherwise add half-band padding at the day edges).
         containShape: false,
         axisLabel: { hideOverlap: true, fontSize: 10, color: text },
         axisLine: { lineStyle: { color: axisLine } },
@@ -236,16 +229,6 @@ export default function ResultCharts({ result }: { result: Result }) {
         nameTextStyle: { color: text },
         splitLine: { lineStyle: { color: rule } },
       },
-      dataZoom: [
-        {
-          type: "inside",
-          xAxisIndex: 0,
-          disabled: true,
-          filterMode: "none",
-          startValue: 0,
-          endValue: 287,
-        },
-      ],
     });
     const line = (
       id: string,
@@ -565,10 +548,9 @@ export default function ResultCharts({ result }: { result: Result }) {
         <Panel
           config={configs.price!}
           selected={selected}
-          window={window}
           onSelect={setSelected}
           dark={dark}
-          aria="Stored price with charge and discharge window bands and negative-price runs marked. Use the interval and window controls or the interval detail table for an accessible alternative."
+          aria="Stored price for the full day with charge and discharge window bands and negative-price runs marked. Hover for interval values; the interval detail table is the accessible alternative."
         >
           <h3 className="chart-title">
             Regional price <span>AUD/MWh</span>
@@ -591,7 +573,6 @@ export default function ResultCharts({ result }: { result: Result }) {
         <Panel
           config={configs.power!}
           selected={selected}
-          window={window}
           onSelect={setSelected}
           dark={dark}
           aria="Grid-side power for the selected strategy: positive imports while charging, negative exports while discharging."
@@ -619,7 +600,6 @@ export default function ResultCharts({ result }: { result: Result }) {
         <Panel
           config={configs.energy!}
           selected={selected}
-          window={window}
           onSelect={setSelected}
           dark={dark}
           aria="Stored energy for each strategy with minimum and maximum site limits marked."
@@ -653,7 +633,6 @@ export default function ResultCharts({ result }: { result: Result }) {
         <Panel
           config={configs.margin!}
           selected={selected}
-          window={window}
           onSelect={setSelected}
           dark={dark}
           aria="Cumulative trading margin for each strategy."
@@ -687,76 +666,10 @@ export default function ResultCharts({ result }: { result: Result }) {
       </div>
       <p className="hint">
         Price, grid-side power (positive imports, negative exports), stored energy and cumulative
-        margin share one cursor. Hover a panel for its interval values; the energy and margin
-        selectors emphasise the same strategy on every panel. Charts use approximate plotting
-        numbers; the readout and tables keep the stored values.
-      </p>
-      <div className="chart-controls">
-        <label>
-          Visible window
-          <select
-            value={windowIndex}
-            onChange={(event) => {
-              const next = Number(event.target.value);
-              setWindowIndex(next);
-              setSelected((current) =>
-                Math.max(windows[next]!.start, Math.min(windows[next]!.end, current)),
-              );
-            }}
-          >
-            {windows.map((value, index) => (
-              <option value={index} key={value.label}>
-                {value.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Selected interval
-          <input
-            type="range"
-            min={window.start}
-            max={window.end}
-            value={selected}
-            aria-valuetext={`${endLabel(result.prices[selected]!.end, selected)} NEM UTC+10`}
-            onChange={(event) => setSelected(Number(event.target.value))}
-          />
-        </label>
-      </div>
-      <p className="chart-readout" aria-live="polite">
-        Interval end: <strong>{endLabel(result.prices[selected]!.end, selected)} NEM UTC+10</strong>
-        <br />
-        Price: <strong>{result.prices[selected]!.price} AUD/MWh</strong>
-        <br />
-        Fixed:{" "}
-        <strong>
-          {signedMw(derived.fixedMW[selected]!)} MW · {mwh(derived.fixedEnergy[selected]!)} MWh
-          stored · {aud(derived.fixedMargin[selected]!)} cumulative
-        </strong>
-        <br />
-        Hindsight:{" "}
-        <strong>
-          {signedMw(derived.hindMW[selected]!)} MW · {mwh(derived.hindEnergy[selected]!)} MWh stored
-          · {aud(derived.hindMargin[selected]!)} cumulative
-        </strong>
-        {threshold && (
-          <>
-            <br />
-            Thresholds:{" "}
-            <strong>
-              {signedMw(derived.thresholdMW![selected]!)} MW ·{" "}
-              {mwh(derived.thresholdEnergy![selected]!)} MWh stored ·{" "}
-              {aud(derived.thresholdMargin![selected]!)} cumulative
-            </strong>
-            {" — "}
-            {thresholdAction(result, selected)}
-          </>
-        )}
-      </p>
-      <p className="hint">
-        Point or tap any panel to move all four cursors; hover also shows each panel's interval
-        values. Use the controls to zoom the panels together; scroll and pinch remain available to
-        navigate the page.
+        margin share one cursor. Hover a panel for its interval values; click or use the arrow keys
+        to move the selected interval, and the energy and margin selectors emphasise the same
+        strategy on every panel. Charts use approximate plotting numbers; the interval detail table
+        keeps the stored values.
       </p>
     </section>
   );

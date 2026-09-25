@@ -71,9 +71,7 @@ test("appearance stays usable without storage and product layouts fit narrow scr
   expect(errors).toEqual([]);
 });
 
-test("charts keep the selected interval and window when appearance changes", async ({
-  page,
-}, info) => {
+test("charts keep the selected interval when appearance changes", async ({ page }, info) => {
   await page.route("**/api/**", (route) =>
     route.fulfill({
       json: route.request().url().includes("coverage?")
@@ -84,15 +82,16 @@ test("charts keep the selected interval and window when appearance changes", asy
   await page.goto("/prices");
   await page.getByLabel("Market day").fill(day);
   await page.getByRole("button", { name: "Check prices" }).click();
-  await page.getByLabel("Visible window").selectOption("1");
-  const slider = page.getByRole("slider", { name: "Selected interval" });
-  await slider.focus();
-  await slider.press("End");
-  const readout = await page.locator(".chart-readout").textContent();
+  const plot = page.locator(".chart-plot");
+  const box = (await plot.boundingBox())!;
+  await page.mouse.click(box.x + 48 + (box.width - 60) * 0.6, box.y + box.height / 2);
+  const cursor = page.locator('.chart-plot path[stroke="#b04a2f"][stroke-width="2"]');
+  await expect(cursor).toHaveCount(1);
+  const beforeX = (await cursor.boundingBox())!.x;
   await page.getByRole("combobox", { name: "Appearance" }).selectOption("dark");
   await expect(page.locator('.chart-plot path[stroke="#ffb020"]')).toHaveCount(1);
-  await expect(page.locator('.chart-plot path[stroke="#ffa48b"]')).toHaveCount(1);
-  await expect(page.locator(".chart-readout")).toHaveText(readout!);
-  await expect(page.getByLabel("Visible window")).toHaveValue("1");
+  await expect(page.locator('.chart-plot path[stroke="#ffa48b"][stroke-width="2"]')).toHaveCount(1);
+  const darkCursor = page.locator('.chart-plot path[stroke="#ffa48b"][stroke-width="2"]');
+  expect(Math.abs((await darkCursor.boundingBox())!.x - beforeX)).toBeLessThan(1);
   await page.screenshot({ path: info.outputPath("prices-dark-chart.png"), fullPage: true });
 });

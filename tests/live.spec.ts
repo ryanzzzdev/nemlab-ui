@@ -20,10 +20,11 @@ test("submits a real simulation and retrieves a worker-produced result", async (
     page.locator(".chart-card").nth(1).getByRole("button", { name: "Thresholds", exact: true }),
   ).toBeVisible();
   await page.locator("summary", { hasText: "Interval detail" }).click();
+  const intervals = page.locator("details", { hasText: "Interval detail" });
   await expect(
-    page.getByRole("table").nth(1).getByRole("columnheader", { name: "Thresholds MW" }).first(),
+    intervals.getByRole("columnheader", { name: "Thresholds MW" }).first(),
   ).toBeVisible();
-  await expect(page.getByRole("table").nth(1).getByRole("row")).toHaveCount(289);
+  await expect(intervals.getByRole("row")).toHaveCount(289);
   const first = await page.locator(".job .revision").first().textContent();
   await page.getByRole("button", { name: "Run simulation" }).click();
   await expect(page.getByRole("heading", { name: "Stored result ready" })).toBeVisible();
@@ -77,8 +78,12 @@ test("reads complete, incomplete and absent days through the real API proxy", as
   await expect(page.getByRole("heading", { name: "Incomplete", exact: true })).toBeVisible();
   await page.locator("summary", { hasText: "Exact interval values" }).click();
   await expect(page.getByRole("cell", { name: "Source null", exact: true })).toBeVisible();
-  await expect(page.locator('.chart-plot path[stroke="#b04a2f"]')).toHaveCount(1);
-  await expect(page.locator(".chart-readout")).toContainText("123.4567890123456789 AUD/MWh");
+  await expect(page.locator('.chart-plot path[stroke="#b04a2f"][stroke-width="2"]')).toHaveCount(1);
+  const plot = page.locator(".chart-plot");
+  const box = (await plot.boundingBox())!;
+  await page.mouse.move(box.x + 48, box.y + box.height / 2);
+  await expect(plot).toContainText("interval 1/288");
+  await expect(plot).toContainText("123.4567890123456789 AUD/MWh");
   await page.screenshot({ path: info.outputPath("prices.png"), fullPage: true, scale: "css" });
   await page.getByLabel("Market day").fill("2023-10-03");
   await page.getByRole("button", { name: "Check prices" }).click();

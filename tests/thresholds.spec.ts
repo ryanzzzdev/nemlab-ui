@@ -1,8 +1,7 @@
 import { expect, test } from "@playwright/test";
-import type { Page } from "@playwright/test";
 import { coverage, day, series } from "./fixtures/prices";
 import { id, job, thresholded, traded } from "./fixtures/simulation";
-import { openSection } from "./helpers";
+import { hoverChartInterval, openSection } from "./helpers";
 
 test.use({ timezoneId: "Australia/Sydney" });
 
@@ -23,16 +22,6 @@ test.beforeEach(async ({ page }) => {
   await page.goto("/batterylab");
   await page.getByLabel("Simulation day").fill(day);
 });
-
-function setRange(page: Page, value: string) {
-  return page
-    .getByRole("slider", { name: "Selected interval" })
-    .evaluate((el: HTMLInputElement, v: string) => {
-      const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!;
-      setter.call(el, v);
-      el.dispatchEvent(new Event("input", { bubbles: true }));
-    }, value);
-}
 
 test("threshold inputs are default, validated and submitted with every run", async ({ page }) => {
   const charge = page.getByLabel("Charge below (AUD/MWh)");
@@ -96,15 +85,15 @@ test("threshold results share equal prominence with the other strategies", async
   const pricePanel = page.locator(".chart-plot").first();
   await expect(pricePanel).toContainText("Charge < -5");
   await expect(pricePanel).toContainText("Discharge > 50");
-  // The readout explains the rule's action at the selected interval.
-  const readout = comparison.locator(".chart-readout");
-  await expect(readout).toContainText("Thresholds:");
+  // The power tooltip explains the rule's action at the hovered interval.
+  const power = page.locator(".result-comparison .chart-plot").nth(1);
   // Interval 0 is above the discharge threshold but the battery starts empty.
-  await expect(readout).toContainText("Hold: already empty");
-  await setRange(page, "160");
-  await expect(readout).toContainText("Charge: below threshold (power limit)");
-  await setRange(page, "100");
-  await expect(readout).toContainText("Hold: price between thresholds");
+  await hoverChartInterval(page, { panel: 1, interval: 0 });
+  await expect(power).toContainText("Hold: already empty");
+  await hoverChartInterval(page, { panel: 1, interval: 160 });
+  await expect(power).toContainText("Charge: below threshold (power limit)");
+  await hoverChartInterval(page, { panel: 1, interval: 100 });
+  await expect(power).toContainText("Hold: price between thresholds");
   // The exact table carries the threshold columns and the methodology caveat.
   await page.locator("summary", { hasText: "Interval detail" }).click();
   const intervals = comparison.getByRole("table").last();
