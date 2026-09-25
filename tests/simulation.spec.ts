@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { coverage, day, series } from "./fixtures/prices";
 import { id, job, result } from "./fixtures/simulation";
+import { openSection } from "./helpers";
 
 test.beforeEach(async ({ page }) => {
   await page.route("**/api/v1/prices/**", (route) =>
@@ -40,7 +41,9 @@ test("submits exact inputs once, polls progress and retrieves the stored result"
       json: job(polls === 1 ? "RUNNING" : "SUCCEEDED"),
     });
   });
+  await openSection(page, "Aggregate site");
   await page.getByLabel("Capacity (MWh)", { exact: true }).fill("2.000000000000000001");
+  await openSection(page, "Schedule windows");
   await page.getByLabel("Discharge end").fill("24:00");
   await page.getByRole("button", { name: "Run simulation" }).click();
   await expect(page.getByText("Queued — waiting", { exact: false })).toBeVisible();
@@ -67,13 +70,17 @@ test("validates exact energy bounds, decimals, efficiency and ordered windows wi
   page.on("request", (r) => {
     if (r.url().includes("/api/")) requests++;
   });
+  await openSection(page, "Stored energy");
   await page.getByLabel("Initial energy").fill("2.000000000000000001");
   await page.getByRole("button", { name: "Run simulation" }).click();
   await expect(page.getByLabel("Initial energy")).toBeFocused();
   await expect(page.getByLabel("Initial energy")).toHaveAttribute("aria-invalid", "true");
   await page.getByLabel("Initial energy").fill("0");
+  await openSection(page, "Efficiency");
   await page.getByLabel("Round-trip efficiency").fill("0.00001");
+  await openSection(page, "Schedule windows");
   await page.getByLabel("Charge start (HH:MM)", { exact: true }).fill("10:01");
+  await openSection(page, "Aggregate site");
   await page.getByLabel("Capacity (MWh)", { exact: true }).fill("1e3");
   await page.getByRole("button", { name: "Run simulation" }).click();
   await expect(page.getByLabel("Capacity (MWh)", { exact: true })).toHaveAttribute(
@@ -91,6 +98,35 @@ test("validates exact energy bounds, decimals, efficiency and ordered windows wi
   await page.getByRole("button", { name: "Run simulation" }).click();
   await expect(page.getByText("Use one nonempty charge window", { exact: false })).toBeVisible();
   expect(requests).toBe(0);
+});
+
+test("scenario groups collapse behind disclosures and controls share one height", async ({
+  page,
+}) => {
+  // The introduction stays on a single line at desktop width; a narrow
+  // viewport may still wrap it.
+  if ((page.viewportSize()?.width ?? 0) > 900) {
+    const intro = await page.locator(".intro").boundingBox();
+    expect(intro!.height).toBeLessThan(30);
+  }
+  // Only the Market day group is open; every other group starts collapsed.
+  const groups = page.locator("details.scenario-group");
+  await expect(groups).toHaveCount(7);
+  await expect(page.locator("details.scenario-group[open]")).toHaveCount(1);
+  await expect(groups.first()).toHaveAttribute("open");
+  await expect(groups.first().locator("summary")).toHaveText("Market day");
+  await expect(page.getByLabel("Simulation region", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Capacity (MWh)", { exact: true })).toBeHidden();
+  // A summary toggles its group in both directions.
+  await openSection(page, "Aggregate site");
+  await expect(page.getByLabel("Capacity (MWh)", { exact: true })).toBeVisible();
+  await openSection(page, "Aggregate site");
+  await expect(page.getByLabel("Capacity (MWh)", { exact: true })).toBeHidden();
+  // The date picker shares the compact height of the other scenario controls.
+  await openSection(page, "Aggregate site");
+  const dayBox = await page.getByLabel("Simulation day").boundingBox();
+  const textBox = await page.getByLabel("Capacity (MWh)", { exact: true }).boundingBox();
+  expect(Math.abs(dayBox!.height - textBox!.height)).toBeLessThan(1);
 });
 
 test("an uncovered day requests a price fetch then submits when coverage arrives", async ({
@@ -176,6 +212,7 @@ test("separate efficiencies omit round trip and terminal duplicates do not resta
     });
     return route.fulfill({ json: job("FAILED") });
   });
+  await openSection(page, "Efficiency");
   await page.getByRole("radio", { name: "Separate legs" }).check();
   await page.getByRole("button", { name: "Run simulation" }).click();
   await expect(page.getByRole("alert")).toContainText("does not restart it");

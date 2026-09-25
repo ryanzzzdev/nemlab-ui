@@ -1,10 +1,12 @@
 import { expect, test } from "@playwright/test";
+import { openSection } from "./helpers";
 
 test("submits a real simulation and retrieves a worker-produced result", async ({ page }, info) => {
   await page.goto("/batterylab");
   await page.getByLabel("Simulation day").fill("2023-10-01");
   // Price thresholds are a default third strategy — the real worker runs the
   // threshold engine and the stored result carries all three strategies.
+  await openSection(page, "Price thresholds");
   await page.getByLabel("Charge below (AUD/MWh)").fill("-50");
   await page.getByLabel("Discharge above (AUD/MWh)").fill("200");
   await page.getByRole("button", { name: "Run simulation" }).click();

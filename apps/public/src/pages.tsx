@@ -45,7 +45,7 @@ export function BatteryLab() {
       title="BatteryLab — NEMLab"
       eyebrow="BatteryLab"
       heading="What could a battery do?"
-      introduction="Compare a fixed trading schedule, an all-day price-threshold rule and the best outcome available in hindsight, using the same battery limits."
+      introduction="Compare a fixed schedule, an all-day price rule and perfect hindsight."
     >
       <BatteryWorkspace />
     </Page>

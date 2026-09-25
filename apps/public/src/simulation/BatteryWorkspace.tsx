@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { FormEvent } from "react";
+import type { FormEvent, ReactNode } from "react";
 import { Link, useSearchParams } from "react-router";
 import { marketDay, nextDay } from "../prices/client";
 import { fields, initialForm, prepare, costFields, windowFields } from "./scenario";
@@ -23,8 +23,21 @@ function wait(seconds: number, signal: AbortSignal) {
   });
 }
 
+// Scenario groups collapse into disclosures; a group containing a field error
+// is forced open so the invalid control is never hidden.
+const groupFields: Record<string, (keyof Form)[]> = {
+  market: ["day"],
+  site: ["capacityMWh", "chargeMW", "dischargeMW", "importLimitMW", "exportLimitMW"],
+  energy: ["minimumMWh", "maximumMWh", "initialMWh"],
+  efficiency: ["efficiencyMode", "roundTrip", "charge", "discharge"],
+  costs: [...costFields],
+  windows: [...windowFields],
+  thresholds: ["chargeBelow", "dischargeAbove"],
+};
+
 export function BatteryWorkspace() {
   const [form, setForm] = useState(initialForm);
+  const [openGroups, setOpenGroups] = useState(() => new Set<string>(["market"]));
   const [errors, setErrors] = useState<Errors>({});
   const [job, setJob] = useState<Job | null>(null);
   const [result, setResult] = useState<Result | null>(null);
@@ -53,10 +66,29 @@ export function BatteryWorkspace() {
               ? ["queued", "Queued"]
               : ["ready", "Ready"];
   useEffect(() => () => active.current?.abort(), []);
+  // Rejected fields open their group before focus; the second effect focuses
+  // once every needed group is committed open, and only once per errors object.
+  const focusedErrors = useRef<Errors | null>(null);
   useEffect(() => {
-    if (Object.keys(errors).length)
-      formRef.current?.querySelector<HTMLElement>("[aria-invalid=true]")?.focus();
+    const rejected = new Set(Object.keys(errors));
+    if (!rejected.size) return;
+    setOpenGroups((current) => {
+      const next = new Set(current);
+      for (const [group, members] of Object.entries(groupFields))
+        if (members.some((member) => rejected.has(member))) next.add(group);
+      return next;
+    });
   }, [errors]);
+  useEffect(() => {
+    const rejected = new Set(Object.keys(errors));
+    if (!rejected.size || focusedErrors.current === errors) return;
+    const needed = Object.entries(groupFields)
+      .filter(([, members]) => members.some((member) => rejected.has(member)))
+      .map(([group]) => group);
+    if (!needed.every((group) => openGroups.has(group))) return;
+    focusedErrors.current = errors;
+    formRef.current?.querySelector<HTMLElement>("[aria-invalid=true]")?.focus();
+  }, [errors, openGroups]);
   useEffect(() => {
     if (!linkedId) return;
     if (!uuid.test(linkedId)) {
@@ -319,6 +351,31 @@ export function BatteryWorkspace() {
       </label>
     );
   }
+  // Collapsible scenario group: a native disclosure keeps keyboard and
+  // screen-reader semantics; the inner fieldset still carries disabled state.
+  function section(key: string, title: string, children: ReactNode) {
+    return (
+      <details
+        className="scenario-group"
+        open={openGroups.has(key)}
+        onToggle={(e) => {
+          const open = e.currentTarget.open;
+          setOpenGroups((current) => {
+            const next = new Set(current);
+            if (open) next.add(key);
+            else next.delete(key);
+            return next;
+          });
+        }}
+      >
+        <summary>{title}</summary>
+        <fieldset disabled={busy}>
+          <legend className="sr-only">{title}</legend>
+          {children}
+        </fieldset>
+      </details>
+    );
+  }
   return (
     <div className="lab-layout simulation-layout">
       <form
@@ -329,8 +386,9 @@ export function BatteryWorkspace() {
         aria-label="Battery scenario"
       >
         <h2>Scenario</h2>
-        <fieldset disabled={busy}>
-          <legend>Market day</legend>
+        {section(
+          "market",
+          "Market day",
           <div className="scenario-fields">
             <label>
               <span id="label-region">Simulation region</span>
@@ -362,91 +420,106 @@ export function BatteryWorkspace() {
                 </span>
               )}
             </label>
-          </div>
-        </fieldset>
-        <fieldset disabled={busy}>
-          <legend>Aggregate site</legend>
+          </div>,
+        )}
+        {section(
+          "site",
+          "Aggregate site",
           <div className="scenario-fields">
             <div className="field-full">{input("capacityMWh")}</div>
             {input("chargeMW")}
             {input("dischargeMW")}
             {input("importLimitMW")}
             {input("exportLimitMW")}
-          </div>
-        </fieldset>
-        <fieldset disabled={busy}>
-          <legend>Stored energy</legend>
-          <div className="scenario-fields">
-            {input("minimumMWh")}
-            {input("maximumMWh")}
-            {input("initialMWh")}
-          </div>
-          <p className="hint">
-            Terminal energy equals initial energy for the fixed schedule and hindsight strategies;
-            price thresholds may differ.
-          </p>
-        </fieldset>
-        <fieldset disabled={busy}>
-          <legend>Efficiency</legend>
-          <div className="radio-row">
-            <label>
-              <input
-                type="radio"
-                name="efficiency-mode"
-                checked={form.efficiencyMode === "roundTrip"}
-                aria-invalid={Boolean(errors.efficiencyMode)}
-                aria-describedby={errors.efficiencyMode ? "error-efficiency" : undefined}
-                onChange={() => change("efficiencyMode", "roundTrip")}
-              />
-              Round trip
-            </label>
-            <label>
-              <input
-                type="radio"
-                name="efficiency-mode"
-                checked={form.efficiencyMode === "legs"}
-                onChange={() => change("efficiencyMode", "legs")}
-              />
-              Separate legs
-            </label>
-          </div>
-          {errors.efficiencyMode && (
-            <span className="field-error" id="error-efficiency">
-              {errors.efficiencyMode}
-            </span>
-          )}
-          <div className="scenario-fields">
-            {form.efficiencyMode === "roundTrip"
-              ? input("roundTrip")
-              : ["charge", "discharge"].map((key) => input(key as Field))}
-          </div>
-          <p className="hint">
-            Round-trip efficiency is split into equal square-root charge and discharge efficiencies.
-          </p>
-        </fieldset>
-        <fieldset disabled={busy}>
-          <legend>Variable costs</legend>
-          <div className="scenario-fields">{costFields.map(input)}</div>
-        </fieldset>
-        <fieldset disabled={busy}>
-          <legend>Schedule windows — fixed schedule and hindsight only</legend>
-          <div className="scenario-fields">{windowFields.map(input)}</div>
-          <p className="hint">
-            NEM UTC+10, five-minute steps. One charge window, then one discharge window. Use 24:00
-            for next midnight. Price thresholds run all day and ignore these windows.
-          </p>
-        </fieldset>
-        <fieldset disabled={busy}>
-          <legend>Price thresholds</legend>
-          <div className="scenario-fields">
-            {input("chargeBelow")}
-            {input("dischargeAbove")}
-          </div>
-          <p className="hint">
-            All-day price rule: charge below, discharge above, otherwise hold. It ignores the
-            schedule windows and may finish with different stored energy.
-          </p>
-        </fieldset>
+          </div>,
+        )}
+        {section(
+          "energy",
+          "Stored energy",
+          <>
+            <div className="scenario-fields">
+              {input("minimumMWh")}
+              {input("maximumMWh")}
+              {input("initialMWh")}
+            </div>
+            <p className="hint">
+              Terminal energy equals initial energy for the fixed schedule and hindsight strategies;
+              price thresholds may differ.
+            </p>
+          </>,
+        )}
+        {section(
+          "efficiency",
+          "Efficiency",
+          <>
+            <div className="radio-row">
+              <label>
+                <input
+                  type="radio"
+                  name="efficiency-mode"
+                  checked={form.efficiencyMode === "roundTrip"}
+                  aria-invalid={Boolean(errors.efficiencyMode)}
+                  aria-describedby={errors.efficiencyMode ? "error-efficiency" : undefined}
+                  onChange={() => change("efficiencyMode", "roundTrip")}
+                />
+                Round trip
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name="efficiency-mode"
+                  checked={form.efficiencyMode === "legs"}
+                  onChange={() => change("efficiencyMode", "legs")}
+                />
+                Separate legs
+              </label>
+            </div>
+            {errors.efficiencyMode && (
+              <span className="field-error" id="error-efficiency">
+                {errors.efficiencyMode}
+              </span>
+            )}
+            <div className="scenario-fields">
+              {form.efficiencyMode === "roundTrip"
+                ? input("roundTrip")
+                : ["charge", "discharge"].map((key) => input(key as Field))}
+            </div>
+            <p className="hint">
+              Round-trip efficiency is split into equal square-root charge and discharge
+              efficiencies.
+            </p>
+          </>,
+        )}
+        {section(
+          "costs",
+          "Variable costs",
+          <div className="scenario-fields">{costFields.map(input)}</div>,
+        )}
+        {section(
+          "windows",
+          "Schedule windows — fixed schedule and hindsight only",
+          <>
+            <div className="scenario-fields">{windowFields.map(input)}</div>
+            <p className="hint">
+              NEM UTC+10, five-minute steps. One charge window, then one discharge window. Use 24:00
+              for next midnight. Price thresholds run all day and ignore these windows.
+            </p>
+          </>,
+        )}
+        {section(
+          "thresholds",
+          "Price thresholds",
+          <>
+            <div className="scenario-fields">
+              {input("chargeBelow")}
+              {input("dischargeAbove")}
+            </div>
+            <p className="hint">
+              All-day price rule: charge below, discharge above, otherwise hold. It ignores the
+              schedule windows and may finish with different stored energy.
+            </p>
+          </>,
+        )}
         <div className="btns">
           <button type="submit" className="primary" disabled={busy}>
             Run simulation

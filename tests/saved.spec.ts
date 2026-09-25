@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { coverage, day, series } from "./fixtures/prices";
 import { id, job, traded } from "./fixtures/simulation";
+import { openSection } from "./helpers";
 
 test.use({ timezoneId: "Australia/Sydney" });
 
@@ -41,12 +42,16 @@ test("a result link restores the identical saved comparison on reload", async ({
     "$54.28",
   );
   // The form reflects the immutable stored inputs, not the current defaults.
+  await openSection(page, "Efficiency");
   await expect(page.getByRole("radio", { name: "Separate legs" })).toBeChecked();
+  await openSection(page, "Variable costs");
   await expect(page.getByLabel("Import fee (AUD/MWh)")).toHaveValue("0.5");
+  await openSection(page, "Schedule windows");
   await expect(page.getByLabel("Charge end (HH:MM)", { exact: true })).toHaveValue("14:00");
   await expect(page.getByLabel("Simulation day")).toHaveValue(day);
 
   // Editing detaches the link so a reload cannot silently resurrect it.
+  await openSection(page, "Aggregate site");
   await page.getByLabel("Capacity (MWh)", { exact: true }).fill("3");
   await expect(page).not.toHaveURL(/simulation=/);
   await expect(page.getByRole("heading", { name: "Result comparison" })).toHaveCount(0);

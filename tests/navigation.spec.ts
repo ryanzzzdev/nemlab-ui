@@ -46,6 +46,9 @@ test("skip link and keyboard navigation move focus to page content", async ({ pa
   await expect(page).toHaveURL(/\/batterylab$/);
   await expect(page.getByRole("heading", { level: 1 })).toBeFocused();
   await page.keyboard.press("Tab");
+  // The first focusable control is the open Market day disclosure.
+  await expect(page.locator("summary", { hasText: "Market day" })).toBeFocused();
+  await page.keyboard.press("Tab");
   await expect(page.getByLabel("Simulation region", { exact: true })).toBeFocused();
   const methodology = page.getByRole("link", { name: "Read the model assumptions" });
   for (let step = 0; step < 40; step++) {

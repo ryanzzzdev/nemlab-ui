@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
 import { coverage, day, series } from "./fixtures/prices";
 import { id, job, thresholded, traded } from "./fixtures/simulation";
+import { openSection } from "./helpers";
 
 test.use({ timezoneId: "Australia/Sydney" });
 
@@ -36,9 +37,10 @@ function setRange(page: Page, value: string) {
 test("threshold inputs are default, validated and submitted with every run", async ({ page }) => {
   const charge = page.getByLabel("Charge below (AUD/MWh)");
   const discharge = page.getByLabel("Discharge above (AUD/MWh)");
-  // Both fields are always visible with illustrative defaults — no opt-in.
+  // Both fields carry illustrative defaults inside their collapsed group.
   await expect(charge).toHaveValue("30");
   await expect(discharge).toHaveValue("150");
+  await openSection(page, "Price thresholds");
   let posted: string | null = null;
   await page.route("**/api/v1/simulations", async (route) => {
     posted = route.request().postData();
