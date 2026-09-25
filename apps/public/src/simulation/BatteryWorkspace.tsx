@@ -530,26 +530,6 @@ export function BatteryWorkspace() {
             <span className={`job-chip ${chip[0]}`}>{chip[1]}</span>
             <span className="job-message">{message}</span>
           </p>
-          {job && (
-            <p className="job-id">
-              Simulation <span className="revision">{job.id}</span>
-              <br />
-              {(result ? result.inputs : form).region} · {(result ? result.inputs : form).day} · NEM
-              UTC+10
-            </p>
-          )}
-          {result && (
-            <p className="job-id">
-              Prices: Open Electricity · revision{" "}
-              <span className="revision">{result.priceRevision}</span>
-              <br />
-              <span className="revision">
-                request {result.versions.request} · model {result.versions.model} · fixed{" "}
-                {result.versions.fixed} · hindsight {result.versions.hindsight} · solver{" "}
-                {result.versions.solver} · execution {result.versions.executionProfile}
-              </span>
-            </p>
-          )}
           <div className="job-actions">
             {busy && (
               <button type="button" className="ghost" onClick={stop}>
@@ -577,6 +557,62 @@ export function BatteryWorkspace() {
                 </p>
               )}
             </div>
+          )}
+          {(job || result) && (
+            <table className="job-meta">
+              <tbody>
+                {job && (
+                  <>
+                    <tr>
+                      <th scope="row">Simulation</th>
+                      <td>
+                        <span className="revision ellip" title={job.id}>
+                          {job.id}
+                        </span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Market day</th>
+                      <td>
+                        {(result ? result.inputs : form).region} ·{" "}
+                        {(result ? result.inputs : form).day} · NEM UTC+10
+                      </td>
+                    </tr>
+                  </>
+                )}
+                {result && (
+                  <>
+                    <tr>
+                      <th scope="row">Price source</th>
+                      <td>Open Electricity</td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Price revision</th>
+                      <td>
+                        <span className="revision ellip" title={result.priceRevision}>
+                          {result.priceRevision}
+                        </span>
+                      </td>
+                    </tr>
+                    {(
+                      [
+                        ["Request", result.versions.request],
+                        ["Model", result.versions.model],
+                        ["Fixed", result.versions.fixed],
+                        ["Hindsight", result.versions.hindsight],
+                        ["Solver", result.versions.solver],
+                        ["Execution", result.versions.executionProfile],
+                      ] as const
+                    ).map(([label, value]) => (
+                      <tr key={label}>
+                        <th scope="row">{label}</th>
+                        <td>{value}</td>
+                      </tr>
+                    ))}
+                  </>
+                )}
+              </tbody>
+            </table>
           )}
         </section>
         <p className="hint">Illustrative defaults, not investment recommendations.</p>

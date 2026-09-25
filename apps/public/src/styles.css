@@ -299,7 +299,6 @@ caption {
   white-space: normal;
 }
 .revision {
-  overflow-wrap: anywhere;
   font-size: 13px;
 }
 
@@ -667,11 +666,41 @@ button:disabled {
 .job-state[role="alert"] .job-message {
   color: light-dark(#b3261e, #ff9d94);
 }
-.job-id {
+.job-meta {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
   font-size: 12px;
   color: var(--color-muted);
-  margin: 0;
-  overflow-wrap: anywhere;
+  margin-top: 10px;
+  border-top: 1px solid var(--color-rule);
+}
+.job-meta th,
+.job-meta td {
+  padding: 4px 0;
+  text-align: left;
+  font-weight: 400;
+  vertical-align: top;
+}
+.job-meta tr + tr th,
+.job-meta tr + tr td {
+  border-top: 1px solid var(--color-rule);
+}
+.job-meta th {
+  width: 104px;
+  padding-right: 12px;
+  font-weight: 600;
+}
+.job-meta td {
+  white-space: normal;
+  overflow: hidden;
+}
+.ellip {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .job-actions {
   display: flex;
