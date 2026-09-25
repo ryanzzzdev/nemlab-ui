@@ -68,7 +68,6 @@ h1 {
   margin: 12px 0 16px;
 }
 .intro {
-  max-width: 640px;
   color: var(--color-muted);
   font-size: 15px;
 }
@@ -951,9 +950,6 @@ button:disabled {
 .site-grid h1 {
   font-size: 28px;
   letter-spacing: -0.025em;
-}
-.site-grid .intro {
-  max-width: none;
 }
 .site-grid h2 {
   font-size: 16px;

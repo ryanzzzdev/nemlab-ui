@@ -1,7 +1,11 @@
 import { expect, test } from "@playwright/test";
 
 const pages = [
-  { path: "/batterylab", title: "BatteryLab", heading: "What could a battery do?" },
+  {
+    path: "/batterylab",
+    title: "BatteryLab",
+    heading: "What could a battery do in a market day?",
+  },
   { path: "/prices", title: "Prices", heading: "Explore electricity prices" },
   { path: "/gridreplay", title: "GridReplay", heading: "See the story behind a market day." },
   { path: "/methodology", title: "Methodology", heading: "Understand what the numbers mean." },
