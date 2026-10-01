@@ -1,7 +1,8 @@
-"""Disposable PostgreSQL + packaged Java API + production-browser integration.
+"""Disposable PostgreSQL + Python API/worker + production-browser integration.
 
-Never uses .env or an existing database. Requires cached backend dependencies,
-Java 25, Docker, installed npm tooling and Playwright Chromium.
+Never uses .env or an existing database. Requires a synced backend uv workspace
+(`uv sync --all-packages --locked` in the backend checkout — run automatically
+below), Docker, installed npm tooling and Playwright Chromium.
 """
 import json
 import os
@@ -31,7 +32,7 @@ api = None
 worker = None
 try:
     run("node", "scripts/contract.mjs", "--backend", cwd=ROOT)
-    run("./gradlew", ":api:bootJar", ":worker:bootJar", "--offline", "--no-daemon", cwd=BACKEND)
+    run("uv", "sync", "--all-packages", "--locked", cwd=BACKEND)
     run("npm", "run", "build", cwd=ROOT)
     run("docker", "run", "--rm", "--detach", "--name", NAME,
         "-e", "POSTGRES_USER=test", "-e", "POSTGRES_PASSWORD=test",
@@ -46,19 +47,6 @@ try:
     else:
         raise RuntimeError("Disposable PostgreSQL did not start")
     port = subprocess.check_output(["docker", "port", NAME, "5432"], text=True).strip().split(":")[-1]
-    for migration in sorted((BACKEND / "infrastructure/src/main/resources/db/migration").glob("V*.sql")):
-        sql(migration.read_text())
-    for day, incomplete in [("2023-10-01", False), ("2023-10-02", True)]:
-        slots = [{"kind": "VALUE", "price": "123.4567890123456789" if i == 0 else "0"} for i in range(288)]
-        if incomplete:
-            slots[3] = {"kind": "MISSING", "price": None}
-            slots[4] = {"kind": "SOURCE_NULL", "price": None}
-        revision = str(uuid.uuid4())
-        sql(f"""INSERT INTO price_revision
-            (id,region,market_day,content_hash,slots,valid_count,missing_count,null_count)
-            VALUES ('{revision}','NSW1','{day}','{'a' * 64}','{json.dumps(slots)}',
-                    {286 if incomplete else 288},{int(incomplete)},{int(incomplete)});
-            INSERT INTO price_current VALUES ('NSW1','{day}','{revision}',now());""")
     with socket.socket() as sock:
         sock.bind(("127.0.0.1", 0))
         api_port = sock.getsockname()[1]
@@ -73,10 +61,22 @@ try:
                 "OPEN_ELECTRICITY_API_KEY": "test-only",
                 "NEMLAB_DB_URL": f"jdbc:postgresql://127.0.0.1:{port}/test",
                 "NEMLAB_DB_USER": "test", "NEMLAB_DB_PASSWORD": "test"})
-    java = str(Path(env["JAVA_HOME"]) / "bin/java") if "JAVA_HOME" in env else "java"
+    run("uv", "run", "python", "-m", "nemlab_infrastructure.migrate", "migrate",
+        cwd=BACKEND, env=env)
+    for day, incomplete in [("2023-10-01", False), ("2023-10-02", True)]:
+        slots = [{"kind": "VALUE", "price": "123.4567890123456789" if i == 0 else "0"} for i in range(288)]
+        if incomplete:
+            slots[3] = {"kind": "MISSING", "price": None}
+            slots[4] = {"kind": "SOURCE_NULL", "price": None}
+        revision = str(uuid.uuid4())
+        sql(f"""INSERT INTO price_revision
+            (id,region,market_day,content_hash,slots,valid_count,missing_count,null_count)
+            VALUES ('{revision}','NSW1','{day}','{'a' * 64}','{json.dumps(slots)}',
+                    {286 if incomplete else 288},{int(incomplete)},{int(incomplete)});
+            INSERT INTO price_current VALUES ('NSW1','{day}','{revision}',now());""")
     with tempfile.TemporaryFile(mode="w+") as log:
-        api = subprocess.Popen([java, "-jar", str(BACKEND / "api/build/libs/api.jar")],
-                               env=env, stdout=log, stderr=subprocess.STDOUT)
+        api = subprocess.Popen(["uv", "run", "nemlab-api"],
+                               cwd=BACKEND, env=env, stdout=log, stderr=subprocess.STDOUT)
         for _ in range(150):
             if api.poll() is not None:
                 raise RuntimeError("Test API exited during startup")
@@ -88,8 +88,8 @@ try:
         else:
             raise RuntimeError("Test API did not start")
         env["NEMLAB_API_TARGET"] = f"http://127.0.0.1:{api_port}"
-        worker = subprocess.Popen([java, "-jar", str(BACKEND / "worker/build/libs/worker.jar")],
-                                  env=env, stdout=log, stderr=subprocess.STDOUT)
+        worker = subprocess.Popen(["uv", "run", "nemlab-worker"],
+                                  cwd=BACKEND, env=env, stdout=log, stderr=subprocess.STDOUT)
         run("npx", "--no-install", "playwright", "test", "--config", "playwright.live.config.ts",
             cwd=ROOT, env=env)
 finally:
