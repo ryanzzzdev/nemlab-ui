@@ -1,2535 +1,4489 @@
 {
-  "openapi": "3.0.3",
-  "info": {
-    "title": "NEMLab shared API",
-    "version": "1.3.0",
-    "description": "Independently enabled price reads, operator controls and simulation lifecycle. Disabled routes return 404. Market dates use fixed UTC+10. Simulation bodies are at most 16384 bytes and decimal inputs are strings. No GridReplay API is implemented."
-  },
-  "paths": {
-    "/api/v1/prices/{region}/coverage": {
-      "get": {
-        "operationId": "getPriceCoverage",
-        "summary": "Coverage for 1\u201331 completed NEM days since 2021-10-01",
-        "security": [],
-        "parameters": [
-          {
-            "name": "region",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Region"
-            }
-          },
-          {
-            "name": "start",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "date"
-            },
-            "description": "ISO date in fixed UTC+10. Start/day must be since 2021-10-01 and before today; endExclusive must be after start and no later than today. Coverage spans at most 31 days."
-          },
-          {
-            "name": "endExclusive",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "date"
-            },
-            "description": "ISO date in fixed UTC+10. Start/day must be since 2021-10-01 and before today; endExclusive must be after start and no later than today. Coverage spans at most 31 days."
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Includes NOT_IMPORTED days with null revision and counts",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Coverage"
-                }
-              }
-            },
-            "headers": {
-              "Cache-Control": {
-                "required": true,
-                "schema": {
-                  "type": "string",
-                  "pattern": "no-store"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "INVALID_REQUEST",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "code",
-                    "message"
-                  ],
-                  "properties": {
-                    "code": {
-                      "type": "string",
-                      "enum": [
-                        "INVALID_REQUEST"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "STORAGE_UNAVAILABLE",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "code",
-                    "message"
-                  ],
-                  "properties": {
-                    "code": {
-                      "type": "string",
-                      "enum": [
-                        "STORAGE_UNAVAILABLE"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
+ "openapi": "3.0.3",
+ "info": {
+  "title": "NEMLab shared API",
+  "version": "1.4.0",
+  "description": "Independently enabled price reads, operator controls, bounded grid imports and simulation lifecycle. Disabled routes return 404. Market dates use fixed UTC+10. Simulation bodies are at most 16384 bytes and decimal inputs are strings. The public GridReplay catalogue and replay API are not yet implemented; grid imports are operator-only."
+ },
+ "paths": {
+  "/api/v1/prices/{region}/coverage": {
+   "get": {
+    "operationId": "getPriceCoverage",
+    "summary": "Coverage for 1\u201331 completed NEM days since 2021-10-01",
+    "security": [],
+    "parameters": [
+     {
+      "name": "region",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$ref": "#/components/schemas/Region"
       }
-    },
-    "/api/v1/prices/{region}/{day}": {
-      "get": {
-        "operationId": "getPriceDay",
-        "summary": "Current immutable revision of one completed NEM price day",
-        "security": [],
-        "parameters": [
-          {
-            "name": "region",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/Region"
-            }
-          },
-          {
-            "name": "day",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "date"
-            },
-            "description": "ISO date in fixed UTC+10. Start/day must be since 2021-10-01 and before today; endExclusive must be after start and no later than today. Coverage spans at most 31 days."
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "288 intervals; exact prices are decimal strings and gap prices are null",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Series"
-                }
-              }
-            },
-            "headers": {
-              "Cache-Control": {
-                "required": true,
-                "schema": {
-                  "type": "string",
-                  "pattern": "no-store"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "INVALID_REQUEST",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "code",
-                    "message"
-                  ],
-                  "properties": {
-                    "code": {
-                      "type": "string",
-                      "enum": [
-                        "INVALID_REQUEST"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "STORAGE_UNAVAILABLE",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "code",
-                    "message"
-                  ],
-                  "properties": {
-                    "code": {
-                      "type": "string",
-                      "enum": [
-                        "STORAGE_UNAVAILABLE"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No stored prices for this day",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "code",
-                    "message"
-                  ],
-                  "properties": {
-                    "code": {
-                      "type": "string",
-                      "enum": [
-                        "PRICE_DAY_NOT_IMPORTED"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          }
+     },
+     {
+      "name": "start",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "date"
+      },
+      "description": "ISO date in fixed UTC+10. Start/day must be since 2021-10-01 and before today; endExclusive must be after start and no later than today. Coverage spans at most 31 days."
+     },
+     {
+      "name": "endExclusive",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "date"
+      },
+      "description": "ISO date in fixed UTC+10. Start/day must be since 2021-10-01 and before today; endExclusive must be after start and no later than today. Coverage spans at most 31 days."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Includes NOT_IMPORTED days with null revision and counts",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Coverage"
         }
+       }
+      },
+      "headers": {
+       "Cache-Control": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "pattern": "no-store"
+        }
+       }
       }
-    },
-    "/api/admin/v1/price-refreshes": {
-      "post": {
-        "operationId": "submitPriceRefresh",
-        "summary": "Queue one completed NEM day since 2021-10-01",
-        "security": [
-          {
-            "operatorBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "Idempotency-Key",
-            "in": "header",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,119}$"
-            },
-            "description": "Permanent binding to one region/day; reuse for retries."
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "Accepted, including idempotent replay",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Job"
-                }
-              }
-            },
-            "headers": {
-              "Location": {
-                "required": true,
-                "schema": {
-                  "type": "string",
-                  "pattern": "^/api/admin/v1/price-refreshes/"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "INVALID_REQUEST",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "code",
-                    "message"
-                  ],
-                  "properties": {
-                    "code": {
-                      "type": "string",
-                      "enum": [
-                        "INVALID_REQUEST"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "STORAGE_UNAVAILABLE",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "code",
-                    "message"
-                  ],
-                  "properties": {
-                    "code": {
-                      "type": "string",
-                      "enum": [
-                        "STORAGE_UNAVAILABLE"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "IDEMPOTENCY_CONFLICT",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "code",
-                    "message"
-                  ],
-                  "properties": {
-                    "code": {
-                      "type": "string",
-                      "enum": [
-                        "IDEMPOTENCY_CONFLICT"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "QUEUE_FULL",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "code",
-                    "message"
-                  ],
-                  "properties": {
-                    "code": {
-                      "type": "string",
-                      "enum": [
-                        "QUEUE_FULL"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            },
-            "headers": {
-              "Retry-After": {
-                "required": true,
-                "schema": {
-                  "type": "string",
-                  "enum": [
-                    "30"
-                  ]
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid operator bearer token",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "code"
-                  ],
-                  "properties": {
-                    "code": {
-                      "type": "string",
-                      "enum": [
-                        "UNAUTHORISED"
-                      ]
-                    }
-                  }
-                }
-              }
-            },
-            "headers": {
-              "WWW-Authenticate": {
-                "required": true,
-                "schema": {
-                  "type": "string",
-                  "enum": [
-                    "Bearer"
-                  ]
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Authenticated operator lacks permission; empty body"
-          }
-        },
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Submission"
-              }
-            }
-          }
-        }
-      },
-      "get": {
-        "operationId": "listPriceRefreshes",
-        "summary": "Recent refresh jobs",
-        "security": [
-          {
-            "operatorBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 100,
-              "default": 50
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Recent jobs",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Job"
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "INVALID_REQUEST",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "code",
-                    "message"
-                  ],
-                  "properties": {
-                    "code": {
-                      "type": "string",
-                      "enum": [
-                        "INVALID_REQUEST"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "STORAGE_UNAVAILABLE",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "code",
-                    "message"
-                  ],
-                  "properties": {
-                    "code": {
-                      "type": "string",
-                      "enum": [
-                        "STORAGE_UNAVAILABLE"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid operator bearer token",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "code"
-                  ],
-                  "properties": {
-                    "code": {
-                      "type": "string",
-                      "enum": [
-                        "UNAUTHORISED"
-                      ]
-                    }
-                  }
-                }
-              }
-            },
-            "headers": {
-              "WWW-Authenticate": {
-                "required": true,
-                "schema": {
-                  "type": "string",
-                  "enum": [
-                    "Bearer"
-                  ]
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Authenticated operator lacks permission; empty body"
-          }
-        }
-      }
-    },
-    "/api/admin/v1/price-refreshes/{id}": {
-      "get": {
-        "operationId": "getPriceRefresh",
-        "summary": "Refresh status",
-        "security": [
-          {
-            "operatorBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Current status",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Job"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "INVALID_REQUEST",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "code",
-                    "message"
-                  ],
-                  "properties": {
-                    "code": {
-                      "type": "string",
-                      "enum": [
-                        "INVALID_REQUEST"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "STORAGE_UNAVAILABLE",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "code",
-                    "message"
-                  ],
-                  "properties": {
-                    "code": {
-                      "type": "string",
-                      "enum": [
-                        "STORAGE_UNAVAILABLE"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "JOB_NOT_FOUND",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "code",
-                    "message"
-                  ],
-                  "properties": {
-                    "code": {
-                      "type": "string",
-                      "enum": [
-                        "JOB_NOT_FOUND"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid operator bearer token",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "code"
-                  ],
-                  "properties": {
-                    "code": {
-                      "type": "string",
-                      "enum": [
-                        "UNAUTHORISED"
-                      ]
-                    }
-                  }
-                }
-              }
-            },
-            "headers": {
-              "WWW-Authenticate": {
-                "required": true,
-                "schema": {
-                  "type": "string",
-                  "enum": [
-                    "Bearer"
-                  ]
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Authenticated operator lacks permission; empty body"
-          }
-        }
-      }
-    },
-    "/api/admin/v1/price-refreshes/{id}/events": {
-      "get": {
-        "operationId": "listPriceRefreshEvents",
-        "summary": "Audit events in ascending ID order",
-        "security": [
-          {
-            "operatorBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "after",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int64",
-              "minimum": 0,
-              "default": 0
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 100,
-              "default": 50
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Events after the exclusive cursor",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Event"
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "INVALID_REQUEST",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "code",
-                    "message"
-                  ],
-                  "properties": {
-                    "code": {
-                      "type": "string",
-                      "enum": [
-                        "INVALID_REQUEST"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "STORAGE_UNAVAILABLE",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "code",
-                    "message"
-                  ],
-                  "properties": {
-                    "code": {
-                      "type": "string",
-                      "enum": [
-                        "STORAGE_UNAVAILABLE"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "JOB_NOT_FOUND",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "code",
-                    "message"
-                  ],
-                  "properties": {
-                    "code": {
-                      "type": "string",
-                      "enum": [
-                        "JOB_NOT_FOUND"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid operator bearer token",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "code"
-                  ],
-                  "properties": {
-                    "code": {
-                      "type": "string",
-                      "enum": [
-                        "UNAUTHORISED"
-                      ]
-                    }
-                  }
-                }
-              }
-            },
-            "headers": {
-              "WWW-Authenticate": {
-                "required": true,
-                "schema": {
-                  "type": "string",
-                  "enum": [
-                    "Bearer"
-                  ]
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Authenticated operator lacks permission; empty body"
-          }
-        }
-      }
-    },
-    "/api/admin/v1/price-refreshes/{id}/cancel": {
-      "post": {
-        "operationId": "cancelPriceRefresh",
-        "summary": "Cancel a refresh; repeat and terminal cancellation return current state",
-        "security": [
-          {
-            "operatorBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Current state after cancellation request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Job"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "INVALID_REQUEST",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "code",
-                    "message"
-                  ],
-                  "properties": {
-                    "code": {
-                      "type": "string",
-                      "enum": [
-                        "INVALID_REQUEST"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "STORAGE_UNAVAILABLE",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "code",
-                    "message"
-                  ],
-                  "properties": {
-                    "code": {
-                      "type": "string",
-                      "enum": [
-                        "STORAGE_UNAVAILABLE"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "JOB_NOT_FOUND",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "code",
-                    "message"
-                  ],
-                  "properties": {
-                    "code": {
-                      "type": "string",
-                      "enum": [
-                        "JOB_NOT_FOUND"
-                      ]
-                    },
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Missing or invalid operator bearer token",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "required": [
-                    "code"
-                  ],
-                  "properties": {
-                    "code": {
-                      "type": "string",
-                      "enum": [
-                        "UNAUTHORISED"
-                      ]
-                    }
-                  }
-                }
-              }
-            },
-            "headers": {
-              "WWW-Authenticate": {
-                "required": true,
-                "schema": {
-                  "type": "string",
-                  "enum": [
-                    "Bearer"
-                  ]
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Authenticated operator lacks permission; empty body"
-          }
-        }
-      }
-    },
-    "/api/v1/simulations": {
-      "post": {
-        "operationId": "submitSimulation",
-        "summary": "Submit or reuse a revision-bound scenario",
-        "description": "No ingestion is triggered. Pending jobs return 202; terminal duplicates return 200. Equivalent normalised parameters and price revision reuse the same job, including failures; resubmission does not reset retries. No Idempotency-Key is required. Worker and API enablement are independent.",
-        "security": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SimulationRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Reused terminal job",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SimulationStatus"
-                }
-              }
-            },
-            "headers": {
-              "Cache-Control": {
-                "required": true,
-                "schema": {
-                  "type": "string",
-                  "pattern": "no-store"
-                }
-              },
-              "Location": {
-                "required": true,
-                "schema": {
-                  "type": "string",
-                  "pattern": "^/api/v1/simulations/[0-9a-f-]{36}$"
-                }
-              }
-            }
-          },
-          "202": {
-            "description": "Accepted pending job",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SimulationStatus"
-                }
-              }
-            },
-            "headers": {
-              "Cache-Control": {
-                "required": true,
-                "schema": {
-                  "type": "string",
-                  "pattern": "no-store"
-                }
-              },
-              "Location": {
-                "required": true,
-                "schema": {
-                  "type": "string",
-                  "pattern": "^/api/v1/simulations/[0-9a-f-]{36}$"
-                }
-              },
-              "Retry-After": {
-                "required": true,
-                "schema": {
-                  "type": "string",
-                  "enum": [
-                    "2"
-                  ]
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SimulationError"
-                }
-              }
-            },
-            "headers": {
-              "Cache-Control": {
-                "required": true,
-                "schema": {
-                  "type": "string",
-                  "pattern": "no-store"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Stored prices missing, incomplete, being fetched or fetch-exhausted",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SimulationError"
-                }
-              }
-            },
-            "headers": {
-              "Cache-Control": {
-                "required": true,
-                "schema": {
-                  "type": "string",
-                  "pattern": "no-store"
-                }
-              }
-            }
-          },
-          "413": {
-            "description": "Body exceeds 16384 bytes",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SimulationError"
-                }
-              }
-            },
-            "headers": {
-              "Cache-Control": {
-                "required": true,
-                "schema": {
-                  "type": "string",
-                  "pattern": "no-store"
-                }
-              }
-            }
-          },
-          "415": {
-            "description": "Requires application/json",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SimulationError"
-                }
-              }
-            },
-            "headers": {
-              "Cache-Control": {
-                "required": true,
-                "schema": {
-                  "type": "string",
-                  "pattern": "no-store"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Queue full",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SimulationError"
-                }
-              }
-            },
-            "headers": {
-              "Cache-Control": {
-                "required": true,
-                "schema": {
-                  "type": "string",
-                  "pattern": "no-store"
-                }
-              },
-              "Retry-After": {
-                "required": true,
-                "schema": {
-                  "type": "string",
-                  "enum": [
-                    "5",
-                    "60"
-                  ]
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Storage unavailable",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SimulationError"
-                }
-              }
-            },
-            "headers": {
-              "Cache-Control": {
-                "required": true,
-                "schema": {
-                  "type": "string",
-                  "pattern": "no-store"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/simulations/{id}": {
-      "get": {
-        "operationId": "getSimulationStatus",
-        "summary": "Read simulation progress without private worker metadata",
-        "security": [],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Current job state",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SimulationStatus"
-                }
-              }
-            },
-            "headers": {
-              "Cache-Control": {
-                "required": true,
-                "schema": {
-                  "type": "string",
-                  "pattern": "no-store"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid identifier",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SimulationError"
-                }
-              }
-            },
-            "headers": {
-              "Cache-Control": {
-                "required": true,
-                "schema": {
-                  "type": "string",
-                  "pattern": "no-store"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Unknown simulation",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SimulationError"
-                }
-              }
-            },
-            "headers": {
-              "Cache-Control": {
-                "required": true,
-                "schema": {
-                  "type": "string",
-                  "pattern": "no-store"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Storage unavailable",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SimulationError"
-                }
-              }
-            },
-            "headers": {
-              "Cache-Control": {
-                "required": true,
-                "schema": {
-                  "type": "string",
-                  "pattern": "no-store"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/simulations/{id}/result": {
-      "get": {
-        "operationId": "getSimulationResult",
-        "summary": "Read an immutable proven comparison",
-        "description": "Returns original exact inputs/prices and unrounded double-based dispatch/accounting. Failed or unproven solver outcomes do not produce a successful public comparison. Currency is AUD; prices/cost rates AUD/MWh; energy MWh and power MW. No retention promise is made by this pre-launch contract.",
-        "security": [],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Saved proven comparison",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SimulationResult"
-                }
-              }
-            },
-            "headers": {
-              "Cache-Control": {
-                "required": true,
-                "schema": {
-                  "type": "string",
-                  "pattern": "no-store"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid identifier",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SimulationError"
-                }
-              }
-            },
-            "headers": {
-              "Cache-Control": {
-                "required": true,
-                "schema": {
-                  "type": "string",
-                  "pattern": "no-store"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Unknown simulation",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SimulationError"
-                }
-              }
-            },
-            "headers": {
-              "Cache-Control": {
-                "required": true,
-                "schema": {
-                  "type": "string",
-                  "pattern": "no-store"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Result pending or simulation failed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SimulationError"
-                }
-              }
-            },
-            "headers": {
-              "Cache-Control": {
-                "required": true,
-                "schema": {
-                  "type": "string",
-                  "pattern": "no-store"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Storage unavailable",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SimulationError"
-                }
-              }
-            },
-            "headers": {
-              "Cache-Control": {
-                "required": true,
-                "schema": {
-                  "type": "string",
-                  "pattern": "no-store"
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-  "components": {
-    "securitySchemes": {
-      "operatorBearer": {
-        "type": "http",
-        "scheme": "bearer",
-        "description": "Locally configured opaque operator token; never embed in the public frontend."
-      }
-    },
-    "schemas": {
-      "Region": {
-        "type": "string",
-        "enum": [
-          "NSW1",
-          "QLD1",
-          "SA1",
-          "TAS1",
-          "VIC1"
-        ]
-      },
-      "DayCoverage": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "day",
-          "availability",
-          "revision",
-          "retrievedAt",
-          "valid",
-          "missing",
-          "sourceNull"
-        ],
-        "properties": {
-          "day": {
-            "type": "string",
-            "format": "date"
-          },
-          "availability": {
-            "type": "string",
-            "enum": [
-              "NOT_IMPORTED",
-              "COMPLETE",
-              "INCOMPLETE"
-            ]
-          },
-          "revision": {
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          },
-          "retrievedAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "valid": {
-            "type": "integer",
-            "nullable": true,
-            "minimum": 0,
-            "maximum": 288
-          },
-          "missing": {
-            "type": "integer",
-            "nullable": true,
-            "minimum": 0,
-            "maximum": 288
-          },
-          "sourceNull": {
-            "type": "integer",
-            "nullable": true,
-            "minimum": 0,
-            "maximum": 288
-          }
-        },
-        "description": "NOT_IMPORTED has null revision, retrievedAt and counts. Imported days have a revision and timestamp; valid + missing + sourceNull = 288. COMPLETE means valid = 288; otherwise INCOMPLETE. Retrieved time is an instant, not a market date."
-      },
-      "Coverage": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "region",
-          "start",
-          "endExclusive",
-          "marketOffset",
-          "days"
-        ],
-        "properties": {
-          "region": {
-            "$ref": "#/components/schemas/Region"
-          },
-          "start": {
-            "type": "string",
-            "format": "date"
-          },
-          "endExclusive": {
-            "type": "string",
-            "format": "date"
-          },
-          "marketOffset": {
-            "type": "string",
-            "enum": [
-              "+10:00"
-            ]
-          },
-          "days": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/DayCoverage"
-            },
-            "minItems": 1,
-            "maxItems": 31
-          }
-        }
-      },
-      "Interval": {
-        "oneOf": [
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "start",
-              "end",
-              "state",
-              "price"
-            ],
-            "properties": {
-              "start": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "end": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "state": {
-                "type": "string",
-                "enum": [
-                  "VALUE"
-                ]
-              },
-              "price": {
-                "type": "string",
-                "pattern": "^-?[0-9]+(?:\\.[0-9]+)?$"
-              }
-            }
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "start",
-              "end",
-              "state",
-              "price"
-            ],
-            "properties": {
-              "start": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "end": {
-                "type": "string",
-                "format": "date-time"
-              },
-              "state": {
-                "type": "string",
-                "enum": [
-                  "MISSING",
-                  "SOURCE_NULL"
-                ]
-              },
-              "price": {
-                "type": "string",
-                "nullable": true,
-                "enum": [
-                  null
-                ]
-              }
-            }
-          }
-        ]
-      },
-      "Series": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "region",
-          "day",
-          "source",
-          "unit",
-          "intervalSeconds",
-          "intervalLabel",
-          "marketOffset",
-          "coverage",
-          "intervals"
-        ],
-        "properties": {
-          "region": {
-            "$ref": "#/components/schemas/Region"
-          },
-          "day": {
-            "type": "string",
-            "format": "date"
-          },
-          "source": {
-            "type": "string",
-            "enum": [
-              "Open Electricity"
-            ]
-          },
-          "unit": {
-            "type": "string",
-            "enum": [
-              "AUD/MWh"
-            ]
-          },
-          "intervalSeconds": {
-            "type": "integer",
-            "enum": [
-              300
-            ]
-          },
-          "intervalLabel": {
-            "type": "string",
-            "enum": [
-              "END"
-            ]
-          },
-          "marketOffset": {
-            "type": "string",
-            "enum": [
-              "+10:00"
-            ]
-          },
-          "coverage": {
-            "$ref": "#/components/schemas/DayCoverage"
-          },
-          "intervals": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Interval"
-            },
-            "minItems": 288,
-            "maxItems": 288
-          }
-        }
-      },
-      "Submission": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "region",
-          "day"
-        ],
-        "properties": {
-          "region": {
-            "$ref": "#/components/schemas/Region"
-          },
-          "day": {
-            "type": "string",
-            "format": "date",
-            "description": "One completed market day since 2021-10-01, using fixed UTC+10."
-          }
-        }
-      },
-      "Job": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "id",
-          "region",
-          "day",
-          "status",
-          "attempts",
-          "availableAt",
-          "diagnostic"
-        ],
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "region": {
-            "$ref": "#/components/schemas/Region"
-          },
-          "day": {
-            "type": "string",
-            "format": "date"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "QUEUED",
-              "RUNNING",
-              "SUCCEEDED",
-              "FAILED",
-              "CANCELLED"
-            ]
-          },
-          "attempts": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 3
-          },
-          "availableAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "diagnostic": {
-            "type": "string",
-            "nullable": true
-          }
-        }
-      },
-      "Event": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "id",
-          "occurredAt",
-          "actor",
-          "action",
-          "diagnostic"
-        ],
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "occurredAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "actor": {
-            "type": "string"
-          },
-          "action": {
-            "type": "string"
-          },
-          "diagnostic": {
-            "type": "string",
-            "nullable": true
-          }
-        }
-      },
-      "SimulationSite": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "capacityMWh",
-          "minimumMWh",
-          "maximumMWh",
-          "initialMWh",
-          "chargeMW",
-          "dischargeMW",
-          "importLimitMW",
-          "exportLimitMW"
-        ],
-        "properties": {
-          "capacityMWh": {
-            "type": "string",
-            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
-            "maxLength": 80,
-            "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors."
-          },
-          "minimumMWh": {
-            "type": "string",
-            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
-            "maxLength": 80,
-            "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors."
-          },
-          "maximumMWh": {
-            "type": "string",
-            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
-            "maxLength": 80,
-            "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors."
-          },
-          "initialMWh": {
-            "type": "string",
-            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
-            "maxLength": 80,
-            "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors."
-          },
-          "chargeMW": {
-            "type": "string",
-            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
-            "maxLength": 80,
-            "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors."
-          },
-          "dischargeMW": {
-            "type": "string",
-            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
-            "maxLength": 80,
-            "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors."
-          },
-          "importLimitMW": {
-            "type": "string",
-            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
-            "maxLength": 80,
-            "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors."
-          },
-          "exportLimitMW": {
-            "type": "string",
-            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
-            "maxLength": 80,
-            "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors."
-          }
-        }
-      },
-      "SimulationCosts": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "importFee",
-          "exportFee",
-          "degradationPerExportedMWh"
-        ],
-        "properties": {
-          "importFee": {
-            "type": "string",
-            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
-            "maxLength": 80,
-            "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors."
-          },
-          "exportFee": {
-            "type": "string",
-            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
-            "maxLength": 80,
-            "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors."
-          },
-          "degradationPerExportedMWh": {
-            "type": "string",
-            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
-            "maxLength": 80,
-            "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors."
-          }
-        }
-      },
-      "SimulationEfficiencyLegs": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "charge",
-          "discharge"
-        ],
-        "properties": {
-          "charge": {
-            "type": "string",
-            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
-            "maxLength": 80,
-            "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors."
-          },
-          "discharge": {
-            "type": "string",
-            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
-            "maxLength": 80,
-            "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors."
-          }
-        },
-        "description": "Both efficiency legs in [0.01,1]."
-      },
-      "SimulationEfficiency": {
-        "oneOf": [
-          {
-            "$ref": "#/components/schemas/SimulationEfficiencyLegs"
-          },
-          {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "roundTrip"
-            ],
-            "properties": {
-              "roundTrip": {
-                "type": "string",
-                "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
-                "maxLength": 80,
-                "description": "Round-trip efficiency in [0.0001,1]; normalised to equal square-root legs."
-              }
-            }
-          }
-        ]
-      },
-      "SimulationWindows": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "chargeStart",
-          "chargeEnd",
-          "dischargeStart",
-          "dischargeEnd"
-        ],
-        "properties": {
-          "chargeStart": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 1440,
-            "multipleOf": 5
-          },
-          "chargeEnd": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 1440,
-            "multipleOf": 5
-          },
-          "dischargeStart": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 1440,
-            "multipleOf": 5
-          },
-          "dischargeEnd": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 1440,
-            "multipleOf": 5
-          }
-        },
-        "description": "Minutes from midnight in fixed UTC+10; nonempty ordered charge then discharge windows. 1440 is next midnight."
-      },
-      "SimulationRequest": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "region",
-          "day",
-          "site",
-          "efficiency",
-          "costs",
-          "windows"
-        ],
-        "properties": {
-          "region": {
-            "$ref": "#/components/schemas/Region"
-          },
-          "day": {
-            "type": "string",
-            "format": "date",
-            "description": "Completed NEM day on/after 2021-10-01 with complete stored prices."
-          },
-          "site": {
-            "$ref": "#/components/schemas/SimulationSite"
-          },
-          "efficiency": {
-            "$ref": "#/components/schemas/SimulationEfficiency"
-          },
-          "costs": {
-            "$ref": "#/components/schemas/SimulationCosts"
-          },
-          "windows": {
-            "$ref": "#/components/schemas/SimulationWindows"
-          },
-          "thresholds": {
-            "$ref": "#/components/schemas/SimulationThresholds"
-          }
-        }
-      },
-      "SimulationInputs": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "region",
-          "day",
-          "site",
-          "efficiency",
-          "costs",
-          "windows"
-        ],
-        "properties": {
-          "region": {
-            "$ref": "#/components/schemas/Region"
-          },
-          "day": {
-            "type": "string",
-            "format": "date",
-            "description": "Completed NEM day on/after 2021-10-01 with complete stored prices."
-          },
-          "site": {
-            "$ref": "#/components/schemas/SimulationSite"
-          },
-          "efficiency": {
-            "$ref": "#/components/schemas/SimulationEfficiencyLegs"
-          },
-          "costs": {
-            "$ref": "#/components/schemas/SimulationCosts"
-          },
-          "windows": {
-            "$ref": "#/components/schemas/SimulationWindows"
-          },
-          "thresholds": {
-            "$ref": "#/components/schemas/SimulationThresholds"
-          }
-        }
-      },
-      "SimulationStatus": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "id",
-          "status",
-          "attempts",
-          "failureCode",
-          "statusUrl",
-          "resultUrl"
-        ],
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "QUEUED",
-              "RUNNING",
-              "SUCCEEDED",
-              "FAILED"
-            ]
-          },
-          "attempts": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 3
-          },
-          "failureCode": {
-            "type": "string",
-            "nullable": true,
-            "enum": [
-              null,
-              "LEASE_EXPIRED",
-              "WORKER_STOPPED",
-              "SIMULATION_DEADLINE_EXCEEDED",
-              "SIMULATION_PROCESS_FAILED",
-              "INVALID_CHILD_RESULT",
-              "UNSUPPORTED_SIMULATION_VERSION",
-              "SOLVER_FEASIBLE_NOT_PROVEN",
-              "SOLVER_NO_SOLUTION",
-              "SOLVER_INFEASIBLE",
-              "SOLVER_FAILED_VALIDATION",
-              "SOLVER_ERROR",
-              "SIMULATION_FAILED"
-            ]
-          },
-          "statusUrl": {
-            "type": "string",
-            "pattern": "^/api/v1/simulations/[0-9a-f-]{36}$"
-          },
-          "resultUrl": {
-            "type": "string",
-            "pattern": "^/api/v1/simulations/[0-9a-f-]{36}/result$"
-          }
-        }
-      },
-      "SimulationVersions": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "request",
-          "model",
-          "fixed",
-          "hindsight",
-          "solver",
-          "executionProfile",
-          "limits"
-        ],
-        "properties": {
-          "request": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 80
-          },
-          "model": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 80
-          },
-          "fixed": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 80
-          },
-          "hindsight": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 80
-          },
-          "solver": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 80
-          },
-          "executionProfile": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 80
-          },
-          "limits": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "milliseconds",
-              "iterations"
-            ],
-            "properties": {
-              "milliseconds": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 60000
-              },
-              "iterations": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 2147483647
-              }
-            }
-          }
-        }
-      },
-      "SimulationDispatch": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "intervals",
-          "limitingReason"
-        ],
-        "properties": {
-          "intervals": {
-            "type": "array",
-            "minItems": 288,
-            "maxItems": 288,
-            "items": {
-              "type": "object",
-              "additionalProperties": false,
-              "required": [
-                "importedMWh",
-                "exportedMWh",
-                "endingEnergyMWh"
-              ],
-              "properties": {
-                "importedMWh": {
-                  "type": "number",
-                  "minimum": 0
-                },
-                "exportedMWh": {
-                  "type": "number",
-                  "minimum": 0
-                },
-                "endingEnergyMWh": {
-                  "type": "number"
-                }
-              }
-            }
-          },
-          "limitingReason": {
-            "type": "string",
-            "enum": [
-              "ENERGY_HEADROOM",
-              "CHARGE_WINDOW",
-              "DISCHARGE_WINDOW",
-              "NOT_EVALUATED"
-            ]
-          }
-        }
-      },
-      "SimulationAccounting": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "importedMWh",
-          "exportedMWh",
-          "chargingCost",
-          "revenue",
-          "fees",
-          "degradation",
-          "margin",
-          "lossesMWh"
-        ],
-        "properties": {
-          "importedMWh": {
-            "type": "number"
-          },
-          "exportedMWh": {
-            "type": "number"
-          },
-          "chargingCost": {
-            "type": "number"
-          },
-          "revenue": {
-            "type": "number"
-          },
-          "fees": {
-            "type": "number"
-          },
-          "degradation": {
-            "type": "number"
-          },
-          "margin": {
-            "type": "number"
-          },
-          "lossesMWh": {
-            "type": "number"
-          }
-        }
-      },
-      "SimulationStrategy": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "dispatch",
-          "accounting"
-        ],
-        "properties": {
-          "dispatch": {
-            "$ref": "#/components/schemas/SimulationDispatch"
-          },
-          "accounting": {
-            "$ref": "#/components/schemas/SimulationAccounting"
-          }
-        }
-      },
-      "SimulationResult": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "id",
-          "inputs",
-          "priceRevision",
-          "versions",
-          "marketOffset",
-          "intervalSeconds",
-          "intervalLabel",
-          "units",
-          "prices",
-          "fixed",
-          "hindsight",
-          "solver",
-          "threshold"
-        ],
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "inputs": {
-            "$ref": "#/components/schemas/SimulationInputs"
-          },
-          "priceRevision": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "versions": {
-            "$ref": "#/components/schemas/SimulationVersions"
-          },
-          "marketOffset": {
-            "type": "string",
-            "enum": [
-              "+10:00"
-            ]
-          },
-          "intervalSeconds": {
-            "type": "integer",
-            "enum": [
-              300
-            ]
-          },
-          "intervalLabel": {
-            "type": "string",
-            "enum": [
-              "END"
-            ]
-          },
-          "units": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "energy",
-              "power",
-              "money",
-              "price"
-            ],
-            "properties": {
-              "energy": {
-                "type": "string",
-                "enum": [
-                  "MWh"
-                ]
-              },
-              "power": {
-                "type": "string",
-                "enum": [
-                  "MW"
-                ]
-              },
-              "money": {
-                "type": "string",
-                "enum": [
-                  "AUD"
-                ]
-              },
-              "price": {
-                "type": "string",
-                "enum": [
-                  "AUD/MWh"
-                ]
-              }
-            }
-          },
-          "prices": {
-            "type": "array",
-            "minItems": 288,
-            "maxItems": 288,
-            "items": {
-              "type": "object",
-              "additionalProperties": false,
-              "required": [
-                "start",
-                "end",
-                "price"
-              ],
-              "properties": {
-                "start": {
-                  "type": "string",
-                  "format": "date-time"
-                },
-                "end": {
-                  "type": "string",
-                  "format": "date-time"
-                },
-                "price": {
-                  "type": "string",
-                  "pattern": "^-?[0-9]+(\\.[0-9]+)?$"
-                }
-              }
-            }
-          },
-          "fixed": {
-            "$ref": "#/components/schemas/SimulationStrategy"
-          },
-          "hindsight": {
-            "$ref": "#/components/schemas/SimulationStrategy"
-          },
-          "solver": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "status",
-              "objective",
-              "upperBound",
-              "absoluteGap"
-            ],
-            "properties": {
-              "status": {
-                "type": "string",
-                "enum": [
-                  "OPTIMAL"
-                ]
-              },
-              "objective": {
-                "type": "number",
-                "nullable": true
-              },
-              "upperBound": {
-                "type": "number"
-              },
-              "absoluteGap": {
-                "type": "number",
-                "minimum": 0,
-                "maximum": 0.01
-              }
-            }
-          },
-          "threshold": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/SimulationThreshold"
-              },
-              {
-                "enum": [
-                  null
-                ]
-              }
-            ]
-          }
-        }
-      },
-      "SimulationError": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
+     },
+     "400": {
+      "description": "INVALID_REQUEST",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
           "code",
-          "message",
-          "field",
-          "reason"
-        ],
-        "properties": {
+          "message"
+         ],
+         "properties": {
           "code": {
-            "type": "string",
-            "enum": [
-              "INVALID_REQUEST",
-              "SIMULATION_NOT_FOUND",
-              "RESULT_NOT_READY",
-              "SIMULATION_FAILED",
-              "QUEUE_FULL",
-              "REQUEST_TOO_LARGE",
-              "UNSUPPORTED_CONTENT_TYPE",
-              "STORAGE_UNAVAILABLE",
-              "PRICE_REFRESH_PENDING",
-              "PRICE_REFRESH_FAILED",
-              "VISITOR_REFRESH_LIMIT"
-            ]
+           "type": "string",
+           "enum": [
+            "INVALID_REQUEST"
+           ]
           },
           "message": {
-            "type": "string"
-          },
-          "field": {
-            "type": "string"
-          },
-          "reason": {
-            "type": "string"
+           "type": "string"
           }
+         }
         }
-      },
-      "SimulationThresholds": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "chargeBelow",
-          "dischargeAbove"
-        ],
-        "properties": {
-          "chargeBelow": {
-            "type": "string",
-            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
-            "maxLength": 80,
-            "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Thresholds in AUD/MWh within [-1000000,1000000]; negative values allowed. Charge threshold must be below discharge threshold."
-          },
-          "dischargeAbove": {
-            "type": "string",
-            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
-            "maxLength": 80,
-            "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Thresholds in AUD/MWh within [-1000000,1000000]; negative values allowed. Charge threshold must be below discharge threshold."
-          }
-        },
-        "description": "Optional all-day price-rule experiment: charge when the interval price is strictly below chargeBelow, discharge when strictly above dischargeAbove, hold otherwise."
-      },
-      "SimulationThreshold": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "version",
-          "thresholds",
-          "dispatch",
-          "accounting"
-        ],
-        "properties": {
-          "version": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 80
-          },
-          "thresholds": {
-            "$ref": "#/components/schemas/SimulationThresholds"
-          },
-          "dispatch": {
-            "$ref": "#/components/schemas/SimulationDispatch"
-          },
-          "accounting": {
-            "$ref": "#/components/schemas/SimulationAccounting"
-          }
-        },
-        "description": "Idealised same-interval price-rule replay over the whole market day. Ending energy may differ from initial energy; this is not a dispatch or forecast reconstruction."
+       }
       }
+     },
+     "503": {
+      "description": "STORAGE_UNAVAILABLE",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "STORAGE_UNAVAILABLE"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
     }
+   }
+  },
+  "/api/v1/prices/{region}/{day}": {
+   "get": {
+    "operationId": "getPriceDay",
+    "summary": "Current immutable revision of one completed NEM price day",
+    "security": [],
+    "parameters": [
+     {
+      "name": "region",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$ref": "#/components/schemas/Region"
+      }
+     },
+     {
+      "name": "day",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "date"
+      },
+      "description": "ISO date in fixed UTC+10. Start/day must be since 2021-10-01 and before today; endExclusive must be after start and no later than today. Coverage spans at most 31 days."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "288 intervals; exact prices are decimal strings and gap prices are null",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Series"
+        }
+       }
+      },
+      "headers": {
+       "Cache-Control": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "pattern": "no-store"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "INVALID_REQUEST",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "INVALID_REQUEST"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "503": {
+      "description": "STORAGE_UNAVAILABLE",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "STORAGE_UNAVAILABLE"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "No stored prices for this day",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "PRICE_DAY_NOT_IMPORTED"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/admin/v1/price-refreshes": {
+   "post": {
+    "operationId": "submitPriceRefresh",
+    "summary": "Queue one completed NEM day since 2021-10-01",
+    "security": [
+     {
+      "operatorBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "Idempotency-Key",
+      "in": "header",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,119}$"
+      },
+      "description": "Permanent binding to one region/day; reuse for retries."
+     }
+    ],
+    "responses": {
+     "202": {
+      "description": "Accepted, including idempotent replay",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Job"
+        }
+       }
+      },
+      "headers": {
+       "Location": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "pattern": "^/api/admin/v1/price-refreshes/"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "INVALID_REQUEST",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "INVALID_REQUEST"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "503": {
+      "description": "STORAGE_UNAVAILABLE",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "STORAGE_UNAVAILABLE"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "409": {
+      "description": "IDEMPOTENCY_CONFLICT",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "IDEMPOTENCY_CONFLICT"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "429": {
+      "description": "QUEUE_FULL",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "QUEUE_FULL"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      "headers": {
+       "Retry-After": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "enum": [
+          "30"
+         ]
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Missing or invalid operator bearer token",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "UNAUTHORISED"
+           ]
+          }
+         }
+        }
+       }
+      },
+      "headers": {
+       "WWW-Authenticate": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "enum": [
+          "Bearer"
+         ]
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Authenticated operator lacks permission; empty body"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/Submission"
+       }
+      }
+     }
+    }
+   },
+   "get": {
+    "operationId": "listPriceRefreshes",
+    "summary": "Recent refresh jobs",
+    "security": [
+     {
+      "operatorBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 100,
+       "default": 50
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Recent jobs",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/Job"
+         }
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "INVALID_REQUEST",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "INVALID_REQUEST"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "503": {
+      "description": "STORAGE_UNAVAILABLE",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "STORAGE_UNAVAILABLE"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Missing or invalid operator bearer token",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "UNAUTHORISED"
+           ]
+          }
+         }
+        }
+       }
+      },
+      "headers": {
+       "WWW-Authenticate": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "enum": [
+          "Bearer"
+         ]
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Authenticated operator lacks permission; empty body"
+     }
+    }
+   }
+  },
+  "/api/admin/v1/price-refreshes/{id}": {
+   "get": {
+    "operationId": "getPriceRefresh",
+    "summary": "Refresh status",
+    "security": [
+     {
+      "operatorBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Current status",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Job"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "INVALID_REQUEST",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "INVALID_REQUEST"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "503": {
+      "description": "STORAGE_UNAVAILABLE",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "STORAGE_UNAVAILABLE"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "JOB_NOT_FOUND",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "JOB_NOT_FOUND"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Missing or invalid operator bearer token",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "UNAUTHORISED"
+           ]
+          }
+         }
+        }
+       }
+      },
+      "headers": {
+       "WWW-Authenticate": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "enum": [
+          "Bearer"
+         ]
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Authenticated operator lacks permission; empty body"
+     }
+    }
+   }
+  },
+  "/api/admin/v1/price-refreshes/{id}/events": {
+   "get": {
+    "operationId": "listPriceRefreshEvents",
+    "summary": "Audit events in ascending ID order",
+    "security": [
+     {
+      "operatorBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid"
+      }
+     },
+     {
+      "name": "after",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "format": "int64",
+       "minimum": 0,
+       "default": 0
+      }
+     },
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 100,
+       "default": 50
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Events after the exclusive cursor",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/Event"
+         }
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "INVALID_REQUEST",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "INVALID_REQUEST"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "503": {
+      "description": "STORAGE_UNAVAILABLE",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "STORAGE_UNAVAILABLE"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "JOB_NOT_FOUND",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "JOB_NOT_FOUND"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Missing or invalid operator bearer token",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "UNAUTHORISED"
+           ]
+          }
+         }
+        }
+       }
+      },
+      "headers": {
+       "WWW-Authenticate": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "enum": [
+          "Bearer"
+         ]
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Authenticated operator lacks permission; empty body"
+     }
+    }
+   }
+  },
+  "/api/admin/v1/price-refreshes/{id}/cancel": {
+   "post": {
+    "operationId": "cancelPriceRefresh",
+    "summary": "Cancel a refresh; repeat and terminal cancellation return current state",
+    "security": [
+     {
+      "operatorBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Current state after cancellation request",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Job"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "INVALID_REQUEST",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "INVALID_REQUEST"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "503": {
+      "description": "STORAGE_UNAVAILABLE",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "STORAGE_UNAVAILABLE"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "JOB_NOT_FOUND",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "JOB_NOT_FOUND"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Missing or invalid operator bearer token",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "UNAUTHORISED"
+           ]
+          }
+         }
+        }
+       }
+      },
+      "headers": {
+       "WWW-Authenticate": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "enum": [
+          "Bearer"
+         ]
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Authenticated operator lacks permission; empty body"
+     }
+    }
+   }
+  },
+  "/api/v1/simulations": {
+   "post": {
+    "operationId": "submitSimulation",
+    "summary": "Submit or reuse a revision-bound scenario",
+    "description": "No ingestion is triggered. Pending jobs return 202; terminal duplicates return 200. Equivalent normalised parameters and price revision reuse the same job, including failures; resubmission does not reset retries. No Idempotency-Key is required. Worker and API enablement are independent.",
+    "security": [],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/SimulationRequest"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Reused terminal job",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SimulationStatus"
+        }
+       }
+      },
+      "headers": {
+       "Cache-Control": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "pattern": "no-store"
+        }
+       },
+       "Location": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "pattern": "^/api/v1/simulations/[0-9a-f-]{36}$"
+        }
+       }
+      }
+     },
+     "202": {
+      "description": "Accepted pending job",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SimulationStatus"
+        }
+       }
+      },
+      "headers": {
+       "Cache-Control": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "pattern": "no-store"
+        }
+       },
+       "Location": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "pattern": "^/api/v1/simulations/[0-9a-f-]{36}$"
+        }
+       },
+       "Retry-After": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "enum": [
+          "2"
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Invalid request",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SimulationError"
+        }
+       }
+      },
+      "headers": {
+       "Cache-Control": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "pattern": "no-store"
+        }
+       }
+      }
+     },
+     "409": {
+      "description": "Stored prices missing, incomplete, being fetched or fetch-exhausted",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SimulationError"
+        }
+       }
+      },
+      "headers": {
+       "Cache-Control": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "pattern": "no-store"
+        }
+       }
+      }
+     },
+     "413": {
+      "description": "Body exceeds 16384 bytes",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SimulationError"
+        }
+       }
+      },
+      "headers": {
+       "Cache-Control": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "pattern": "no-store"
+        }
+       }
+      }
+     },
+     "415": {
+      "description": "Requires application/json",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SimulationError"
+        }
+       }
+      },
+      "headers": {
+       "Cache-Control": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "pattern": "no-store"
+        }
+       }
+      }
+     },
+     "429": {
+      "description": "Queue full",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SimulationError"
+        }
+       }
+      },
+      "headers": {
+       "Cache-Control": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "pattern": "no-store"
+        }
+       },
+       "Retry-After": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "enum": [
+          "5",
+          "60"
+         ]
+        }
+       }
+      }
+     },
+     "503": {
+      "description": "Storage unavailable",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SimulationError"
+        }
+       }
+      },
+      "headers": {
+       "Cache-Control": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "pattern": "no-store"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/simulations/{id}": {
+   "get": {
+    "operationId": "getSimulationStatus",
+    "summary": "Read simulation progress without private worker metadata",
+    "security": [],
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Current job state",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SimulationStatus"
+        }
+       }
+      },
+      "headers": {
+       "Cache-Control": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "pattern": "no-store"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Invalid identifier",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SimulationError"
+        }
+       }
+      },
+      "headers": {
+       "Cache-Control": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "pattern": "no-store"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Unknown simulation",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SimulationError"
+        }
+       }
+      },
+      "headers": {
+       "Cache-Control": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "pattern": "no-store"
+        }
+       }
+      }
+     },
+     "503": {
+      "description": "Storage unavailable",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SimulationError"
+        }
+       }
+      },
+      "headers": {
+       "Cache-Control": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "pattern": "no-store"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/simulations/{id}/result": {
+   "get": {
+    "operationId": "getSimulationResult",
+    "summary": "Read an immutable proven comparison",
+    "description": "Returns original exact inputs/prices and unrounded double-based dispatch/accounting. Failed or unproven solver outcomes do not produce a successful public comparison. Currency is AUD; prices/cost rates AUD/MWh; energy MWh and power MW. No retention promise is made by this pre-launch contract.",
+    "security": [],
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Saved proven comparison",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SimulationResult"
+        }
+       }
+      },
+      "headers": {
+       "Cache-Control": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "pattern": "no-store"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "Invalid identifier",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SimulationError"
+        }
+       }
+      },
+      "headers": {
+       "Cache-Control": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "pattern": "no-store"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Unknown simulation",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SimulationError"
+        }
+       }
+      },
+      "headers": {
+       "Cache-Control": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "pattern": "no-store"
+        }
+       }
+      }
+     },
+     "409": {
+      "description": "Result pending or simulation failed",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SimulationError"
+        }
+       }
+      },
+      "headers": {
+       "Cache-Control": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "pattern": "no-store"
+        }
+       }
+      }
+     },
+     "503": {
+      "description": "Storage unavailable",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SimulationError"
+        }
+       }
+      },
+      "headers": {
+       "Cache-Control": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "pattern": "no-store"
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/admin/v1/grid-imports": {
+   "post": {
+    "operationId": "submitGridImport",
+    "summary": "Import a bounded window of grid series (1-31 completed days)",
+    "security": [
+     {
+      "operatorBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "Idempotency-Key",
+      "in": "header",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,119}$"
+      },
+      "description": "Permanent binding to one region/window; reuse for retries."
+     }
+    ],
+    "responses": {
+     "202": {
+      "description": "Accepted, including idempotent replay",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/GridImport"
+        }
+       }
+      },
+      "headers": {
+       "Location": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "pattern": "^/api/admin/v1/grid-imports/"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "INVALID_REQUEST",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "INVALID_REQUEST"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "503": {
+      "description": "STORAGE_UNAVAILABLE",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "STORAGE_UNAVAILABLE"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "409": {
+      "description": "IDEMPOTENCY_CONFLICT",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "IDEMPOTENCY_CONFLICT"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "429": {
+      "description": "QUEUE_FULL",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "QUEUE_FULL"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      },
+      "headers": {
+       "Retry-After": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "enum": [
+          "30"
+         ]
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Missing or invalid operator bearer token",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "UNAUTHORISED"
+           ]
+          }
+         }
+        }
+       }
+      },
+      "headers": {
+       "WWW-Authenticate": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "enum": [
+          "Bearer"
+         ]
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Authenticated operator lacks permission; empty body"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/GridImportSubmission"
+       }
+      }
+     }
+    }
+   },
+   "get": {
+    "operationId": "listGridImports",
+    "summary": "Recent grid import jobs",
+    "security": [
+     {
+      "operatorBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 100,
+       "default": 50
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Recent jobs",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/GridImport"
+         }
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "INVALID_REQUEST",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "INVALID_REQUEST"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "503": {
+      "description": "STORAGE_UNAVAILABLE",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "STORAGE_UNAVAILABLE"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Missing or invalid operator bearer token",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "UNAUTHORISED"
+           ]
+          }
+         }
+        }
+       }
+      },
+      "headers": {
+       "WWW-Authenticate": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "enum": [
+          "Bearer"
+         ]
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Authenticated operator lacks permission; empty body"
+     }
+    }
+   }
+  },
+  "/api/admin/v1/grid-imports/{id}": {
+   "get": {
+    "operationId": "getGridImport",
+    "summary": "Import status and progress",
+    "security": [
+     {
+      "operatorBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Current status",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/GridImport"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "INVALID_REQUEST",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "INVALID_REQUEST"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "503": {
+      "description": "STORAGE_UNAVAILABLE",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "STORAGE_UNAVAILABLE"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "JOB_NOT_FOUND",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "JOB_NOT_FOUND"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Missing or invalid operator bearer token",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "UNAUTHORISED"
+           ]
+          }
+         }
+        }
+       }
+      },
+      "headers": {
+       "WWW-Authenticate": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "enum": [
+          "Bearer"
+         ]
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Authenticated operator lacks permission; empty body"
+     }
+    }
+   }
+  },
+  "/api/admin/v1/grid-imports/{id}/events": {
+   "get": {
+    "operationId": "listGridImportEvents",
+    "summary": "Audit events after the exclusive cursor",
+    "security": [
+     {
+      "operatorBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid"
+      }
+     },
+     {
+      "name": "after",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "format": "int64",
+       "minimum": 0,
+       "default": 0
+      }
+     },
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 100,
+       "default": 50
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Events after the exclusive cursor",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/Event"
+         }
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "INVALID_REQUEST",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "INVALID_REQUEST"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "503": {
+      "description": "STORAGE_UNAVAILABLE",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "STORAGE_UNAVAILABLE"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "JOB_NOT_FOUND",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "JOB_NOT_FOUND"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Missing or invalid operator bearer token",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "UNAUTHORISED"
+           ]
+          }
+         }
+        }
+       }
+      },
+      "headers": {
+       "WWW-Authenticate": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "enum": [
+          "Bearer"
+         ]
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Authenticated operator lacks permission; empty body"
+     }
+    }
+   }
+  },
+  "/api/admin/v1/grid-imports/{id}/cancel": {
+   "post": {
+    "operationId": "cancelGridImport",
+    "summary": "Cancel a queued or running import",
+    "security": [
+     {
+      "operatorBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Current state after cancellation request",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/GridImport"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "INVALID_REQUEST",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "INVALID_REQUEST"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "503": {
+      "description": "STORAGE_UNAVAILABLE",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "STORAGE_UNAVAILABLE"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "JOB_NOT_FOUND",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "JOB_NOT_FOUND"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Missing or invalid operator bearer token",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "UNAUTHORISED"
+           ]
+          }
+         }
+        }
+       }
+      },
+      "headers": {
+       "WWW-Authenticate": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "enum": [
+          "Bearer"
+         ]
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Authenticated operator lacks permission; empty body"
+     }
+    }
+   }
+  },
+  "/api/admin/v1/grid-publications": {
+   "post": {
+    "operationId": "publishGridCatalogue",
+    "summary": "Run detectors over a bounded window and publish the catalogue atomically",
+    "security": [
+     {
+      "operatorBearer": []
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/GridPublicationSubmission"
+       }
+      }
+     }
+    },
+    "responses": {
+     "201": {
+      "description": "Published",
+      "headers": {
+       "Location": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "pattern": "^/api/admin/v1/grid-publications/"
+        }
+       }
+      },
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/GridPublication"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "INVALID_REQUEST",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "INVALID_REQUEST"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Missing or invalid operator bearer token",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "UNAUTHORISED"
+           ]
+          }
+         }
+        }
+       }
+      },
+      "headers": {
+       "WWW-Authenticate": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "enum": [
+          "Bearer"
+         ]
+        }
+       }
+      }
+     },
+     "503": {
+      "description": "STORAGE_UNAVAILABLE",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "STORAGE_UNAVAILABLE"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "get": {
+    "operationId": "listGridPublications",
+    "summary": "List recent detection publications",
+    "security": [
+     {
+      "operatorBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "limit",
+      "in": "query",
+      "schema": {
+       "type": "integer",
+       "default": 50,
+       "minimum": 1,
+       "maximum": 100
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Recent publications",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/GridPublication"
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Missing or invalid operator bearer token",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "UNAUTHORISED"
+           ]
+          }
+         }
+        }
+       }
+      },
+      "headers": {
+       "WWW-Authenticate": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "enum": [
+          "Bearer"
+         ]
+        }
+       }
+      }
+     },
+     "503": {
+      "description": "STORAGE_UNAVAILABLE",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "STORAGE_UNAVAILABLE"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/admin/v1/grid-publications/{id}": {
+   "get": {
+    "operationId": "gridPublication",
+    "summary": "Publication detail with coverage summary",
+    "security": [
+     {
+      "operatorBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Publication detail",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/GridPublication"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Missing or invalid operator bearer token",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "UNAUTHORISED"
+           ]
+          }
+         }
+        }
+       }
+      },
+      "headers": {
+       "WWW-Authenticate": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "enum": [
+          "Bearer"
+         ]
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "PUBLICATION_NOT_FOUND",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "PUBLICATION_NOT_FOUND"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "503": {
+      "description": "STORAGE_UNAVAILABLE",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "STORAGE_UNAVAILABLE"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "INVALID_REQUEST",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "INVALID_REQUEST"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/events": {
+   "get": {
+    "operationId": "listGridEvents",
+    "summary": "Published event catalogue, newest-first with pinned cursor pagination",
+    "security": [],
+    "parameters": [
+     {
+      "name": "region",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "$ref": "#/components/schemas/Region"
+      }
+     },
+     {
+      "name": "type",
+      "in": "query",
+      "schema": {
+       "$ref": "#/components/schemas/GridEventType"
+      }
+     },
+     {
+      "name": "from",
+      "in": "query",
+      "schema": {
+       "type": "string",
+       "format": "date"
+      },
+      "description": "Inclusive market-day filter; requires `to`."
+     },
+     {
+      "name": "to",
+      "in": "query",
+      "schema": {
+       "type": "string",
+       "format": "date"
+      }
+     },
+     {
+      "name": "limit",
+      "in": "query",
+      "schema": {
+       "type": "integer",
+       "default": 24,
+       "minimum": 1,
+       "maximum": 100
+      }
+     },
+     {
+      "name": "cursor",
+      "in": "query",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "One pinned page",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/GridEventPage"
+        }
+       }
+      },
+      "headers": {
+       "Cache-Control": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "enum": [
+          "no-store"
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "INVALID_REQUEST",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "INVALID_REQUEST"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "CATALOGUE_NOT_PUBLISHED or stale pinned publication",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "CATALOGUE_NOT_PUBLISHED",
+            "PUBLICATION_NOT_FOUND"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "503": {
+      "description": "STORAGE_UNAVAILABLE",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "STORAGE_UNAVAILABLE"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/events/{id}": {
+   "get": {
+    "operationId": "gridEvent",
+    "summary": "Immutable event version detail \u2014 superseded ids stay reproducible",
+    "security": [],
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Event detail",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/GridEventDetail"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "INVALID_REQUEST",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "INVALID_REQUEST"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "EVENT_NOT_FOUND",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "EVENT_NOT_FOUND"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "503": {
+      "description": "STORAGE_UNAVAILABLE",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "STORAGE_UNAVAILABLE"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/events/{id}/replay": {
+   "get": {
+    "operationId": "gridEventReplay",
+    "summary": "Materialised replay snapshot (<=7 market days, optional sub-window)",
+    "security": [],
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid"
+      }
+     },
+     {
+      "name": "startDay",
+      "in": "query",
+      "schema": {
+       "type": "string",
+       "format": "date"
+      }
+     },
+     {
+      "name": "endExclusive",
+      "in": "query",
+      "schema": {
+       "type": "string",
+       "format": "date"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Replay snapshot",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/GridReplay"
+        }
+       }
+      },
+      "headers": {
+       "Cache-Control": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "enum": [
+          "no-store"
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "INVALID_REQUEST",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "INVALID_REQUEST"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "Event or replay missing",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "EVENT_NOT_FOUND",
+            "REPLAY_NOT_FOUND"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "503": {
+      "description": "STORAGE_UNAVAILABLE",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "STORAGE_UNAVAILABLE"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
   }
+ },
+ "components": {
+  "securitySchemes": {
+   "operatorBearer": {
+    "type": "http",
+    "scheme": "bearer",
+    "description": "Locally configured opaque operator token; never embed in the public frontend."
+   }
+  },
+  "schemas": {
+   "Region": {
+    "type": "string",
+    "enum": [
+     "NSW1",
+     "QLD1",
+     "SA1",
+     "TAS1",
+     "VIC1"
+    ]
+   },
+   "DayCoverage": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "day",
+     "availability",
+     "revision",
+     "retrievedAt",
+     "valid",
+     "missing",
+     "sourceNull"
+    ],
+    "properties": {
+     "day": {
+      "type": "string",
+      "format": "date"
+     },
+     "availability": {
+      "type": "string",
+      "enum": [
+       "NOT_IMPORTED",
+       "COMPLETE",
+       "INCOMPLETE"
+      ]
+     },
+     "revision": {
+      "type": "string",
+      "format": "uuid",
+      "nullable": true
+     },
+     "retrievedAt": {
+      "type": "string",
+      "format": "date-time",
+      "nullable": true
+     },
+     "valid": {
+      "type": "integer",
+      "nullable": true,
+      "minimum": 0,
+      "maximum": 288
+     },
+     "missing": {
+      "type": "integer",
+      "nullable": true,
+      "minimum": 0,
+      "maximum": 288
+     },
+     "sourceNull": {
+      "type": "integer",
+      "nullable": true,
+      "minimum": 0,
+      "maximum": 288
+     }
+    },
+    "description": "NOT_IMPORTED has null revision, retrievedAt and counts. Imported days have a revision and timestamp; valid + missing + sourceNull = 288. COMPLETE means valid = 288; otherwise INCOMPLETE. Retrieved time is an instant, not a market date."
+   },
+   "Coverage": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "region",
+     "start",
+     "endExclusive",
+     "marketOffset",
+     "days"
+    ],
+    "properties": {
+     "region": {
+      "$ref": "#/components/schemas/Region"
+     },
+     "start": {
+      "type": "string",
+      "format": "date"
+     },
+     "endExclusive": {
+      "type": "string",
+      "format": "date"
+     },
+     "marketOffset": {
+      "type": "string",
+      "enum": [
+       "+10:00"
+      ]
+     },
+     "days": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/DayCoverage"
+      },
+      "minItems": 1,
+      "maxItems": 31
+     }
+    }
+   },
+   "Interval": {
+    "oneOf": [
+     {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "start",
+       "end",
+       "state",
+       "price"
+      ],
+      "properties": {
+       "start": {
+        "type": "string",
+        "format": "date-time"
+       },
+       "end": {
+        "type": "string",
+        "format": "date-time"
+       },
+       "state": {
+        "type": "string",
+        "enum": [
+         "VALUE"
+        ]
+       },
+       "price": {
+        "type": "string",
+        "pattern": "^-?[0-9]+(?:\\.[0-9]+)?$"
+       }
+      }
+     },
+     {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "start",
+       "end",
+       "state",
+       "price"
+      ],
+      "properties": {
+       "start": {
+        "type": "string",
+        "format": "date-time"
+       },
+       "end": {
+        "type": "string",
+        "format": "date-time"
+       },
+       "state": {
+        "type": "string",
+        "enum": [
+         "MISSING",
+         "SOURCE_NULL"
+        ]
+       },
+       "price": {
+        "type": "string",
+        "nullable": true,
+        "enum": [
+         null
+        ]
+       }
+      }
+     }
+    ]
+   },
+   "Series": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "region",
+     "day",
+     "source",
+     "unit",
+     "intervalSeconds",
+     "intervalLabel",
+     "marketOffset",
+     "coverage",
+     "intervals"
+    ],
+    "properties": {
+     "region": {
+      "$ref": "#/components/schemas/Region"
+     },
+     "day": {
+      "type": "string",
+      "format": "date"
+     },
+     "source": {
+      "type": "string",
+      "enum": [
+       "Open Electricity"
+      ]
+     },
+     "unit": {
+      "type": "string",
+      "enum": [
+       "AUD/MWh"
+      ]
+     },
+     "intervalSeconds": {
+      "type": "integer",
+      "enum": [
+       300
+      ]
+     },
+     "intervalLabel": {
+      "type": "string",
+      "enum": [
+       "END"
+      ]
+     },
+     "marketOffset": {
+      "type": "string",
+      "enum": [
+       "+10:00"
+      ]
+     },
+     "coverage": {
+      "$ref": "#/components/schemas/DayCoverage"
+     },
+     "intervals": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Interval"
+      },
+      "minItems": 288,
+      "maxItems": 288
+     }
+    }
+   },
+   "Submission": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "region",
+     "day"
+    ],
+    "properties": {
+     "region": {
+      "$ref": "#/components/schemas/Region"
+     },
+     "day": {
+      "type": "string",
+      "format": "date",
+      "description": "One completed market day since 2021-10-01, using fixed UTC+10."
+     }
+    }
+   },
+   "Job": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "id",
+     "region",
+     "day",
+     "status",
+     "attempts",
+     "availableAt",
+     "diagnostic"
+    ],
+    "properties": {
+     "id": {
+      "type": "string",
+      "format": "uuid"
+     },
+     "region": {
+      "$ref": "#/components/schemas/Region"
+     },
+     "day": {
+      "type": "string",
+      "format": "date"
+     },
+     "status": {
+      "type": "string",
+      "enum": [
+       "QUEUED",
+       "RUNNING",
+       "SUCCEEDED",
+       "FAILED",
+       "CANCELLED"
+      ]
+     },
+     "attempts": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3
+     },
+     "availableAt": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "diagnostic": {
+      "type": "string",
+      "nullable": true
+     }
+    }
+   },
+   "Event": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "id",
+     "occurredAt",
+     "actor",
+     "action",
+     "diagnostic"
+    ],
+    "properties": {
+     "id": {
+      "type": "integer",
+      "format": "int64"
+     },
+     "occurredAt": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "actor": {
+      "type": "string"
+     },
+     "action": {
+      "type": "string"
+     },
+     "diagnostic": {
+      "type": "string",
+      "nullable": true
+     }
+    }
+   },
+   "SimulationSite": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "capacityMWh",
+     "minimumMWh",
+     "maximumMWh",
+     "initialMWh",
+     "chargeMW",
+     "dischargeMW",
+     "importLimitMW",
+     "exportLimitMW"
+    ],
+    "properties": {
+     "capacityMWh": {
+      "type": "string",
+      "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
+      "maxLength": 80,
+      "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors."
+     },
+     "minimumMWh": {
+      "type": "string",
+      "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
+      "maxLength": 80,
+      "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors."
+     },
+     "maximumMWh": {
+      "type": "string",
+      "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
+      "maxLength": 80,
+      "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors."
+     },
+     "initialMWh": {
+      "type": "string",
+      "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
+      "maxLength": 80,
+      "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors."
+     },
+     "chargeMW": {
+      "type": "string",
+      "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
+      "maxLength": 80,
+      "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors."
+     },
+     "dischargeMW": {
+      "type": "string",
+      "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
+      "maxLength": 80,
+      "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors."
+     },
+     "importLimitMW": {
+      "type": "string",
+      "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
+      "maxLength": 80,
+      "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors."
+     },
+     "exportLimitMW": {
+      "type": "string",
+      "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
+      "maxLength": 80,
+      "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors."
+     }
+    }
+   },
+   "SimulationCosts": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "importFee",
+     "exportFee",
+     "degradationPerExportedMWh"
+    ],
+    "properties": {
+     "importFee": {
+      "type": "string",
+      "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
+      "maxLength": 80,
+      "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors."
+     },
+     "exportFee": {
+      "type": "string",
+      "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
+      "maxLength": 80,
+      "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors."
+     },
+     "degradationPerExportedMWh": {
+      "type": "string",
+      "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
+      "maxLength": 80,
+      "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors."
+     }
+    }
+   },
+   "SimulationEfficiencyLegs": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "charge",
+     "discharge"
+    ],
+    "properties": {
+     "charge": {
+      "type": "string",
+      "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
+      "maxLength": 80,
+      "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors."
+     },
+     "discharge": {
+      "type": "string",
+      "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
+      "maxLength": 80,
+      "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Physical/cost values in [0,1000000]; capacity >0. Semantic checks return field errors."
+     }
+    },
+    "description": "Both efficiency legs in [0.01,1]."
+   },
+   "SimulationEfficiency": {
+    "oneOf": [
+     {
+      "$ref": "#/components/schemas/SimulationEfficiencyLegs"
+     },
+     {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "roundTrip"
+      ],
+      "properties": {
+       "roundTrip": {
+        "type": "string",
+        "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
+        "maxLength": 80,
+        "description": "Round-trip efficiency in [0.0001,1]; normalised to equal square-root legs."
+       }
+      }
+     }
+    ]
+   },
+   "SimulationWindows": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "chargeStart",
+     "chargeEnd",
+     "dischargeStart",
+     "dischargeEnd"
+    ],
+    "properties": {
+     "chargeStart": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1440,
+      "multipleOf": 5
+     },
+     "chargeEnd": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1440,
+      "multipleOf": 5
+     },
+     "dischargeStart": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1440,
+      "multipleOf": 5
+     },
+     "dischargeEnd": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1440,
+      "multipleOf": 5
+     }
+    },
+    "description": "Minutes from midnight in fixed UTC+10; nonempty ordered charge then discharge windows. 1440 is next midnight."
+   },
+   "SimulationRequest": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "region",
+     "day",
+     "site",
+     "efficiency",
+     "costs",
+     "windows"
+    ],
+    "properties": {
+     "region": {
+      "$ref": "#/components/schemas/Region"
+     },
+     "day": {
+      "type": "string",
+      "format": "date",
+      "description": "Completed NEM day on/after 2021-10-01 with complete stored prices."
+     },
+     "site": {
+      "$ref": "#/components/schemas/SimulationSite"
+     },
+     "efficiency": {
+      "$ref": "#/components/schemas/SimulationEfficiency"
+     },
+     "costs": {
+      "$ref": "#/components/schemas/SimulationCosts"
+     },
+     "windows": {
+      "$ref": "#/components/schemas/SimulationWindows"
+     },
+     "thresholds": {
+      "$ref": "#/components/schemas/SimulationThresholds"
+     }
+    }
+   },
+   "SimulationInputs": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "region",
+     "day",
+     "site",
+     "efficiency",
+     "costs",
+     "windows"
+    ],
+    "properties": {
+     "region": {
+      "$ref": "#/components/schemas/Region"
+     },
+     "day": {
+      "type": "string",
+      "format": "date",
+      "description": "Completed NEM day on/after 2021-10-01 with complete stored prices."
+     },
+     "site": {
+      "$ref": "#/components/schemas/SimulationSite"
+     },
+     "efficiency": {
+      "$ref": "#/components/schemas/SimulationEfficiencyLegs"
+     },
+     "costs": {
+      "$ref": "#/components/schemas/SimulationCosts"
+     },
+     "windows": {
+      "$ref": "#/components/schemas/SimulationWindows"
+     },
+     "thresholds": {
+      "$ref": "#/components/schemas/SimulationThresholds"
+     }
+    }
+   },
+   "SimulationStatus": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "id",
+     "status",
+     "attempts",
+     "failureCode",
+     "statusUrl",
+     "resultUrl"
+    ],
+    "properties": {
+     "id": {
+      "type": "string",
+      "format": "uuid"
+     },
+     "status": {
+      "type": "string",
+      "enum": [
+       "QUEUED",
+       "RUNNING",
+       "SUCCEEDED",
+       "FAILED"
+      ]
+     },
+     "attempts": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3
+     },
+     "failureCode": {
+      "type": "string",
+      "nullable": true,
+      "enum": [
+       null,
+       "LEASE_EXPIRED",
+       "WORKER_STOPPED",
+       "SIMULATION_DEADLINE_EXCEEDED",
+       "SIMULATION_PROCESS_FAILED",
+       "INVALID_CHILD_RESULT",
+       "UNSUPPORTED_SIMULATION_VERSION",
+       "SOLVER_FEASIBLE_NOT_PROVEN",
+       "SOLVER_NO_SOLUTION",
+       "SOLVER_INFEASIBLE",
+       "SOLVER_FAILED_VALIDATION",
+       "SOLVER_ERROR",
+       "SIMULATION_FAILED"
+      ]
+     },
+     "statusUrl": {
+      "type": "string",
+      "pattern": "^/api/v1/simulations/[0-9a-f-]{36}$"
+     },
+     "resultUrl": {
+      "type": "string",
+      "pattern": "^/api/v1/simulations/[0-9a-f-]{36}/result$"
+     }
+    }
+   },
+   "SimulationVersions": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "request",
+     "model",
+     "fixed",
+     "hindsight",
+     "solver",
+     "executionProfile",
+     "limits"
+    ],
+    "properties": {
+     "request": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+     },
+     "model": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+     },
+     "fixed": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+     },
+     "hindsight": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+     },
+     "solver": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+     },
+     "executionProfile": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+     },
+     "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "milliseconds",
+       "iterations"
+      ],
+      "properties": {
+       "milliseconds": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 60000
+       },
+       "iterations": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 2147483647
+       }
+      }
+     }
+    }
+   },
+   "SimulationDispatch": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "intervals",
+     "limitingReason"
+    ],
+    "properties": {
+     "intervals": {
+      "type": "array",
+      "minItems": 288,
+      "maxItems": 288,
+      "items": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "importedMWh",
+        "exportedMWh",
+        "endingEnergyMWh"
+       ],
+       "properties": {
+        "importedMWh": {
+         "type": "number",
+         "minimum": 0
+        },
+        "exportedMWh": {
+         "type": "number",
+         "minimum": 0
+        },
+        "endingEnergyMWh": {
+         "type": "number"
+        }
+       }
+      }
+     },
+     "limitingReason": {
+      "type": "string",
+      "enum": [
+       "ENERGY_HEADROOM",
+       "CHARGE_WINDOW",
+       "DISCHARGE_WINDOW",
+       "NOT_EVALUATED"
+      ]
+     }
+    }
+   },
+   "SimulationAccounting": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "importedMWh",
+     "exportedMWh",
+     "chargingCost",
+     "revenue",
+     "fees",
+     "degradation",
+     "margin",
+     "lossesMWh"
+    ],
+    "properties": {
+     "importedMWh": {
+      "type": "number"
+     },
+     "exportedMWh": {
+      "type": "number"
+     },
+     "chargingCost": {
+      "type": "number"
+     },
+     "revenue": {
+      "type": "number"
+     },
+     "fees": {
+      "type": "number"
+     },
+     "degradation": {
+      "type": "number"
+     },
+     "margin": {
+      "type": "number"
+     },
+     "lossesMWh": {
+      "type": "number"
+     }
+    }
+   },
+   "SimulationStrategy": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "dispatch",
+     "accounting"
+    ],
+    "properties": {
+     "dispatch": {
+      "$ref": "#/components/schemas/SimulationDispatch"
+     },
+     "accounting": {
+      "$ref": "#/components/schemas/SimulationAccounting"
+     }
+    }
+   },
+   "SimulationResult": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "id",
+     "inputs",
+     "priceRevision",
+     "versions",
+     "marketOffset",
+     "intervalSeconds",
+     "intervalLabel",
+     "units",
+     "prices",
+     "fixed",
+     "hindsight",
+     "solver",
+     "threshold"
+    ],
+    "properties": {
+     "id": {
+      "type": "string",
+      "format": "uuid"
+     },
+     "inputs": {
+      "$ref": "#/components/schemas/SimulationInputs"
+     },
+     "priceRevision": {
+      "type": "string",
+      "format": "uuid"
+     },
+     "versions": {
+      "$ref": "#/components/schemas/SimulationVersions"
+     },
+     "marketOffset": {
+      "type": "string",
+      "enum": [
+       "+10:00"
+      ]
+     },
+     "intervalSeconds": {
+      "type": "integer",
+      "enum": [
+       300
+      ]
+     },
+     "intervalLabel": {
+      "type": "string",
+      "enum": [
+       "END"
+      ]
+     },
+     "units": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "energy",
+       "power",
+       "money",
+       "price"
+      ],
+      "properties": {
+       "energy": {
+        "type": "string",
+        "enum": [
+         "MWh"
+        ]
+       },
+       "power": {
+        "type": "string",
+        "enum": [
+         "MW"
+        ]
+       },
+       "money": {
+        "type": "string",
+        "enum": [
+         "AUD"
+        ]
+       },
+       "price": {
+        "type": "string",
+        "enum": [
+         "AUD/MWh"
+        ]
+       }
+      }
+     },
+     "prices": {
+      "type": "array",
+      "minItems": 288,
+      "maxItems": 288,
+      "items": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "start",
+        "end",
+        "price"
+       ],
+       "properties": {
+        "start": {
+         "type": "string",
+         "format": "date-time"
+        },
+        "end": {
+         "type": "string",
+         "format": "date-time"
+        },
+        "price": {
+         "type": "string",
+         "pattern": "^-?[0-9]+(\\.[0-9]+)?$"
+        }
+       }
+      }
+     },
+     "fixed": {
+      "$ref": "#/components/schemas/SimulationStrategy"
+     },
+     "hindsight": {
+      "$ref": "#/components/schemas/SimulationStrategy"
+     },
+     "solver": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "status",
+       "objective",
+       "upperBound",
+       "absoluteGap"
+      ],
+      "properties": {
+       "status": {
+        "type": "string",
+        "enum": [
+         "OPTIMAL"
+        ]
+       },
+       "objective": {
+        "type": "number",
+        "nullable": true
+       },
+       "upperBound": {
+        "type": "number"
+       },
+       "absoluteGap": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 0.01
+       }
+      }
+     },
+     "threshold": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/SimulationThreshold"
+       },
+       {
+        "enum": [
+         null
+        ]
+       }
+      ]
+     }
+    }
+   },
+   "SimulationError": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "code",
+     "message",
+     "field",
+     "reason"
+    ],
+    "properties": {
+     "code": {
+      "type": "string",
+      "enum": [
+       "INVALID_REQUEST",
+       "SIMULATION_NOT_FOUND",
+       "RESULT_NOT_READY",
+       "SIMULATION_FAILED",
+       "QUEUE_FULL",
+       "REQUEST_TOO_LARGE",
+       "UNSUPPORTED_CONTENT_TYPE",
+       "STORAGE_UNAVAILABLE",
+       "PRICE_REFRESH_PENDING",
+       "PRICE_REFRESH_FAILED",
+       "VISITOR_REFRESH_LIMIT"
+      ]
+     },
+     "message": {
+      "type": "string"
+     },
+     "field": {
+      "type": "string"
+     },
+     "reason": {
+      "type": "string"
+     }
+    }
+   },
+   "SimulationThresholds": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "chargeBelow",
+     "dischargeAbove"
+    ],
+    "properties": {
+     "chargeBelow": {
+      "type": "string",
+      "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
+      "maxLength": 80,
+      "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Thresholds in AUD/MWh within [-1000000,1000000]; negative values allowed. Charge threshold must be below discharge threshold."
+     },
+     "dischargeAbove": {
+      "type": "string",
+      "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
+      "maxLength": 80,
+      "description": "Exact decimal input; 38 digits precision and absolute scale <=18. Thresholds in AUD/MWh within [-1000000,1000000]; negative values allowed. Charge threshold must be below discharge threshold."
+     }
+    },
+    "description": "Optional all-day price-rule experiment: charge when the interval price is strictly below chargeBelow, discharge when strictly above dischargeAbove, hold otherwise."
+   },
+   "SimulationThreshold": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "version",
+     "thresholds",
+     "dispatch",
+     "accounting"
+    ],
+    "properties": {
+     "version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+     },
+     "thresholds": {
+      "$ref": "#/components/schemas/SimulationThresholds"
+     },
+     "dispatch": {
+      "$ref": "#/components/schemas/SimulationDispatch"
+     },
+     "accounting": {
+      "$ref": "#/components/schemas/SimulationAccounting"
+     }
+    },
+    "description": "Idealised same-interval price-rule replay over the whole market day. Ending energy may differ from initial energy; this is not a dispatch or forecast reconstruction."
+   },
+   "GridImportSubmission": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "region",
+     "startDay",
+     "endExclusive"
+    ],
+    "properties": {
+     "region": {
+      "$ref": "#/components/schemas/Region"
+     },
+     "startDay": {
+      "type": "string",
+      "format": "date",
+      "description": "First market day, fixed UTC+10."
+     },
+     "endExclusive": {
+      "type": "string",
+      "format": "date",
+      "description": "Exclusive window end; 1-31 completed market days."
+     }
+    }
+   },
+   "GridImport": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "id",
+     "region",
+     "startDay",
+     "endExclusive",
+     "nextDay",
+     "status",
+     "attempts",
+     "optionalFailures",
+     "availableAt",
+     "diagnostic"
+    ],
+    "properties": {
+     "id": {
+      "type": "string",
+      "format": "uuid"
+     },
+     "region": {
+      "$ref": "#/components/schemas/Region"
+     },
+     "startDay": {
+      "type": "string",
+      "format": "date"
+     },
+     "endExclusive": {
+      "type": "string",
+      "format": "date"
+     },
+     "nextDay": {
+      "type": "string",
+      "format": "date",
+      "description": "Resume checkpoint: first uncommitted day."
+     },
+     "status": {
+      "type": "string",
+      "enum": [
+       "QUEUED",
+       "RUNNING",
+       "PAUSED",
+       "SUCCEEDED",
+       "FAILED",
+       "CANCELLED"
+      ]
+     },
+     "attempts": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 5
+     },
+     "optionalFailures": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Days whose optional (power) series fetch failed while core market data committed."
+     },
+     "availableAt": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "diagnostic": {
+      "type": "string",
+      "nullable": true
+     }
+    }
+   },
+   "GridPublicationSubmission": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "region",
+     "startDay",
+     "endExclusive"
+    ],
+    "properties": {
+     "region": {
+      "$ref": "#/components/schemas/Region"
+     },
+     "startDay": {
+      "type": "string",
+      "format": "date"
+     },
+     "endExclusive": {
+      "type": "string",
+      "format": "date"
+     }
+    }
+   },
+   "GridPublication": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "id",
+     "region",
+     "startDay",
+     "endExclusive",
+     "detectorVersion",
+     "eventCount",
+     "coverage",
+     "createdAt"
+    ],
+    "properties": {
+     "id": {
+      "type": "string",
+      "format": "uuid"
+     },
+     "region": {
+      "$ref": "#/components/schemas/Region"
+     },
+     "startDay": {
+      "type": "string",
+      "format": "date"
+     },
+     "endExclusive": {
+      "type": "string",
+      "format": "date"
+     },
+     "detectorVersion": {
+      "type": "string"
+     },
+     "eventCount": {
+      "type": "integer",
+      "minimum": 0
+     },
+     "coverage": {
+      "type": "object",
+      "description": "Per-day evaluated/missing counts and ramp outcome."
+     },
+     "createdAt": {
+      "type": "string",
+      "format": "date-time"
+     }
+    }
+   },
+   "GridEventType": {
+    "type": "string",
+    "enum": [
+     "negative_price_run",
+     "price_spike",
+     "demand_ramp"
+    ]
+   },
+   "GridEventSummary": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "id",
+     "region",
+     "type",
+     "detectorVersion",
+     "marketDay",
+     "startAt",
+     "endAt",
+     "intervalCount",
+     "durationMinutes",
+     "value",
+     "edgeIncomplete",
+     "version",
+     "superseded",
+     "coverage"
+    ],
+    "properties": {
+     "id": {
+      "type": "string",
+      "format": "uuid"
+     },
+     "region": {
+      "$ref": "#/components/schemas/Region"
+     },
+     "type": {
+      "$ref": "#/components/schemas/GridEventType"
+     },
+     "detectorVersion": {
+      "type": "string"
+     },
+     "marketDay": {
+      "type": "string",
+      "format": "date"
+     },
+     "startAt": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "endAt": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "intervalCount": {
+      "type": "integer",
+      "minimum": 1
+     },
+     "durationMinutes": {
+      "type": "integer",
+      "minimum": 5
+     },
+     "value": {
+      "type": "string",
+      "description": "Exact decimal: extreme price (AUD/MWh) or ramp MW."
+     },
+     "edgeIncomplete": {
+      "type": "boolean"
+     },
+     "version": {
+      "type": "integer",
+      "minimum": 1
+     },
+     "superseded": {
+      "type": "boolean"
+     },
+     "coverage": {
+      "type": "object",
+      "description": "{evaluated, missing, edge_incomplete}"
+     }
+    }
+   },
+   "GridEventDetail": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "id",
+     "region",
+     "type",
+     "detectorVersion",
+     "detectorParams",
+     "marketDay",
+     "startAt",
+     "endAt",
+     "intervalCount",
+     "durationMinutes",
+     "value",
+     "edgeIncomplete",
+     "version",
+     "superseded",
+     "coverage",
+     "sourceRevisions",
+     "replay"
+    ],
+    "properties": {
+     "id": {
+      "type": "string",
+      "format": "uuid"
+     },
+     "region": {
+      "$ref": "#/components/schemas/Region"
+     },
+     "type": {
+      "$ref": "#/components/schemas/GridEventType"
+     },
+     "detectorVersion": {
+      "type": "string"
+     },
+     "marketDay": {
+      "type": "string",
+      "format": "date"
+     },
+     "startAt": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "endAt": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "intervalCount": {
+      "type": "integer",
+      "minimum": 1
+     },
+     "durationMinutes": {
+      "type": "integer",
+      "minimum": 5
+     },
+     "value": {
+      "type": "string",
+      "description": "Exact decimal: extreme price (AUD/MWh) or ramp MW."
+     },
+     "edgeIncomplete": {
+      "type": "boolean"
+     },
+     "version": {
+      "type": "integer",
+      "minimum": 1
+     },
+     "superseded": {
+      "type": "boolean"
+     },
+     "coverage": {
+      "type": "object",
+      "description": "{evaluated, missing, edge_incomplete}"
+     },
+     "detectorParams": {
+      "type": "object"
+     },
+     "sourceRevisions": {
+      "type": "object",
+      "description": "Pinned source revision ids per series/day."
+     },
+     "replay": {
+      "type": "object",
+      "nullable": true,
+      "properties": {
+       "startDay": {
+        "type": "string",
+        "format": "date"
+       },
+       "endExclusive": {
+        "type": "string",
+        "format": "date"
+       }
+      }
+     }
+    }
+   },
+   "GridEventPage": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "publication",
+     "events",
+     "nextCursor"
+    ],
+    "properties": {
+     "publication": {
+      "$ref": "#/components/schemas/GridPublication"
+     },
+     "events": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/GridEventSummary"
+      }
+     },
+     "nextCursor": {
+      "type": "string",
+      "nullable": true,
+      "description": "Opaque cursor pinning the publication; pass as `cursor`."
+     }
+    }
+   },
+   "GridReplay": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "event",
+     "manifest",
+     "payload"
+    ],
+    "properties": {
+     "event": {
+      "$ref": "#/components/schemas/GridEventDetail"
+     },
+     "manifest": {
+      "type": "object",
+      "description": "Series list with pinned revisions, units and grid semantics."
+     },
+     "payload": {
+      "type": "object",
+      "description": "Materialised exact values: series -> day -> 288 slots (decimal strings or null)."
+     }
+    }
+   }
+  }
+ }
 }

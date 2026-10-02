@@ -164,6 +164,161 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/v1/grid-imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Recent grid import jobs */
+        get: operations["listGridImports"];
+        put?: never;
+        /** Import a bounded window of grid series (1-31 completed days) */
+        post: operations["submitGridImport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/v1/grid-imports/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Import status and progress */
+        get: operations["getGridImport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/v1/grid-imports/{id}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Audit events after the exclusive cursor */
+        get: operations["listGridImportEvents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/v1/grid-imports/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel a queued or running import */
+        post: operations["cancelGridImport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/v1/grid-publications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List recent detection publications */
+        get: operations["listGridPublications"];
+        put?: never;
+        /** Run detectors over a bounded window and publish the catalogue atomically */
+        post: operations["publishGridCatalogue"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/v1/grid-publications/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Publication detail with coverage summary */
+        get: operations["gridPublication"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Published event catalogue, newest-first with pinned cursor pagination */
+        get: operations["listGridEvents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/events/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Immutable event version detail — superseded ids stay reproducible */
+        get: operations["gridEvent"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/events/{id}/replay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Materialised replay snapshot (<=7 market days, optional sub-window) */
+        get: operations["gridEventReplay"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -436,6 +591,131 @@ export interface components {
             thresholds: components["schemas"]["SimulationThresholds"];
             dispatch: components["schemas"]["SimulationDispatch"];
             accounting: components["schemas"]["SimulationAccounting"];
+        };
+        GridImportSubmission: {
+            region: components["schemas"]["Region"];
+            /**
+             * Format: date
+             * @description First market day, fixed UTC+10.
+             */
+            startDay: string;
+            /**
+             * Format: date
+             * @description Exclusive window end; 1-31 completed market days.
+             */
+            endExclusive: string;
+        };
+        GridImport: {
+            /** Format: uuid */
+            id: string;
+            region: components["schemas"]["Region"];
+            /** Format: date */
+            startDay: string;
+            /** Format: date */
+            endExclusive: string;
+            /**
+             * Format: date
+             * @description Resume checkpoint: first uncommitted day.
+             */
+            nextDay: string;
+            /** @enum {string} */
+            status: "QUEUED" | "RUNNING" | "PAUSED" | "SUCCEEDED" | "FAILED" | "CANCELLED";
+            attempts: number;
+            /** @description Days whose optional (power) series fetch failed while core market data committed. */
+            optionalFailures: number;
+            /** Format: date-time */
+            availableAt: string;
+            diagnostic: string | null;
+        };
+        GridPublicationSubmission: {
+            region: components["schemas"]["Region"];
+            /** Format: date */
+            startDay: string;
+            /** Format: date */
+            endExclusive: string;
+        };
+        GridPublication: {
+            /** Format: uuid */
+            id: string;
+            region: components["schemas"]["Region"];
+            /** Format: date */
+            startDay: string;
+            /** Format: date */
+            endExclusive: string;
+            detectorVersion: string;
+            eventCount: number;
+            /** @description Per-day evaluated/missing counts and ramp outcome. */
+            coverage: Record<string, never>;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        /** @enum {string} */
+        GridEventType: "negative_price_run" | "price_spike" | "demand_ramp";
+        GridEventSummary: {
+            /** Format: uuid */
+            id: string;
+            region: components["schemas"]["Region"];
+            type: components["schemas"]["GridEventType"];
+            detectorVersion: string;
+            /** Format: date */
+            marketDay: string;
+            /** Format: date-time */
+            startAt: string;
+            /** Format: date-time */
+            endAt: string;
+            intervalCount: number;
+            durationMinutes: number;
+            /** @description Exact decimal: extreme price (AUD/MWh) or ramp MW. */
+            value: string;
+            edgeIncomplete: boolean;
+            version: number;
+            superseded: boolean;
+            /** @description {evaluated, missing, edge_incomplete} */
+            coverage: Record<string, never>;
+        };
+        GridEventDetail: {
+            /** Format: uuid */
+            id: string;
+            region: components["schemas"]["Region"];
+            type: components["schemas"]["GridEventType"];
+            detectorVersion: string;
+            /** Format: date */
+            marketDay: string;
+            /** Format: date-time */
+            startAt: string;
+            /** Format: date-time */
+            endAt: string;
+            intervalCount: number;
+            durationMinutes: number;
+            /** @description Exact decimal: extreme price (AUD/MWh) or ramp MW. */
+            value: string;
+            edgeIncomplete: boolean;
+            version: number;
+            superseded: boolean;
+            /** @description {evaluated, missing, edge_incomplete} */
+            coverage: Record<string, never>;
+            detectorParams: Record<string, never>;
+            /** @description Pinned source revision ids per series/day. */
+            sourceRevisions: Record<string, never>;
+            replay: {
+                /** Format: date */
+                startDay?: string;
+                /** Format: date */
+                endExclusive?: string;
+            } | null;
+        };
+        GridEventPage: {
+            publication: components["schemas"]["GridPublication"];
+            events: components["schemas"]["GridEventSummary"][];
+            /** @description Opaque cursor pinning the publication; pass as `cursor`. */
+            nextCursor: string | null;
+        };
+        GridReplay: {
+            event: components["schemas"]["GridEventDetail"];
+            /** @description Series list with pinned revisions, units and grid semantics. */
+            manifest: Record<string, never>;
+            /** @description Materialised exact values: series -> day -> 288 slots (decimal strings or null). */
+            payload: Record<string, never>;
         };
     };
     responses: never;
@@ -1190,6 +1470,801 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SimulationError"];
+                };
+            };
+        };
+    };
+    listGridImports: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Recent jobs */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GridImport"][];
+                };
+            };
+            /** @description INVALID_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "INVALID_REQUEST";
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid operator bearer token */
+            401: {
+                headers: {
+                    "WWW-Authenticate": "Bearer";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "UNAUTHORISED";
+                    };
+                };
+            };
+            /** @description Authenticated operator lacks permission; empty body */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description STORAGE_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "STORAGE_UNAVAILABLE";
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    submitGridImport: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Permanent binding to one region/window; reuse for retries. */
+                "Idempotency-Key": string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GridImportSubmission"];
+            };
+        };
+        responses: {
+            /** @description Accepted, including idempotent replay */
+            202: {
+                headers: {
+                    Location: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GridImport"];
+                };
+            };
+            /** @description INVALID_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "INVALID_REQUEST";
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid operator bearer token */
+            401: {
+                headers: {
+                    "WWW-Authenticate": "Bearer";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "UNAUTHORISED";
+                    };
+                };
+            };
+            /** @description Authenticated operator lacks permission; empty body */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description IDEMPOTENCY_CONFLICT */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "IDEMPOTENCY_CONFLICT";
+                        message: string;
+                    };
+                };
+            };
+            /** @description QUEUE_FULL */
+            429: {
+                headers: {
+                    "Retry-After": "30";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "QUEUE_FULL";
+                        message: string;
+                    };
+                };
+            };
+            /** @description STORAGE_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "STORAGE_UNAVAILABLE";
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    getGridImport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current status */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GridImport"];
+                };
+            };
+            /** @description INVALID_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "INVALID_REQUEST";
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid operator bearer token */
+            401: {
+                headers: {
+                    "WWW-Authenticate": "Bearer";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "UNAUTHORISED";
+                    };
+                };
+            };
+            /** @description Authenticated operator lacks permission; empty body */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description JOB_NOT_FOUND */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "JOB_NOT_FOUND";
+                        message: string;
+                    };
+                };
+            };
+            /** @description STORAGE_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "STORAGE_UNAVAILABLE";
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    listGridImportEvents: {
+        parameters: {
+            query?: {
+                after?: number;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Events after the exclusive cursor */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Event"][];
+                };
+            };
+            /** @description INVALID_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "INVALID_REQUEST";
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid operator bearer token */
+            401: {
+                headers: {
+                    "WWW-Authenticate": "Bearer";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "UNAUTHORISED";
+                    };
+                };
+            };
+            /** @description Authenticated operator lacks permission; empty body */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description JOB_NOT_FOUND */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "JOB_NOT_FOUND";
+                        message: string;
+                    };
+                };
+            };
+            /** @description STORAGE_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "STORAGE_UNAVAILABLE";
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    cancelGridImport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current state after cancellation request */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GridImport"];
+                };
+            };
+            /** @description INVALID_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "INVALID_REQUEST";
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid operator bearer token */
+            401: {
+                headers: {
+                    "WWW-Authenticate": "Bearer";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "UNAUTHORISED";
+                    };
+                };
+            };
+            /** @description Authenticated operator lacks permission; empty body */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description JOB_NOT_FOUND */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "JOB_NOT_FOUND";
+                        message: string;
+                    };
+                };
+            };
+            /** @description STORAGE_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "STORAGE_UNAVAILABLE";
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    listGridPublications: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Recent publications */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GridPublication"][];
+                };
+            };
+            /** @description Missing or invalid operator bearer token */
+            401: {
+                headers: {
+                    "WWW-Authenticate": "Bearer";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "UNAUTHORISED";
+                    };
+                };
+            };
+            /** @description STORAGE_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "STORAGE_UNAVAILABLE";
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    publishGridCatalogue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GridPublicationSubmission"];
+            };
+        };
+        responses: {
+            /** @description Published */
+            201: {
+                headers: {
+                    Location: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GridPublication"];
+                };
+            };
+            /** @description INVALID_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "INVALID_REQUEST";
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid operator bearer token */
+            401: {
+                headers: {
+                    "WWW-Authenticate": "Bearer";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "UNAUTHORISED";
+                    };
+                };
+            };
+            /** @description STORAGE_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "STORAGE_UNAVAILABLE";
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    gridPublication: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Publication detail */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GridPublication"];
+                };
+            };
+            /** @description INVALID_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "INVALID_REQUEST";
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid operator bearer token */
+            401: {
+                headers: {
+                    "WWW-Authenticate": "Bearer";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "UNAUTHORISED";
+                    };
+                };
+            };
+            /** @description PUBLICATION_NOT_FOUND */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "PUBLICATION_NOT_FOUND";
+                        message: string;
+                    };
+                };
+            };
+            /** @description STORAGE_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "STORAGE_UNAVAILABLE";
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    listGridEvents: {
+        parameters: {
+            query: {
+                region: components["schemas"]["Region"];
+                type?: components["schemas"]["GridEventType"];
+                /** @description Inclusive market-day filter; requires `to`. */
+                from?: string;
+                to?: string;
+                limit?: number;
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One pinned page */
+            200: {
+                headers: {
+                    "Cache-Control": "no-store";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GridEventPage"];
+                };
+            };
+            /** @description INVALID_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "INVALID_REQUEST";
+                        message: string;
+                    };
+                };
+            };
+            /** @description CATALOGUE_NOT_PUBLISHED or stale pinned publication */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "CATALOGUE_NOT_PUBLISHED" | "PUBLICATION_NOT_FOUND";
+                        message: string;
+                    };
+                };
+            };
+            /** @description STORAGE_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "STORAGE_UNAVAILABLE";
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    gridEvent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Event detail */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GridEventDetail"];
+                };
+            };
+            /** @description INVALID_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "INVALID_REQUEST";
+                        message: string;
+                    };
+                };
+            };
+            /** @description EVENT_NOT_FOUND */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "EVENT_NOT_FOUND";
+                        message: string;
+                    };
+                };
+            };
+            /** @description STORAGE_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "STORAGE_UNAVAILABLE";
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    gridEventReplay: {
+        parameters: {
+            query?: {
+                startDay?: string;
+                endExclusive?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Replay snapshot */
+            200: {
+                headers: {
+                    "Cache-Control": "no-store";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GridReplay"];
+                };
+            };
+            /** @description INVALID_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "INVALID_REQUEST";
+                        message: string;
+                    };
+                };
+            };
+            /** @description Event or replay missing */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "EVENT_NOT_FOUND" | "REPLAY_NOT_FOUND";
+                        message: string;
+                    };
+                };
+            };
+            /** @description STORAGE_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "STORAGE_UNAVAILABLE";
+                        message: string;
+                    };
                 };
             };
         };
