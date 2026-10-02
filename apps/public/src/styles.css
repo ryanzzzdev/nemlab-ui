@@ -1037,31 +1037,6 @@ button:disabled {
   gap: 10px;
   margin-bottom: 14px;
 }
-.event-day {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 10px;
-  align-items: start;
-}
-.event-day-more {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 10px;
-}
-.event-day-more:not([open]) > :not(summary) {
-  display: none;
-}
-.event-day-more > summary {
-  grid-column: 1 / -1;
-  min-height: 32px;
-  display: flex;
-  align-items: center;
-  color: var(--color-muted);
-  font-size: 0.9em;
-  cursor: pointer;
-}
 .event-card {
   display: flex;
   flex-direction: column;

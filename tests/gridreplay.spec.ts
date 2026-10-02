@@ -129,34 +129,6 @@ test("invalid URL parameters fall back to defaults", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Replay", exact: true })).toHaveCount(0);
 });
 
-test("same-day episodes group under the day's headline cards", async ({ page }) => {
-  const secondRun = {
-    ...events[0]!,
-    id: "aaaaaaaa-1111-4000-8000-000000000003",
-    intervalCount: 8,
-    durationMinutes: 40,
-    value: "-30.5",
-    startAt: "2023-09-04T11:00:00+10:00",
-    endAt: "2023-09-04T11:35:00+10:00",
-  };
-  await page.route("**/api/v1/events**", async (route) => {
-    const url = new URL(route.request().url());
-    if (url.pathname.endsWith("/replay")) {
-      await route.fulfill({ json: replay(url.pathname.split("/").at(-2)!) });
-    } else {
-      await route.fulfill({ json: eventPage([...events, secondRun]) });
-    }
-  });
-  await page.goto("/gridreplay");
-  // Headline: the longer run plus the spike; the 15-minute run collapses.
-  await expect(page.getByRole("button", { name: /Negative prices for 40 minutes/ })).toBeVisible();
-  await expect(page.getByRole("button", { name: /Price spike to 1500.25/ })).toBeVisible();
-  const collapsed = page.getByRole("button", { name: /Negative prices for 15 minutes/ });
-  await expect(collapsed).not.toBeVisible();
-  await page.getByText("1 more event on 2023-09-04").click();
-  await expect(collapsed).toBeVisible();
-});
-
 test("an unpublished region shows an honest empty state", async ({ page }) => {
   await page.route("**/api/v1/events**", async (route) => {
     await route.fulfill({

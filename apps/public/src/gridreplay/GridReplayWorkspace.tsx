@@ -162,41 +162,6 @@ export function GridReplayWorkspace() {
   const events = catalogueQuery.data?.pages.flatMap((page) => page.events) ?? [];
   const publication = catalogueQuery.data?.pages[0]?.publication;
 
-  // Days routinely produce several episodes (multiple negative runs plus the
-  // daily ramp). Group cards by market day, lead with each type's headline
-  // event and collapse secondary episodes so the list stays scannable.
-  const dayGroups = useMemo(() => {
-    const rank: Record<EventType, number> = {
-      price_spike: 0,
-      negative_price_run: 1,
-      demand_ramp: 2,
-    };
-    const groups = new Map<string, EventSummary[]>();
-    for (const event of events) {
-      const list = groups.get(event.marketDay) ?? [];
-      list.push(event);
-      groups.set(event.marketDay, list);
-    }
-    for (const list of groups.values()) {
-      list.sort(
-        (a, b) =>
-          rank[a.type] - rank[b.type] ||
-          b.intervalCount - a.intervalCount ||
-          Math.abs(Number(b.value)) - Math.abs(Number(a.value)),
-      );
-    }
-    return [...groups.values()].map((list) => {
-      const seen = new Set<EventType>();
-      const headline: EventSummary[] = [];
-      const rest: EventSummary[] = [];
-      for (const event of list) {
-        (seen.has(event.type) ? rest : headline).push(event);
-        seen.add(event.type);
-      }
-      return { day: list[0]!.marketDay, headline, rest };
-    });
-  }, [events]);
-
   // Opening an event scrolls the replay into view once it renders.
   useEffect(() => {
     if (linkedEvent && replayQuery.data) {
@@ -322,33 +287,13 @@ export function GridReplayWorkspace() {
               </div>
             ) : (
               <div className="event-cards">
-                {dayGroups.map((group) => (
-                  <div className="event-day" key={group.day}>
-                    {group.headline.map((event) => (
-                      <EventCard
-                        key={event.id}
-                        event={event}
-                        selected={event.id === linkedEvent}
-                        onOpen={openEvent}
-                      />
-                    ))}
-                    {group.rest.length > 0 && (
-                      <details className="event-day-more">
-                        <summary>
-                          {group.rest.length} more event
-                          {group.rest.length === 1 ? "" : "s"} on {group.day}
-                        </summary>
-                        {group.rest.map((event) => (
-                          <EventCard
-                            key={event.id}
-                            event={event}
-                            selected={event.id === linkedEvent}
-                            onOpen={openEvent}
-                          />
-                        ))}
-                      </details>
-                    )}
-                  </div>
+                {events.map((event) => (
+                  <EventCard
+                    key={event.id}
+                    event={event}
+                    selected={event.id === linkedEvent}
+                    onOpen={openEvent}
+                  />
                 ))}
               </div>
             )}
