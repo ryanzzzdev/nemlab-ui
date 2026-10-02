@@ -1038,40 +1038,29 @@ button:disabled {
   margin-bottom: 14px;
 }
 .event-day {
-  display: contents;
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 10px;
+  align-items: start;
 }
 .event-day-more {
-  display: contents;
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 10px;
 }
 .event-day-more:not([open]) > :not(summary) {
   display: none;
 }
 .event-day-more > summary {
+  grid-column: 1 / -1;
+  min-height: 32px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  min-height: 120px;
-  border: 1px dashed var(--color-rule);
-  border-radius: 10px;
   color: var(--color-muted);
   font-size: 0.9em;
   cursor: pointer;
-}
-.event-day-more > summary:hover {
-  border-color: var(--color-accent);
-  color: var(--color-text);
-}
-.event-day-more[open] {
-  display: grid;
-  grid-column: 1 / -1;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 10px;
-}
-.event-day-more[open] > summary {
-  grid-column: 1 / -1;
-  min-height: 32px;
-  border: none;
-  justify-content: flex-start;
 }
 .event-card {
   display: flex;
