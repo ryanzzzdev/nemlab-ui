@@ -56,6 +56,7 @@ const FUELTECH_ORDER = [
   "bioenergy_biomass",
   "bioenergy_biogas",
   "battery_charging",
+  "pumps",
 ];
 const FUELTECH: Record<string, { name: string; light: string; dark: string }> = {
   coal_black: { name: "Black coal", light: "#4b5563", dark: "#8a94a3" },
@@ -73,6 +74,7 @@ const FUELTECH: Record<string, { name: string; light: string; dark: string }> = 
   bioenergy_biomass: { name: "Biomass", light: "#7a9a4e", dark: "#a0bd72" },
   bioenergy_biogas: { name: "Biogas", light: "#a4c16d", dark: "#c4d795" },
   battery_charging: { name: "Battery charging", light: "#b8a6e8", dark: "#8f7bd8" },
+  pumps: { name: "Pumped hydro", light: "#5b8dd9", dark: "#8db3e8" },
 };
 
 const numbers = (values: (string | null)[]) =>

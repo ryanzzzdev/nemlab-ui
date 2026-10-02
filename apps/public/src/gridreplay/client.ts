@@ -10,7 +10,8 @@ export type EventPage = components["schemas"]["GridEventPage"];
 
 export type ManifestSeries = {
   metric: string;
-  series: string | null;
+  // Omitted on the wire when there is no sub-series.
+  series?: string | null;
   unit: string;
   grid: "interval_end" | "source_label";
   days: Record<string, string | null>;
@@ -96,7 +97,8 @@ function validReplay(replay: Replay): boolean {
   return manifest.series.every((series) => {
     if (
       typeof series.metric !== "string" ||
-      (series.series !== null && typeof series.series !== "string") ||
+      // The wire format omits `series` entirely when there is no sub-series.
+      !(series.series == null || typeof series.series === "string") ||
       typeof series.unit !== "string" ||
       !["interval_end", "source_label"].includes(series.grid) ||
       typeof series.days !== "object" ||

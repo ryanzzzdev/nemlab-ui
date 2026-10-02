@@ -76,6 +76,15 @@ export default function ReplaySection({ replay }: { replay: Replay }) {
   const [speed, setSpeed] = useState(16);
   const [copied, setCopied] = useState(false);
 
+  // A hidden tab pauses playback; leaving the page unmounts and stops it.
+  useEffect(() => {
+    const pause = () => {
+      if (document.hidden) setPlaying(false);
+    };
+    document.addEventListener("visibilitychange", pause);
+    return () => document.removeEventListener("visibilitychange", pause);
+  }, []);
+
   useEffect(() => {
     if (!playing) return;
     const timer = setInterval(() => {

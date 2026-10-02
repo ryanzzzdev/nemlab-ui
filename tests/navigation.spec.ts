@@ -69,9 +69,15 @@ test("navigation supports history and honest unavailable states", async ({ page 
   await page.goto("/");
   await page.getByRole("link", { name: "Explore BatteryLab" }).click();
   await expect(page.getByRole("region", { name: "Simulation progress" })).toBeVisible();
+  await page.route("**/api/v1/events**", async (route) => {
+    await route.fulfill({
+      status: 503,
+      json: { code: "STORAGE_UNAVAILABLE", message: "unavailable" },
+    });
+  });
   await page.getByRole("navigation").getByRole("link", { name: "GridReplay" }).click();
   await expect(page.getByRole("heading", { name: "Event catalogue" })).toBeVisible();
-  // Without a backend the catalogue reports its unavailable state honestly.
+  // An unavailable backend produces an honest error state, not fake events.
   await expect(page.getByRole("alert").first()).toBeVisible();
   await page.goBack();
   await expect(page).toHaveTitle("BatteryLab — NEMLab");

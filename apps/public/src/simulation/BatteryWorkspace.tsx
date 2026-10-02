@@ -37,20 +37,27 @@ const groupFields: Record<string, (keyof Form)[]> = {
 
 export function BatteryWorkspace() {
   // A GridReplay link carries ?day=<market-day>; prefill the scenario's day
-  // when it is a valid completed market day, else keep the default.
+  // when it is a valid completed market day, else keep the default and say so.
   const linkedDay = (() => {
     const value = new URLSearchParams(window.location.search).get("day");
-    return value && validDay(value) ? value : null;
+    if (!value) return { day: null, invalid: false };
+    return { day: validDay(value) ? value : null, invalid: !validDay(value) };
   })();
   const [form, setForm] = useState(() =>
-    linkedDay ? { ...initialForm(), day: linkedDay } : initialForm(),
+    linkedDay.day ? { ...initialForm(), day: linkedDay.day } : initialForm(),
   );
   const [openGroups, setOpenGroups] = useState(() => new Set<string>(["market"]));
   const [errors, setErrors] = useState<Errors>({});
   const [job, setJob] = useState<Job | null>(null);
   const [result, setResult] = useState<Result | null>(null);
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState("Choose your scenario, then run all three strategies.");
+  const [message, setMessage] = useState(
+    linkedDay.invalid
+      ? "The link's day is not a completed NEM market day, so yesterday is selected instead."
+      : linkedDay.day
+        ? `Market day ${linkedDay.day} came from a shared link. Adjust the scenario, then run all three strategies.`
+        : "Choose your scenario, then run all three strategies.",
+  );
   const [problem, setProblem] = useState(false);
   const [shareNote, setShareNote] = useState("");
   const active = useRef<AbortController | null>(null);

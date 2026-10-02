@@ -91,6 +91,44 @@ test("the replay slider and play controls move the shared cursor", async ({ page
   await page.getByRole("button", { name: "Pause", exact: true }).click();
 });
 
+test("filter and event state round-trip through the URL", async ({ page }) => {
+  const seen: string[] = [];
+  await page.route("**/api/v1/events**", async (route) => {
+    const url = new URL(route.request().url());
+    if (!url.pathname.includes("/replay")) seen.push(url.search);
+    await route.fulfill({ json: eventPage() });
+  });
+  // A shared filtered link applies its filters on direct load.
+  await page.goto("/gridreplay?type=price_spike&from=2023-09-03&to=2023-09-05");
+  await expect(page.getByRole("button", { name: /Price spike to 1500.25/ })).toBeVisible();
+  const loaded = new URLSearchParams(seen[0]!);
+  expect(loaded.get("type")).toBe("price_spike");
+  expect(loaded.get("from")).toBe("2023-09-03");
+  // Opening a card keeps the filter params and adds the event.
+  await page.getByRole("button", { name: /Price spike to 1500.25/ }).click();
+  await expect(page).toHaveURL(/type=price_spike/);
+  await expect(page).toHaveURL(/event=aaaaaaaa-1111-4000-8000-000000000002/);
+  // Back restores the catalogue-only view.
+  await page.goBack();
+  await expect(page).not.toHaveURL(/event=/);
+});
+
+test("invalid URL parameters fall back to defaults", async ({ page }) => {
+  const seen: string[] = [];
+  await page.route("**/api/v1/events**", async (route) => {
+    const url = new URL(route.request().url());
+    if (!url.pathname.includes("/replay")) seen.push(url.search);
+    await route.fulfill({ json: eventPage() });
+  });
+  await page.goto("/gridreplay?region=XX9&type=bogus&from=nope&to=also-nope&event=not-a-uuid");
+  await expect(page.getByRole("button", { name: /Negative prices for 15 minutes/ })).toBeVisible();
+  const loaded = new URLSearchParams(seen[0]!);
+  expect(loaded.get("region")).toBe("NSW1");
+  expect(loaded.get("type")).toBeNull();
+  expect(loaded.get("from")).toBeNull();
+  await expect(page.getByRole("heading", { name: "Replay", exact: true })).toHaveCount(0);
+});
+
 test("an unpublished region shows an honest empty state", async ({ page }) => {
   await page.route("**/api/v1/events**", async (route) => {
     await route.fulfill({

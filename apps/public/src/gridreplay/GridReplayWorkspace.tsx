@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { CatalogueChanged, listEvents, NotPublished, readReplay } from "./client";
@@ -70,8 +70,14 @@ function EventCard({
         {event.region} · {event.marketDay} · {marketTime(event.startAt)}–{marketTime(event.endAt)}{" "}
         NEM
       </span>
+      <span className="event-stat">
+        {event.intervalCount} interval{event.intervalCount === 1 ? "" : "s"} ·{" "}
+        {event.durationMinutes} min
+      </span>
       <span className="event-foot">
-        <span className="event-coverage">{coverageTag(event)}</span>
+        <span className="event-coverage">
+          {event.detectorVersion} · {coverageTag(event)}
+        </span>
         {event.version > 1 && <span className="event-version">v{event.version}</span>}
       </span>
     </button>
@@ -80,27 +86,56 @@ function EventCard({
 
 export function GridReplayWorkspace() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const linkedEvent = searchParams.get("event");
-  const [region, setRegion] = useState<Region>("NSW1");
-  const [type, setType] = useState<EventType | "">("");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
-  const [catalogue, setCatalogue] = useState<{
+
+  // Filters and the open event live in the URL: shared views are reloadable
+  // and Back/Forward restores them. Invalid values fall back to defaults.
+  const filters = useMemo<{
     region: Region;
     type: EventType | "";
     from: string;
     to: string;
-  }>({ region: "NSW1", type: "", from: "", to: "" });
+    event: string | null;
+  }>(() => {
+    const regionParam = searchParams.get("region");
+    const typeParam = searchParams.get("type");
+    const fromParam = searchParams.get("from") ?? "";
+    const toParam = searchParams.get("to") ?? "";
+    const eventParam = searchParams.get("event");
+    const dayParam = /^\d{4}-\d{2}-\d{2}$/;
+    return {
+      region: regions.includes(regionParam as Region) ? (regionParam as Region) : "NSW1",
+      type: (Object.keys(typeLabels) as EventType[]).includes(typeParam as EventType)
+        ? (typeParam as EventType)
+        : "",
+      from: dayParam.test(fromParam) ? fromParam : "",
+      to: dayParam.test(toParam) ? toParam : "",
+      event: eventParam && /^[0-9a-f-]{36}$/.test(eventParam) ? eventParam : null,
+    };
+  }, [searchParams]);
+
+  // Form inputs are draft copies of the applied (URL) filters.
+  const [region, setRegion] = useState<Region>(filters.region);
+  const [type, setType] = useState<EventType | "">(filters.type);
+  const [from, setFrom] = useState(filters.from);
+  const [to, setTo] = useState(filters.to);
+  useEffect(() => {
+    setRegion(filters.region);
+    setType(filters.type);
+    setFrom(filters.from);
+    setTo(filters.to);
+  }, [filters.region, filters.type, filters.from, filters.to]);
+
+  const linkedEvent = filters.event;
   const replayRef = useRef<HTMLElement>(null);
 
   const catalogueQuery = useInfiniteQuery({
-    queryKey: ["grid-events", catalogue],
+    queryKey: ["grid-events", filters.region, filters.type, filters.from, filters.to],
     queryFn: ({ pageParam, signal }) =>
       listEvents(
         {
-          region: catalogue.region,
-          ...(catalogue.type ? { type: catalogue.type } : {}),
-          ...(catalogue.from && catalogue.to ? { from: catalogue.from, to: catalogue.to } : {}),
+          region: filters.region,
+          ...(filters.type ? { type: filters.type } : {}),
+          ...(filters.from && filters.to ? { from: filters.from, to: filters.to } : {}),
           ...(pageParam ? { cursor: pageParam } : {}),
         },
         signal,
@@ -135,12 +170,23 @@ export function GridReplayWorkspace() {
   }, [linkedEvent, replayQuery.data]);
 
   function applyFilters() {
-    setSearchParams({}, { replace: true });
-    setCatalogue({ region, type, from, to });
+    const params: Record<string, string> = {};
+    if (region !== "NSW1") params.region = region;
+    if (type) params.type = type;
+    if (from && to && from <= to) {
+      params.from = from;
+      params.to = to;
+    }
+    setSearchParams(params);
   }
 
   function openEvent(id: string) {
-    setSearchParams(id ? { event: id } : {});
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      if (id) next.set("event", id);
+      else next.delete("event");
+      return next;
+    });
   }
 
   const notPublished = catalogueQuery.error instanceof NotPublished;
