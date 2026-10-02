@@ -1,4 +1,5 @@
 import { BatteryWorkspace } from "./simulation/BatteryWorkspace";
+import { GridReplayWorkspace } from "./gridreplay/GridReplayWorkspace";
 import { PriceExplorer } from "./prices/PriceExplorer";
 import { Link } from "react-router";
 import { Page } from "./components/Page";
@@ -71,71 +72,9 @@ export function GridReplay() {
       title="GridReplay — NEMLab"
       eyebrow="GridReplay"
       heading="See the story behind a market day."
-      introduction="Explore historical periods through aligned views of electricity prices and the grid’s changing energy mix."
+      introduction="Explore published market events and replay the day through aligned views of price, demand, generation mix and interconnector flows."
     >
-      <section className="notice" aria-labelledby="grid-status">
-        <h2 id="grid-status">Replay is being built</h2>
-        <p>
-          The event catalogue and replay controls are not available yet. No market events are shown
-          on this page.
-        </p>
-      </section>
-      <section className="replay-catalogue" aria-labelledby="catalogue-heading">
-        <div className="section-heading">
-          <h2 id="catalogue-heading">Event catalogue</h2>
-          <span className="availability">Historical NEM observations</span>
-        </div>
-        <div className="event-types" aria-label="Planned event types">
-          <span>Negative-price runs</span>
-          <span>Price spikes</span>
-          <span>Renewable peaks</span>
-          <span>Demand ramps</span>
-        </div>
-        <div className="empty-state">
-          <span className="empty-symbol" aria-hidden="true">
-            ↗
-          </span>
-          <h3>The next market story starts here</h3>
-          <p>
-            Published events will appear here once the catalogue is connected.
-            <br />
-            There are no event results to display yet.
-          </p>
-        </div>
-      </section>
-      <section className="replay-preview" aria-labelledby="replay-heading">
-        <div className="section-heading">
-          <h2 id="replay-heading">A shared view of the day</h2>
-          <span className="availability">Replay coming later</span>
-        </div>
-        <div className="replay-panels">
-          {[
-            ["Regional reference price", "AUD/MWh"],
-            ["Scheduled demand", "MW"],
-            ["Generation by technology", "MW"],
-            ["Regional flows", "MW"],
-          ].map(([label, unit]) => (
-            <div className="replay-panel" key={label}>
-              <h3>
-                {label} <span>{unit}</span>
-              </h3>
-              <p>Waiting for replay data</p>
-            </div>
-          ))}
-        </div>
-      </section>
-      <section className="prose" aria-labelledby="grid-plan">
-        <h2 id="grid-plan">Follow the evidence</h2>
-        <p>
-          The planned experience will let you explore notable periods, inspect the available data
-          and move through time with a shared chart cursor.
-        </p>
-        <p>
-          Gaps in the source data will stay visible. A missing observation does not mean zero
-          generation or a zero price.
-        </p>
-        <Link to="/methodology">Read about data and limitations</Link>
-      </section>
+      <GridReplayWorkspace />
     </Page>
   );
 }

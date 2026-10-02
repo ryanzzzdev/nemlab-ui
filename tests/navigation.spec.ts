@@ -70,7 +70,9 @@ test("navigation supports history and honest unavailable states", async ({ page 
   await page.getByRole("link", { name: "Explore BatteryLab" }).click();
   await expect(page.getByRole("region", { name: "Simulation progress" })).toBeVisible();
   await page.getByRole("navigation").getByRole("link", { name: "GridReplay" }).click();
-  await expect(page.getByRole("heading", { name: "Replay is being built" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Event catalogue" })).toBeVisible();
+  // Without a backend the catalogue reports its unavailable state honestly.
+  await expect(page.getByRole("alert").first()).toBeVisible();
   await page.goBack();
   await expect(page).toHaveTitle("BatteryLab — NEMLab");
   await expect(page.getByRole("heading", { level: 1 })).toBeFocused();

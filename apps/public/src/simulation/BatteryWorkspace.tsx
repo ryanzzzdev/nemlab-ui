@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import { Link, useSearchParams } from "react-router";
-import { marketDay, nextDay } from "../prices/client";
+import { marketDay, nextDay, validDay } from "../prices/client";
 import { fields, initialForm, prepare, costFields, windowFields } from "./scenario";
 import type { Field, Form, Errors, Request } from "./scenario";
 import { readResult, readStatus, submitSimulation, SimulationError, uuid } from "./client";
@@ -36,7 +36,15 @@ const groupFields: Record<string, (keyof Form)[]> = {
 };
 
 export function BatteryWorkspace() {
-  const [form, setForm] = useState(initialForm);
+  // A GridReplay link carries ?day=<market-day>; prefill the scenario's day
+  // when it is a valid completed market day, else keep the default.
+  const linkedDay = (() => {
+    const value = new URLSearchParams(window.location.search).get("day");
+    return value && validDay(value) ? value : null;
+  })();
+  const [form, setForm] = useState(() =>
+    linkedDay ? { ...initialForm(), day: linkedDay } : initialForm(),
+  );
   const [openGroups, setOpenGroups] = useState(() => new Set<string>(["market"]));
   const [errors, setErrors] = useState<Errors>({});
   const [job, setJob] = useState<Job | null>(null);

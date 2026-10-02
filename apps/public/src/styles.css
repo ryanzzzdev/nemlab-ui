@@ -1001,30 +1001,186 @@ button:disabled {
   color: var(--color-accent);
   font-size: 24px;
 }
-.replay-panels {
-  display: grid;
-  gap: 10px;
+.replay-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin: 14px 0 18px;
 }
-.replay-panel {
+.replay-filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-muted);
+}
+.replay-filters select,
+.replay-filters input[type="date"] {
+  height: 32px;
+  padding: 7px 9px;
+  font-size: 13px;
+  border: 1px solid var(--color-rule);
+  border-radius: 8px;
+  background: var(--color-panel);
+  color: var(--color-text);
+}
+.replay-filters .primary {
+  min-height: 32px;
+  padding: 6px 14px;
+  width: auto;
+}
+.event-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.event-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  text-align: left;
   border: 1px solid var(--color-rule);
   border-radius: 10px;
   background: var(--color-panel);
-  padding: 12px 16px;
+  padding: 12px 14px;
+  cursor: pointer;
+  color: var(--color-text);
+  font: inherit;
 }
-.replay-panel h3 {
+.event-card:hover {
+  border-color: var(--color-accent);
+}
+.event-card.selected {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 1px var(--color-accent);
+}
+.event-badge {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+.event-badge.badge-neg {
+  color: #b3261e;
+  background: rgba(179, 38, 30, 0.1);
+}
+.event-badge.badge-spike {
+  color: #b45309;
+  background: rgba(180, 83, 9, 0.12);
+}
+.event-badge.badge-ramp {
+  color: #1d4ed8;
+  background: rgba(29, 78, 216, 0.1);
+}
+[data-theme="dark"] .event-badge.badge-neg {
+  color: #ff9d8a;
+  background: rgba(255, 110, 90, 0.14);
+}
+[data-theme="dark"] .event-badge.badge-spike {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.14);
+}
+[data-theme="dark"] .event-badge.badge-ramp {
+  color: #93c5fd;
+  background: rgba(147, 197, 253, 0.14);
+}
+.event-title {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.event-meta {
+  font-size: 12px;
+  color: var(--color-muted);
+}
+.event-foot {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.event-coverage {
+  font-size: 11px;
+  color: var(--color-muted);
+}
+.event-version {
+  font-size: 11px;
+  color: var(--color-muted);
+  border: 1px solid var(--color-rule);
+  border-radius: 10px;
+  padding: 0 6px;
+}
+.replay-section {
+  margin-top: 28px;
+}
+.replay-header {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
-  font-size: 12px;
-  font-weight: 500;
-  margin: 0;
-  color: var(--color-muted);
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
 }
-.replay-panel p {
-  text-align: center;
-  padding: 12px;
+.replay-header h3 {
+  margin: 0 0 4px;
+}
+.replay-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.replay-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 16px 0 10px;
+}
+.replay-controls .replay-play {
+  width: auto;
+  min-height: 32px;
+  padding: 6px 16px;
+}
+.replay-slider {
+  flex: 1;
+  min-width: 140px;
+  accent-color: var(--color-accent);
+}
+.replay-clock {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+  white-space: nowrap;
+}
+.replay-readout {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+  margin: 0 0 6px;
+}
+.replay-readout div {
+  border: 1px solid var(--color-rule);
+  border-radius: 8px;
+  background: var(--color-panel);
+  padding: 8px 12px;
+}
+.replay-readout dt {
+  font-size: 11px;
   color: var(--color-muted);
-  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.replay-readout dd {
+  margin: 2px 0 0;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+.replay-charts .chart-plot {
+  min-height: 200px;
 }
 .site-grid .prose {
   font-size: 13px;
