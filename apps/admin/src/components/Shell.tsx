@@ -71,12 +71,17 @@ const WORKSPACE_ROUTES = new Set(["/", "/access"]);
 
 export function Shell() {
   const session = useSession();
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   const previous = useRef(pathname);
   const workspace = useRef<HTMLElement>(null);
   const { prefs, update } = useLayoutPrefs();
   const [theme, setTheme] = useThemePreference();
   const [helpOpen, setHelpOpen] = useState(false);
+
+  // /how-it-works redirects to /?help=1 — the drawer opens over the workspace.
+  useEffect(() => {
+    if (new URLSearchParams(search).has("help")) setHelpOpen(true);
+  }, [search]);
 
   const role = session.data?.role;
   const signedIn = role === "owner" || role === "viewer";

@@ -16,6 +16,8 @@
     "playwright.config.ts",
     "tests",
     "apps/public/vite.config.ts",
-    "playwright.live.config.ts"
+    "playwright.live.config.ts",
+    "playwright.admin.config.ts",
+    "tests-admin"
   ]
 }

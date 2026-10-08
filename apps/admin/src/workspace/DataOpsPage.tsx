@@ -6,9 +6,8 @@ import type { Region, SessionView } from "../api";
 import { ActivityPane, Inspector } from "../components/Panes";
 import { Stat, StatStrip, Tabs, Toolbar } from "../components/Toolbar";
 import { Empty } from "../components/States";
-import { LOAD_DRAFT_KEY } from "../pages/LoadPage";
 import { CoverageView, DayInspector, baselineQuery, coverageQuery } from "./CoverageView";
-import { LoadDrawer } from "./LoadDrawer";
+import { LOAD_DRAFT_KEY, LoadDrawer } from "./LoadDrawer";
 import { PublishDrawer } from "./PublishDrawer";
 import {
   ActivityBody,
@@ -202,7 +201,16 @@ export function DataOpsPage() {
       case "import": {
         const job = imports.data?.find((j) => j.id === selection.id);
         return job ? (
-          <ImportInspector job={job} session={session} />
+          <ImportInspector
+            job={job}
+            session={session}
+            onLoadDraft={(draft) => {
+              // "Submit again" seeds the drawer with the job's remaining
+              // window — same draft the retired /load page consumed.
+              sessionStorage.setItem(LOAD_DRAFT_KEY, JSON.stringify(draft));
+              setOpenDrawer("load");
+            }}
+          />
         ) : (
           <Empty label="That import is not in the loaded list." />
         );

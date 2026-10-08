@@ -15,14 +15,13 @@ import type {
   LoadDispatchOutcome,
   LoadOperation,
   LoadOperationDetail,
+  Region,
   SessionView,
 } from "../api";
 import { DataTable } from "../components/Table";
 import type { Column } from "../components/Table";
 import { StatusChip } from "../components/StatusChip";
 import { Empty, Failure, Loading } from "../components/States";
-import { LOAD_DRAFT_KEY } from "../pages/LoadPage";
-import { useNavigate } from "react-router";
 import type { Scope, Selection } from "./scope";
 
 export const POLL_MS = 20_000;
@@ -370,9 +369,16 @@ export function OperationInspector({
 const CANCELLABLE = new Set(["QUEUED", "RUNNING", "PAUSED"]);
 const RESUBMITTABLE = new Set(["FAILED", "CANCELLED"]);
 
-export function ImportInspector({ job, session }: { job: GridImport; session: SessionView }) {
+export function ImportInspector({
+  job,
+  session,
+  onLoadDraft,
+}: {
+  job: GridImport;
+  session: SessionView;
+  onLoadDraft: (draft: { region: Region; start: string; end: string }) => void;
+}) {
   const client = useQueryClient();
-  const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<unknown>(null);
   const owner = session.role === "owner";
@@ -394,15 +400,11 @@ export function ImportInspector({ job, session }: { job: GridImport; session: Se
     // Recovery is a new bounded submission over the remaining window — the
     // checkpoint (`nextDay`) marks where the old job stopped, never a retry
     // in place.
-    sessionStorage.setItem(
-      LOAD_DRAFT_KEY,
-      JSON.stringify({
-        region: job.region,
-        start: job.nextDay < job.endExclusive ? job.nextDay : job.startDay,
-        end: plusDays(job.endExclusive, -1),
-      }),
-    );
-    void navigate("/load");
+    onLoadDraft({
+      region: job.region,
+      start: job.nextDay < job.endExclusive ? job.nextDay : job.startDay,
+      end: plusDays(job.endExclusive, -1),
+    });
   }
 
   return (

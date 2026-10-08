@@ -4,12 +4,37 @@ import { REGIONS, apiGet, beginLoadOperation, marketDay, plusDays, submitGridImp
 import type { GridCoverage, Region, SessionView } from "../api";
 import { Drawer } from "../components/Drawer";
 import { Failure } from "../components/States";
-import { LOAD_DRAFT_KEY, readLoadDraft } from "../pages/LoadPage";
 import type { Scope } from "./scope";
+
+export const LOAD_DRAFT_KEY = "admin.loadDraft";
 
 const MAX_SCOPE_DAYS = 366;
 const CHUNK_DAYS = 31;
 const BASELINE_DAYS = 90;
+
+interface LoadDraft {
+  region: Region;
+  start: string;
+  end: string;
+}
+
+export function readLoadDraft(): LoadDraft | null {
+  try {
+    const raw = sessionStorage.getItem(LOAD_DRAFT_KEY);
+    if (!raw) return null;
+    const draft = JSON.parse(raw) as LoadDraft;
+    if (
+      REGIONS.includes(draft.region) &&
+      /^\d{4}-\d{2}-\d{2}$/.test(draft.start) &&
+      /^\d{4}-\d{2}-\d{2}$/.test(draft.end)
+    ) {
+      return draft;
+    }
+  } catch {
+    /* unreadable draft — fall back to defaults */
+  }
+  return null;
+}
 
 function writeLoadDraft(draft: Scope) {
   sessionStorage.setItem(LOAD_DRAFT_KEY, JSON.stringify(draft));

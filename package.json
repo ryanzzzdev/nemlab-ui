@@ -20,7 +20,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test:browser": "playwright test",
-    "check": "npm run contract:check && npm run format:check && npm run build && npm run test:browser",
+    "test:admin": "playwright test --config playwright.admin.config.ts",
+    "check": "npm run contract:check && npm run format:check && npm run build && npm run test:browser && npm run test:admin",
     "contract:sync": "node scripts/contract.mjs --sync",
     "contract:check": "node scripts/contract.mjs",
     "test:live": "python3 scripts/test-live.py"
