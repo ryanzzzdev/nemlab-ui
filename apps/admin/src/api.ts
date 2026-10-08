@@ -176,6 +176,53 @@ export function publishGrid(
   return apiPost<AdminGridPublication>("/api/admin/v1/grid-publications", csrfToken, body);
 }
 
+export type AccessRequestView = components["schemas"]["AccessRequestView"];
+export type AccessRequestDetail = components["schemas"]["AccessRequestDetail"];
+export type DeliveryView = components["schemas"]["DeliveryView"];
+export type ViewerGrantView = components["schemas"]["ViewerGrantView"];
+export type GrantState = "active" | "expired" | "revoked";
+export type GrantDays = 7 | 30 | 90;
+
+/** Owner-only access management (`access.manage` capability). Sensitive
+ * mutations additionally demand a recent sign-in server-side —
+ * `RECENT_AUTH_REQUIRED` is a normal outcome the UI surfaces, never a
+ * reason to silently replay the request. */
+export function decideAccessRequest(
+  csrfToken: string,
+  id: string,
+  body: { decision: "approve" | "reject"; days?: GrantDays | undefined; version: number },
+): Promise<AccessRequestView | null> {
+  return apiPost<AccessRequestView>(
+    `/api/admin/v1/access-requests/${id}/decisions`,
+    csrfToken,
+    body,
+  );
+}
+
+export function resendAccessDelivery(csrfToken: string, id: string) {
+  return apiPost(`/api/admin/v1/access-requests/${id}/resend`, csrfToken);
+}
+
+export function extendViewerGrant(
+  csrfToken: string,
+  id: string,
+  days: GrantDays,
+): Promise<ViewerGrantView | null> {
+  return apiPost<ViewerGrantView>(`/api/admin/v1/viewer-grants/${id}/extend`, csrfToken, {
+    days,
+  });
+}
+
+export function revokeViewerGrant(
+  csrfToken: string,
+  id: string,
+  reason: string | null,
+): Promise<ViewerGrantView | null> {
+  return apiPost<ViewerGrantView>(`/api/admin/v1/viewer-grants/${id}/revoke`, csrfToken, {
+    reason,
+  });
+}
+
 /** NEM market days run UTC+10 — same helper convention as the public app. */
 export function marketDay(now = new Date()): string {
   return new Date(now.getTime() + 10 * 3600000).toISOString().slice(0, 10);

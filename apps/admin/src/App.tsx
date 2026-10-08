@@ -7,6 +7,7 @@ import {
   VerifyPage,
   WelcomePage,
 } from "./pages/AuthPages";
+import { AccessPage } from "./pages/AccessPage";
 import { CoveragePage } from "./pages/CoveragePage";
 import { HowItWorksPage } from "./pages/HowItWorksPage";
 import { JobsPage } from "./pages/JobsPage";
@@ -31,6 +32,7 @@ export function App() {
           <Route path="load" element={<LoadPage />} />
           <Route path="jobs" element={<JobsPage />} />
           <Route path="publications" element={<PublicationsPage />} />
+          <Route path="access" element={<AccessPage />} />
           <Route path="how-it-works" element={<HowItWorksPage />} />
           <Route path="welcome" element={<WelcomePage />} />
           <Route path="request-access" element={<RequestAccessPage />} />
