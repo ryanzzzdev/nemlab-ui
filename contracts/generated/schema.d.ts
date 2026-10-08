@@ -418,14 +418,8 @@ export interface components {
             coverage: components["schemas"]["DayCoverage"];
             intervals: components["schemas"]["Interval"][];
         };
-        Submission: {
-            region: components["schemas"]["Region"];
-            /**
-             * Format: date
-             * @description One completed market day since 2021-10-01, using fixed UTC+10.
-             */
-            day: string;
-        };
+        /** @description Either one completed market day, or a bounded window fanned out to one job per day. */
+        Submission: components["schemas"]["DaySubmission"] | components["schemas"]["WindowSubmission"];
         Job: {
             /** Format: uuid */
             id: string;
@@ -852,6 +846,31 @@ export interface components {
             /** @description Preview y-axis is local to the slot range, not a global scale. */
             localScale: boolean;
         };
+        DaySubmission: {
+            region: components["schemas"]["Region"];
+            /**
+             * Format: date
+             * @description One completed market day since 2021-10-01, using fixed UTC+10.
+             */
+            day: string;
+        };
+        WindowSubmission: {
+            region: components["schemas"]["Region"];
+            /**
+             * Format: date
+             * @description First market day in the window, since 2021-10-01, using fixed UTC+10.
+             */
+            startDay: string;
+            /**
+             * Format: date
+             * @description End market day, exclusive; the window covers 1..31 completed days.
+             */
+            endExclusive: string;
+        };
+        JobSet: {
+            /** @description One job per market day in the submitted window, in day order. */
+            jobs: components["schemas"]["Job"][];
+        };
     };
     responses: never;
     parameters: never;
@@ -1063,14 +1082,13 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Accepted, including idempotent replay */
+            /** @description Accepted, including idempotent replay. A day submission returns one Job with a Location header; a window submission returns a JobSet in day order. */
             202: {
                 headers: {
-                    Location: string;
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Job"];
+                    "application/json": components["schemas"]["Job"] | components["schemas"]["JobSet"];
                 };
             };
             /** @description INVALID_REQUEST */

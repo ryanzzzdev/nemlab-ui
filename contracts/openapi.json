@@ -265,20 +265,18 @@
     ],
     "responses": {
      "202": {
-      "description": "Accepted, including idempotent replay",
+      "description": "Accepted, including idempotent replay. A day submission returns one Job with a Location header; a window submission returns a JobSet in day order.",
       "content": {
        "application/json": {
         "schema": {
-         "$ref": "#/components/schemas/Job"
-        }
-       }
-      },
-      "headers": {
-       "Location": {
-        "required": true,
-        "schema": {
-         "type": "string",
-         "pattern": "^/api/admin/v1/price-refreshes/"
+         "oneOf": [
+          {
+           "$ref": "#/components/schemas/Job"
+          },
+          {
+           "$ref": "#/components/schemas/JobSet"
+          }
+         ]
         }
        }
       }
@@ -3645,22 +3643,15 @@
     }
    },
    "Submission": {
-    "type": "object",
-    "additionalProperties": false,
-    "required": [
-     "region",
-     "day"
-    ],
-    "properties": {
-     "region": {
-      "$ref": "#/components/schemas/Region"
+    "oneOf": [
+     {
+      "$ref": "#/components/schemas/DaySubmission"
      },
-     "day": {
-      "type": "string",
-      "format": "date",
-      "description": "One completed market day since 2021-10-01, using fixed UTC+10."
+     {
+      "$ref": "#/components/schemas/WindowSubmission"
      }
-    }
+    ],
+    "description": "Either one completed market day, or a bounded window fanned out to one job per day."
    },
    "Job": {
     "type": "object",
@@ -5193,6 +5184,64 @@
      "localScale": {
       "type": "boolean",
       "description": "Preview y-axis is local to the slot range, not a global scale."
+     }
+    }
+   },
+   "DaySubmission": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "region",
+     "day"
+    ],
+    "properties": {
+     "region": {
+      "$ref": "#/components/schemas/Region"
+     },
+     "day": {
+      "type": "string",
+      "format": "date",
+      "description": "One completed market day since 2021-10-01, using fixed UTC+10."
+     }
+    }
+   },
+   "WindowSubmission": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "region",
+     "startDay",
+     "endExclusive"
+    ],
+    "properties": {
+     "region": {
+      "$ref": "#/components/schemas/Region"
+     },
+     "startDay": {
+      "type": "string",
+      "format": "date",
+      "description": "First market day in the window, since 2021-10-01, using fixed UTC+10."
+     },
+     "endExclusive": {
+      "type": "string",
+      "format": "date",
+      "description": "End market day, exclusive; the window covers 1..31 completed days."
+     }
+    }
+   },
+   "JobSet": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "jobs"
+    ],
+    "properties": {
+     "jobs": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/Job"
+      },
+      "description": "One job per market day in the submitted window, in day order."
      }
     }
    }
