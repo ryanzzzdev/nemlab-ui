@@ -1,11 +1,25 @@
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Link, Navigate, NavLink, Outlet, useLocation } from "react-router";
-import { ThemePicker } from "../../../public/src/components/Theme";
-import { PUBLIC_BASE } from "../api";
+import { PUBLIC_BASE, listAccessRequests } from "../api";
 import type { SessionView } from "../api";
+import { useLayoutPrefs, useThemePreference } from "../prefs";
+import type { Density, Theme } from "../prefs";
 import { useSession, useSignOut } from "../session";
 import { Loading } from "./States";
+
+const DENSITIES: { id: Density; label: string }[] = [
+  { id: "compact", label: "Compact" },
+  { id: "standard", label: "Standard" },
+  { id: "comfortable", label: "Comfortable" },
+];
+
+const THEMES: { id: Theme; label: string }[] = [
+  { id: "auto", label: "Auto" },
+  { id: "light", label: "Light" },
+  { id: "dark", label: "Dark" },
+];
 
 function Account({ session }: { session: SessionView }) {
   const signOut = useSignOut();
@@ -17,15 +31,17 @@ function Account({ session }: { session: SessionView }) {
     month: "short",
   });
   return (
-    <div className="account">
-      <span className="account-name" title={session.role}>
-        {session.name}
-      </span>
-      {session.role === "viewer" && <span className="badge badge-readonly">Read-only access</span>}
-      <span className="hint">until {expires}</span>
+    <>
+      <div className="account">
+        <div className="who">{session.name}</div>
+        <div className="sub">
+          {session.role}
+          {session.role === "viewer" ? " · read-only" : ""} · session until {expires}
+        </div>
+      </div>
       <button
         type="button"
-        className="ghost"
+        className="btn"
         disabled={busy}
         onClick={() => {
           setBusy(true);
@@ -34,38 +50,54 @@ function Account({ session }: { session: SessionView }) {
       >
         Sign out
       </button>
-    </div>
+    </>
   );
 }
 
 const NAV = [
-  { to: "/", label: "Coverage", end: true },
-  { to: "/load", label: "Load data" },
-  { to: "/jobs", label: "Jobs" },
-  { to: "/publications", label: "Publications" },
-  { to: "/access", label: "Access" },
-  { to: "/how-it-works", label: "How it works" },
+  { to: "/", label: "Coverage", icon: "▦", end: true },
+  { to: "/load", label: "Load data", icon: "⇥" },
+  { to: "/jobs", label: "Jobs", icon: "◫" },
+  { to: "/publications", label: "Publications", icon: "◈" },
 ] as const;
 
-const PUBLIC_ROUTES = new Set(["/welcome", "/request-access", "/sign-in", "/verify"]);
+const PUBLIC_ROUTES = new Set([
+  "/welcome",
+  "/request-access",
+  "/request-status",
+  "/sign-in",
+  "/verify",
+]);
 
 export function Shell() {
   const session = useSession();
   const { pathname } = useLocation();
   const previous = useRef(pathname);
-  const main = useRef<HTMLElement>(null);
+  const workspace = useRef<HTMLElement>(null);
+  const { prefs, update } = useLayoutPrefs();
+  const [theme, setTheme] = useThemePreference();
+
+  const role = session.data?.role;
+  const signedIn = role === "owner" || role === "viewer";
+
+  // Owner-only pending count for the Access rail badge — the query is
+  // disabled for everyone else so viewers never even attempt it.
+  const pending = useQuery({
+    queryKey: ["access-requests"],
+    queryFn: ({ signal }) => listAccessRequests(signal),
+    enabled: role === "owner",
+    staleTime: 30_000,
+  });
 
   useEffect(() => {
     if (previous.current !== pathname) {
       previous.current = pathname;
-      main.current?.querySelector("h1")?.focus({ preventScroll: true });
-      window.scrollTo(0, 0);
+      workspace.current?.querySelector("h1")?.focus({ preventScroll: true });
     }
   }, [pathname]);
 
-  const role = session.data?.role;
   let content: ReactNode;
-  if (PUBLIC_ROUTES.has(pathname) || pathname === "/request-status") {
+  if (PUBLIC_ROUTES.has(pathname)) {
     // Auth pages manage their own session states — welcome, request form,
     // fragment exchanges and the applicant status view must render without
     // an owner/viewer session.
@@ -78,42 +110,81 @@ export function Shell() {
     content = <Outlet context={session.data} />;
   }
 
-  const signedIn = role === "owner" || role === "viewer";
   return (
-    <div className="site">
-      <a className="skip-link" href="#main">
+    <div className="app" data-density={prefs.density}>
+      <a className="skip-link" href="#workspace">
         Skip to content
       </a>
-      <header className="site-header">
-        <div className="brand">
-          <Link className="wordmark" to="/" aria-label="NEMLab Admin home">
-            <span className="brand-symbol" aria-hidden="true">
-              N
-            </span>{" "}
-            NEMLab Admin
-          </Link>
-        </div>
+      <header className="appbar">
+        <Link className="brand" to="/" aria-label="NEMLab Admin home">
+          NEMLab <em>Admin</em>
+          {import.meta.env.DEV && <span className="env">development</span>}
+        </Link>
+        <div className="spacer" />
+        <Link className="btn appbar-link" to="/how-it-works">
+          Help
+        </Link>
+        <label className="dim picker">
+          Density
+          <select
+            value={prefs.density}
+            onChange={(event) => update({ density: event.target.value as Density })}
+          >
+            {DENSITIES.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="dim picker">
+          Theme
+          <select value={theme} onChange={(event) => setTheme(event.target.value as Theme)}>
+            {THEMES.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        {signedIn && session.data && <Account session={session.data} />}
+      </header>
+
+      <div className="body">
         {signedIn && (
-          <nav aria-label="Admin navigation">
+          <nav className="rail" aria-label="Workspaces">
             {NAV.map((item) => (
-              <NavLink key={item.to} to={item.to} end={"end" in item}>
-                {item.label}
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={"end" in item}
+                className={({ isActive }) => `rail-item${isActive ? " active" : ""}`}
+              >
+                <span aria-hidden="true">{item.icon}</span>
+                <span className="label">{item.label}</span>
               </NavLink>
             ))}
+            {role === "owner" && (
+              <NavLink
+                to="/access"
+                className={({ isActive }) => `rail-item${isActive ? " active" : ""}`}
+              >
+                <span aria-hidden="true">◔</span>
+                <span className="label">Access</span>
+                {(pending.data?.length ?? 0) > 0 && (
+                  <span className="badge">{pending.data!.length}</span>
+                )}
+              </NavLink>
+            )}
+            <div className="rail-bottom">
+              <a href={`${PUBLIC_BASE}/`}>Public site ↗</a>
+            </div>
           </nav>
         )}
-        <div className="header-right">
-          {signedIn && session.data && <Account session={session.data} />}
-          <ThemePicker />
-        </div>
-      </header>
-      <main id="main" ref={main} tabIndex={-1}>
-        {content}
-      </main>
-      <footer className="site-footer">
-        <p>Owner and approved-visitor console. Read access only for visitors.</p>
-        <a href={`${PUBLIC_BASE}/`}>Back to NEMLab</a>
-      </footer>
+        <main className="workspace" id="workspace" ref={workspace} tabIndex={-1}>
+          <div className="page">{content}</div>
+        </main>
+      </div>
     </div>
   );
 }

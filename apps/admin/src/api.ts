@@ -186,8 +186,19 @@ export type AccessRequestView = components["schemas"]["AccessRequestView"];
 export type AccessRequestDetail = components["schemas"]["AccessRequestDetail"];
 export type DeliveryView = components["schemas"]["DeliveryView"];
 export type ViewerGrantView = components["schemas"]["ViewerGrantView"];
+export type AccessAuditView = components["schemas"]["AccessAuditView"];
 export type GrantState = "active" | "expired" | "revoked";
 export type GrantDays = 7 | 30 | 90;
+
+/** Pending request queue — owner only (`access.manage`). */
+export function listAccessRequests(signal?: AbortSignal): Promise<AccessRequestView[]> {
+  return apiGet<AccessRequestView[]>("/api/admin/v1/access-requests", signal);
+}
+
+/** Recent access-audit rows — owner only, newest first. */
+export function listAccessAudit(limit = 100, signal?: AbortSignal): Promise<AccessAuditView[]> {
+  return apiGet<AccessAuditView[]>(`/api/admin/v1/access-audit?limit=${limit}`, signal);
+}
 
 /** Owner-only access management (`access.manage` capability). Sensitive
  * mutations additionally demand a recent sign-in server-side —
