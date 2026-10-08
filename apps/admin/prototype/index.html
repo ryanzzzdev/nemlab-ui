@@ -1,0 +1,665 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>NEMLab Admin — workspace prototype</title>
+    <!--
+      Static design prototype for the Admin desktop workspace redesign
+      (decision 025 / NEM-109). All data is labelled fixture content —
+      nothing here calls a real API. Demo controls (role / scenario)
+      exist only to preview variants.
+    -->
+    <style>
+      /* ---- tokens ---- */
+      :root,
+      [data-theme="light"] {
+        --bg: #eef0f3;
+        --surface: #ffffff;
+        --surface-2: #f7f8fa;
+        --rule: #d9dee4;
+        --rule-soft: #e7eaee;
+        --text: #1b2530;
+        --muted: #5c6979;
+        --faint: #8a96a5;
+        --accent: #1a5fb4;
+        --accent-soft: #e8f0fb;
+        --ok: #1a7f4b;
+        --warn: #9a6200;
+        --bad: #b3261e;
+        --info: #5b5fc7;
+        --focus: #1a5fb4;
+      }
+      [data-theme="dark"] {
+        --bg: #10151b;
+        --surface: #181f28;
+        --surface-2: #141a21;
+        --rule: #2a3441;
+        --rule-soft: #222b36;
+        --text: #d9e0e9;
+        --muted: #93a1b1;
+        --faint: #66747f;
+        --accent: #7aa7e8;
+        --accent-soft: #1e2c40;
+        --ok: #57c785;
+        --warn: #e0a13c;
+        --bad: #e4706a;
+        --info: #9b9eef;
+        --focus: #7aa7e8;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]):not([data-theme="dark"]) {
+          --bg: #10151b;
+          --surface: #181f28;
+          --surface-2: #141a21;
+          --rule: #2a3441;
+          --rule-soft: #222b36;
+          --text: #d9e0e9;
+          --muted: #93a1b1;
+          --faint: #66747f;
+          --accent: #7aa7e8;
+          --accent-soft: #1e2c40;
+          --ok: #57c785;
+          --warn: #e0a13c;
+          --bad: #e4706a;
+          --info: #9b9eef;
+          --focus: #7aa7e8;
+        }
+      }
+
+      * { box-sizing: border-box; }
+      html, body { height: 100%; }
+      body {
+        margin: 0;
+        font: 13px/1.45 -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        color: var(--text);
+        background: var(--bg);
+      }
+      code, .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 12px; }
+      button, select, input { font: inherit; color: inherit; }
+      button { cursor: pointer; }
+      :focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+      [data-density="compact"] { --row-h: 28px; }
+      [data-density="standard"], :root { --row-h: 32px; }
+      [data-density="comfortable"] { --row-h: 40px; }
+
+      /* ---- app frame ---- */
+      .app { display: flex; flex-direction: column; height: 100vh; }
+      .appbar {
+        height: 48px; flex: none; display: flex; align-items: center; gap: 12px;
+        padding: 0 12px; background: var(--surface); border-bottom: 1px solid var(--rule);
+      }
+      .brand { font-weight: 600; font-size: 14px; white-space: nowrap; }
+      .brand em { font-style: normal; color: var(--muted); font-weight: 500; }
+      .env {
+        font-size: 11px; color: var(--warn); border: 1px solid var(--warn);
+        border-radius: 3px; padding: 0 4px; margin-left: 8px; text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .appbar .spacer { flex: 1; }
+      .account { text-align: right; line-height: 1.25; }
+      .account .who { font-weight: 600; }
+      .account .sub { font-size: 11px; color: var(--muted); }
+
+      .body { display: flex; flex: 1; min-height: 0; }
+      .rail {
+        width: 176px; flex: none; background: var(--surface); border-right: 1px solid var(--rule);
+        display: flex; flex-direction: column; padding: 8px 0;
+      }
+      .rail-item {
+        display: flex; align-items: center; gap: 8px; margin: 1px 8px; padding: 7px 10px;
+        border: 0; border-radius: 5px; background: none; text-align: left; font-size: 13px;
+        color: var(--text);
+      }
+      .rail-item:hover { background: var(--surface-2); }
+      .rail-item.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+      .rail-item .badge {
+        margin-left: auto; background: var(--accent); color: var(--surface);
+        font-size: 11px; min-width: 18px; text-align: center; border-radius: 9px; padding: 0 5px;
+      }
+      .rail-bottom { margin-top: auto; border-top: 1px solid var(--rule-soft); padding-top: 8px; }
+      .rail-bottom a {
+        display: block; margin: 0 8px; padding: 7px 10px; color: var(--muted);
+        text-decoration: none; font-size: 13px;
+      }
+      .rail-bottom a:hover { color: var(--accent); }
+
+      /* ---- workspace ---- */
+      .workspace { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+      .toolbar {
+        display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+        padding: 10px 14px 6px; background: var(--surface); border-bottom: 1px solid var(--rule);
+      }
+      .toolbar h1 { font-size: 15px; margin: 0 10px 0 0; font-weight: 600; }
+      .toolbar label { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+      .toolbar select, .toolbar input {
+        height: 28px; border: 1px solid var(--rule); border-radius: 5px;
+        background: var(--surface); padding: 0 6px;
+      }
+      .fresh { font-size: 12px; color: var(--muted); margin-left: auto; }
+      .btn {
+        height: 28px; padding: 0 12px; border-radius: 5px; border: 1px solid var(--rule);
+        background: var(--surface); font-weight: 500;
+      }
+      .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+      .btn:hover { filter: brightness(0.97); }
+      .btn[disabled] { opacity: 0.5; cursor: default; }
+
+      .strip {
+        display: flex; gap: 1px; background: var(--rule); border-bottom: 1px solid var(--rule);
+      }
+      .stat {
+        flex: 1; background: var(--surface); padding: 6px 14px 8px; min-width: 0;
+        border: 0; text-align: left;
+      }
+      .stat b { display: block; font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+      .stat span { font-size: 11px; color: var(--muted); }
+      .stat:hover { background: var(--surface-2); }
+      .stat .warn { color: var(--warn); }
+      .stat .ok { color: var(--ok); }
+
+      .tabs {
+        display: flex; gap: 2px; padding: 0 14px; background: var(--surface);
+        border-bottom: 1px solid var(--rule);
+      }
+      .tab {
+        border: 0; background: none; padding: 7px 12px; font-size: 13px; color: var(--muted);
+        border-bottom: 2px solid transparent;
+      }
+      .tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+
+      .workarea { flex: 1; display: flex; min-height: 0; }
+      .main-col { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+      .table-wrap { flex: 1; overflow: auto; min-height: 0; background: var(--surface); }
+      table.grid {
+        border-collapse: collapse; width: 100%; font-size: 13px;
+      }
+      table.grid th {
+        position: sticky; top: 0; background: var(--surface-2); z-index: 1;
+        text-align: left; font-size: 11px; font-weight: 600; color: var(--muted);
+        text-transform: uppercase; letter-spacing: 0.04em;
+        padding: 6px 10px; border-bottom: 1px solid var(--rule); white-space: nowrap;
+      }
+      table.grid td {
+        height: var(--row-h); padding: 0 10px; border-bottom: 1px solid var(--rule-soft);
+        white-space: nowrap; font-variant-numeric: tabular-nums;
+      }
+      table.grid td.num, table.grid th.num { text-align: right; }
+      table.grid tbody tr { cursor: default; }
+      table.grid tbody tr:hover { background: var(--surface-2); }
+      table.grid tbody tr.sel { background: var(--accent-soft); }
+      table.grid tbody tr.sel td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+
+      .chip {
+        display: inline-flex; align-items: center; gap: 5px; font-size: 12px;
+      }
+      .chip::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--c, var(--faint)); }
+      .chip.c-ok { --c: var(--ok); }
+      .chip.c-warn { --c: var(--warn); }
+      .chip.c-bad { --c: var(--bad); }
+      .chip.c-info { --c: var(--info); }
+      .chip.c-run { --c: var(--accent); }
+
+      .linklike { border: 0; background: none; color: var(--accent); padding: 0; font-size: 13px; }
+      .linklike:hover { text-decoration: underline; }
+
+      /* ---- activity pane ---- */
+      .activity {
+        height: 220px; flex: none; border-top: 1px solid var(--rule);
+        background: var(--surface); display: flex; flex-direction: column;
+      }
+      .activity.collapsed { height: 30px; overflow: hidden; }
+      .activity-head {
+        height: 30px; flex: none; display: flex; align-items: center; gap: 10px;
+        padding: 0 12px; background: var(--surface-2); border-bottom: 1px solid var(--rule-soft);
+        font-size: 12px; font-weight: 600;
+      }
+      .activity-head .scope { color: var(--muted); font-weight: 400; }
+      .activity-head .spacer { flex: 1; }
+      .activity-body { flex: 1; overflow: auto; }
+      .mini-btn { border: 0; background: none; color: var(--muted); font-size: 12px; padding: 2px 6px; }
+      .mini-btn:hover { color: var(--accent); }
+
+      /* ---- inspector ---- */
+      .inspector {
+        width: 360px; flex: none; border-left: 1px solid var(--rule);
+        background: var(--surface); display: flex; flex-direction: column; overflow: auto;
+      }
+      .insp-head {
+        padding: 12px 14px 8px; border-bottom: 1px solid var(--rule-soft);
+      }
+      .insp-head h2 { margin: 0; font-size: 14px; }
+      .insp-head .sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+      .insp-sec { padding: 10px 14px; border-bottom: 1px solid var(--rule-soft); }
+      .insp-sec h3 { margin: 0 0 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--faint); }
+      .kv { display: grid; grid-template-columns: 130px 1fr; gap: 3px 10px; font-size: 13px; }
+      .kv dt { color: var(--muted); }
+      .kv dd { margin: 0; font-variant-numeric: tabular-nums; }
+      .insp-actions { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 14px; }
+      .empty-insp { padding: 24px 14px; color: var(--muted); font-size: 13px; }
+
+      /* ---- drawers ---- */
+      .drawer {
+        position: fixed; top: 0; right: 0; bottom: 0; width: 480px; max-width: 92vw;
+        background: var(--surface); border-left: 1px solid var(--rule);
+        box-shadow: -8px 0 24px rgba(0, 0, 0, 0.18); z-index: 20;
+        display: flex; flex-direction: column;
+      }
+      .drawer.wide { width: 560px; }
+      .drawer-head {
+        height: 48px; flex: none; display: flex; align-items: center; gap: 10px;
+        padding: 0 14px; border-bottom: 1px solid var(--rule); font-weight: 600; font-size: 14px;
+      }
+      .drawer-head .close { margin-left: auto; border: 0; background: none; font-size: 18px; color: var(--muted); }
+      .drawer-body { flex: 1; overflow: auto; padding: 14px; }
+      .drawer-foot {
+        flex: none; display: flex; gap: 10px; justify-content: flex-end;
+        padding: 12px 14px; border-top: 1px solid var(--rule);
+      }
+      .drawer h3 { font-size: 13px; margin: 16px 0 6px; }
+      .drawer h3:first-child { margin-top: 0; }
+      .drawer p { margin: 6px 0; }
+      .field-row { display: flex; gap: 10px; align-items: center; margin: 8px 0; }
+      .field-row label { color: var(--muted); font-size: 12px; width: 90px; flex: none; }
+      .field-row input, .field-row select {
+        height: 28px; border: 1px solid var(--rule); border-radius: 5px; background: var(--surface); padding: 0 6px;
+      }
+      .note { font-size: 12px; color: var(--muted); }
+      .ack { display: flex; gap: 8px; align-items: flex-start; margin: 10px 0; }
+      .banner {
+        padding: 8px 12px; border: 1px solid var(--rule); border-left: 3px solid var(--info);
+        background: var(--surface-2); font-size: 12px; border-radius: 4px; margin: 8px 0;
+      }
+      .banner.warn { border-left-color: var(--warn); }
+
+      .hidden { display: none !important; }
+      .dim { color: var(--muted); }
+      .right { text-align: right; }
+
+      @media (max-width: 1360px) {
+        .rail { width: 48px; }
+        .rail-item { justify-content: center; padding: 7px 0; }
+        .rail-item .label, .rail-item .badge { display: none; }
+        .rail-bottom a { font-size: 0; text-align: center; }
+        .rail-bottom a::after { content: "↗"; font-size: 14px; }
+      }
+    </style>
+  </head>
+  <body data-density="standard">
+    <div class="app">
+      <header class="appbar">
+        <div class="brand">NEMLab <em>Admin</em><span class="env">development</span></div>
+        <div class="spacer"></div>
+        <label class="dim" style="font-size:12px">Scenario
+          <select id="scenario">
+            <option value="typical">typical</option>
+            <option value="empty">empty</option>
+            <option value="failure">API failure</option>
+          </select>
+        </label>
+        <label class="dim" style="font-size:12px">Role
+          <select id="role">
+            <option value="owner">Owner</option>
+            <option value="viewer">Viewer</option>
+          </select>
+        </label>
+        <button class="btn" title="Open contextual help">Help</button>
+        <label class="dim" style="font-size:12px">Theme
+          <select id="theme">
+            <option value="auto">Auto</option>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
+        </label>
+        <div class="account">
+          <div class="who">Dev Owner</div>
+          <div class="sub" id="accountSub">owner · session until 9 Oct, 3:17 am</div>
+        </div>
+      </header>
+
+      <div class="body">
+        <nav class="rail" aria-label="Workspaces">
+          <button class="rail-item active" data-ws="ops"><span aria-hidden="true">▦</span><span class="label">Data Ops</span></button>
+          <button class="rail-item" data-ws="access" id="railAccess"><span aria-hidden="true">◔</span><span class="label">Access</span><span class="badge">2</span></button>
+          <div class="rail-bottom"><a href="/">Public site ↗</a></div>
+        </nav>
+
+        <main class="workspace" id="workspace">
+          <div class="toolbar">
+            <h1 id="wsTitle">Data Operations</h1>
+            <label>Region
+              <select id="region"><option>NSW1</option><option>QLD1</option><option>SA1</option><option>TAS1</option><option>VIC1</option></select>
+            </label>
+            <label>From <input type="date" value="2023-09-01" /></label>
+            <label>To <input type="date" value="2023-09-30" /></label>
+            <button class="btn primary">Apply</button>
+            <label class="dim">Density
+              <select id="density">
+                <option value="compact">Compact</option>
+                <option value="standard" selected>Standard</option>
+                <option value="comfortable">Comfortable</option>
+              </select>
+            </label>
+            <span class="fresh">Stored data as of 2023-09-30 · checked 12 min ago</span>
+            <button class="btn">Refresh</button>
+          </div>
+
+          <div class="strip" id="strip"></div>
+
+          <div class="tabs" id="tabs">
+            <button class="tab active" data-tab="coverage">Coverage</button>
+            <button class="tab" data-tab="jobs">Loads &amp; Jobs</button>
+            <button class="tab" data-tab="pubs">Publications</button>
+          </div>
+
+          <div class="workarea">
+            <div class="main-col">
+              <div class="table-wrap" id="tableWrap"></div>
+              <div class="activity" id="activity">
+                <div class="activity-head">
+                  <span>Activity</span>
+                  <span class="scope" id="activityScope">NSW1 · 2023-09-01 – 2023-09-30</span>
+                  <span class="spacer"></span>
+                  <button class="mini-btn">All recent</button>
+                  <button class="mini-btn" id="activityToggle">Collapse</button>
+                </div>
+                <div class="activity-body" id="activityBody"></div>
+              </div>
+            </div>
+            <aside class="inspector" id="inspector" aria-label="Selection inspector"></aside>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <!-- Load data drawer -->
+    <aside class="drawer hidden" id="drawerLoad" role="dialog" aria-label="Load data">
+      <div class="drawer-head">Load data — NSW1<button class="close" aria-label="Close">×</button></div>
+      <div class="drawer-body">
+        <h3>Scope</h3>
+        <div class="field-row"><label>First day</label><input type="date" value="2023-09-01" /><label>Last day</label><input type="date" value="2023-09-30" /></div>
+        <p class="note">30 market days across <b>1</b> bounded chunk of at most 31 days.</p>
+        <h3>What will happen</h3>
+        <ul class="note">
+          <li>Grid phase first: 1 import submission fanning out to one job per day.</li>
+          <li>Then the price phase refreshes all 30 days.</li>
+          <li>Already-stored days deduplicate safely — overlap never corrupts revisions.</li>
+        </ul>
+        <p class="banner">Dispatch is explicit: you step the operation forward chunk by chunk; it stays resumable between visits.</p>
+      </div>
+      <div class="drawer-foot">
+        <button class="btn" data-close>Cancel</button>
+        <button class="btn primary">Start loading</button>
+      </div>
+    </aside>
+
+    <!-- Review publication drawer -->
+    <aside class="drawer wide hidden" id="drawerPublish" role="dialog" aria-label="Review publication">
+      <div class="drawer-head">Review &amp; publish — NSW1<button class="close" aria-label="Close">×</button></div>
+      <div class="drawer-body">
+        <h3>Scope</h3>
+        <div class="field-row"><label>First day</label><input type="date" value="2023-09-01" /><label>Last day</label><input type="date" value="2023-09-05" />
+          <select><option>v2 — calibrated suite (default)</option><option>v1 — frozen rules</option></select></div>
+        <p class="note">A publication covers at most 31 days and replaces NSW1's public catalogue pointer in one transaction — it does not append a monthly catalogue.</p>
+        <h3>Coverage preview — NSW1 2023-09-01 – 2023-09-05</h3>
+        <p class="banner warn"><b>2 of 5 days lack complete required grid data:</b> 2023-09-03 (partial), 2023-09-04 (not imported).</p>
+        <label class="ack"><input type="checkbox" /> Publish anyway — I intend a partial publication for these days.</label>
+        <p class="note">The publish request always names the suite explicitly. If the response is lost, the recorded attempt key reconciles against detection-run history — nothing is silently retried.</p>
+      </div>
+      <div class="drawer-foot">
+        <button class="btn" data-close>Cancel</button>
+        <button class="btn primary" disabled>Detect &amp; publish v2</button>
+      </div>
+    </aside>
+
+    <script>
+      /* ---------- fixture data ---------- */
+      const DAYS = [
+        ["2023-09-30","complete","complete","partial","complete","not evaluated","r2 · 14:02"],
+        ["2023-09-29","complete","complete","complete","complete","not evaluated","r2 · 14:02"],
+        ["2023-09-28","complete","complete","complete","complete","not evaluated","r2 · 14:02"],
+        ["2023-09-27","complete","partial","complete","complete","not evaluated","r2 · 14:02"],
+        ["2023-09-26","complete","complete","complete","complete","not evaluated","r2 · 14:02"],
+        ["2023-09-25","complete","complete","complete","complete","not evaluated","r2 · 14:02"],
+        ["2023-09-24","complete","complete","complete","partial","not evaluated","r2 · 14:02"],
+        ["2023-09-23","complete","complete","complete","complete","not evaluated","r2 · 14:02"],
+        ["2023-09-22","complete","complete","complete","complete","not evaluated","r2 · 14:02"],
+        ["2023-09-21","complete","complete","partial","complete","not evaluated","r2 · 14:02"],
+        ["2023-09-20","complete","complete","complete","complete","not evaluated","r2 · 14:02"],
+        ["2023-09-19","complete","complete","complete","complete","not evaluated","r2 · 14:02"],
+        ["2023-09-18","partial","complete","complete","complete","not evaluated","r3 · 22:41"],
+        ["2023-09-17","complete","complete","complete","complete","not evaluated","r2 · 14:02"],
+        ["2023-09-16","complete","complete","complete","complete","not evaluated","r2 · 14:02"],
+        ["2023-09-15","complete","complete","complete","complete","not evaluated","r2 · 14:02"],
+        ["2023-09-14","complete","complete","complete","complete","not evaluated","r2 · 14:02"],
+        ["2023-09-13","complete","complete","complete","complete","not evaluated","r2 · 14:02"],
+        ["2023-09-12","complete","complete","complete","complete","not evaluated","r2 · 14:02"],
+        ["2023-09-11","complete","complete","complete","complete","not evaluated","r2 · 14:02"],
+        ["2023-09-10","complete","complete","complete","complete","not evaluated","r2 · 14:02"],
+        ["2023-09-09","complete","complete","complete","complete","not evaluated","r2 · 14:02"],
+        ["2023-09-08","complete","complete","complete","complete","not evaluated","r2 · 14:02"],
+        ["2023-09-07","complete","complete","complete","complete","not evaluated","r2 · 14:02"],
+        ["2023-09-06","complete","complete","complete","complete","not evaluated","r2 · 14:02"],
+        ["2023-09-05","complete","complete","complete","complete","ready","r4 · 09:12"],
+        ["2023-09-04","missing","missing","missing","missing","insufficient baseline","—"],
+        ["2023-09-03","partial","partial","complete","complete","ready","r1 · 08:55"],
+        ["2023-09-02","complete","complete","complete","complete","ready","r4 · 09:12"],
+        ["2023-09-01","complete","complete","complete","complete","ready","r4 · 09:12"],
+      ];
+      const JOBS = [
+        ["RUNNING","load op","NSW1","2023-09-04 – 2023-09-30","price phase · 12/27 days","1","09:14","8f31a2…"],
+        ["RUNNING","grid import","NSW1","2023-09-27","288/288 intervals","1","09:13","b77c41…"],
+        ["FAILED","grid import","NSW1","2023-09-03","fetch error after 2 attempts","2","09:10","c92e18…"],
+        ["CANCELLED","grid import","NSW1","2023-09-04","by owner","1","08:58","d01b77…"],
+        ["SUCCEEDED","grid import","NSW1","2023-09-05","288/288 intervals","1","09:12","a41f9c…"],
+        ["SUCCEEDED","price refresh","NSW1","2023-09-02 – 2023-09-05","4 days","1","09:08","f55d02…"],
+        ["SUCCEEDED","grid import","NSW1","2023-09-02","288/288 intervals","1","09:07","7e3b19…"],
+        ["SUCCEEDED","grid import","NSW1","2023-09-01","288/288 intervals","1","09:05","2ac8e4…"],
+      ];
+      const PUBS = [
+        [true,"NSW1","2023-09-01 – 2023-09-05","v2","14","08 Oct 14:02","—"],
+        [false,"NSW1","2023-09-01 – 2023-09-05","v2","14","08 Oct 13:58","superseded"],
+        [false,"NSW1","2023-09-01 – 2023-09-05","v1","11","08 Oct 09:31","superseded"],
+        [true,"QLD1","2023-09-01 – 2023-09-05","v2","9","08 Oct 11:20","—"],
+        [true,"SA1","2023-09-01 – 2023-09-05","v2","6","08 Oct 11:19","—"],
+        [true,"TAS1","2023-09-01 – 2023-09-05","v2","4","08 Oct 11:18","—"],
+        [true,"VIC1","2023-09-01 – 2023-09-05","v2","12","08 Oct 11:17","—"],
+      ];
+
+      const chip = (v) => {
+        const map = { complete:"c-ok", partial:"c-warn", missing:"c-bad", ready:"c-ok",
+          "not evaluated":"", "insufficient baseline":"c-warn", "—":"",
+          RUNNING:"c-run", SUCCEEDED:"c-ok", FAILED:"c-bad", CANCELLED:"" };
+        return `<span class="chip ${map[v] ?? ""}">${v === "missing" ? "not imported" : v}</span>`;
+      };
+
+      const state = { tab: "coverage", sel: 0, role: "owner", scenario: "typical" };
+      const $ = (id) => document.getElementById(id);
+
+      /* ---------- summary strip ---------- */
+      function renderStrip() {
+        if (state.tab === "coverage") {
+          $("strip").innerHTML = [
+            `<b>27<small class="dim">/30</small></b><span>days complete</span>`,
+            `<b>4</b><span>baseline ready</span>`,
+            `<b>1</b><span>insufficient baseline</span>`,
+            `<b>14 <small class="dim">events</small></b><span>latest publication · NSW1 1–5 Sep · v2</span>`,
+          ].map((h, i) => `<button class="stat">${h}</button>`).join("");
+        } else if (state.tab === "jobs") {
+          $("strip").innerHTML = [
+            `<b class="ok">4</b><span>succeeded today</span>`,
+            `<b>2</b><span>running</span>`,
+            `<b class="warn">1</b><span>failed — retryable</span>`,
+            `<b>1</b><span>cancelled</span>`,
+          ].map(h => `<button class="stat">${h}</button>`).join("");
+        } else {
+          $("strip").innerHTML = [
+            `<b>7</b><span>publications</span>`,
+            `<b>5</b><span>current region pointers</span>`,
+            `<b class="warn">1</b><span>superseded this week</span>`,
+            `<b>v2</b><span>default suite</span>`,
+          ].map(h => `<button class="stat">${h}</button>`).join("");
+        }
+      }
+
+      /* ---------- tables ---------- */
+      function renderTable() {
+        const w = $("tableWrap");
+        if (state.scenario === "failure") {
+          w.innerHTML = `<div class="empty-insp"><b>Couldn't load this view.</b><br/>The read failed — nothing was submitted or changed. Check the connection and retry.</div>`;
+          return;
+        }
+        if (state.scenario === "empty") {
+          w.innerHTML = `<div class="empty-insp"><b>Nothing stored for NSW1 2023-09-01 – 2023-09-30.</b><br/>Load data to bring market days into storage.</div>`;
+          return;
+        }
+        if (state.tab === "coverage") {
+          w.innerHTML = `<table class="grid"><thead><tr>
+            <th>Day</th><th>Price</th><th>Demand</th><th>Flows</th><th>Fuel</th><th>Baseline</th><th>Revision</th>
+          </tr></thead><tbody>${DAYS.map((d, i) => `
+            <tr data-i="${i}" class="${i === state.sel ? "sel" : ""}">
+              <td class="mono">${d[0]}</td><td>${chip(d[1])}</td><td>${chip(d[2])}</td>
+              <td>${chip(d[3])}</td><td>${chip(d[4])}</td><td>${chip(d[5])}</td><td class="dim">${d[6]}</td>
+            </tr>`).join("")}</tbody></table>`;
+        } else if (state.tab === "jobs") {
+          w.innerHTML = `<table class="grid"><thead><tr>
+            <th>Status</th><th>Type</th><th>Region</th><th>Window / day</th><th>Progress</th>
+            <th class="num">Attempts</th><th>Updated</th><th>ID</th>
+          </tr></thead><tbody>${JOBS.map((j, i) => `
+            <tr data-i="${i}" class="${i === state.sel ? "sel" : ""}">
+              <td>${chip(j[0])}</td><td>${j[1]}</td><td>${j[2]}</td><td class="mono">${j[3]}</td>
+              <td class="dim">${j[4]}</td><td class="num">${j[5]}</td><td>${j[6]}</td>
+              <td class="mono dim">${j[7]}</td>
+            </tr>`).join("")}</tbody></table>`;
+        } else {
+          w.innerHTML = `<table class="grid"><thead><tr>
+            <th></th><th>Region</th><th>Window</th><th>Suite</th><th class="num">Events</th>
+            <th>Published</th><th>Note</th><th>Replay</th>
+          </tr></thead><tbody>${PUBS.map((p, i) => `
+            <tr data-i="${i}" class="${i === state.sel ? "sel" : ""}">
+              <td>${p[0] ? '<span class="chip c-info">current</span>' : ""}</td>
+              <td>${p[1]}</td><td class="mono">${p[2]}</td><td>${p[3]}</td>
+              <td class="num">${p[4]}</td><td>${p[5]}</td><td class="dim">${p[6]}</td>
+              <td><button class="linklike">Open ↗</button></td>
+            </tr>`).join("")}</tbody></table>`;
+        }
+        w.querySelectorAll("tbody tr").forEach((tr) =>
+          tr.addEventListener("click", () => {
+            state.sel = Number(tr.dataset.i);
+            renderTable(); renderInspector();
+          }),
+        );
+      }
+
+      /* ---------- inspector ---------- */
+      function renderInspector() {
+        const el = $("inspector");
+        const owner = state.role === "owner";
+        if (state.tab === "coverage") {
+          const d = DAYS[state.sel];
+          el.innerHTML = `
+            <div class="insp-head"><h2>${d[0]} — NSW1</h2><div class="sub">Market day inspection · does not change the scope above</div></div>
+            <div class="insp-sec"><h3>Stored series</h3><dl class="kv">
+              <dt>Price</dt><dd>${d[1] === "missing" ? "—" : "144/144 intervals"}</dd>
+              <dt>Demand</dt><dd>${d[2] === "missing" ? "—" : "288/288 intervals"}</dd>
+              <dt>Flows</dt><dd>${d[3] === "missing" ? "—" : d[3] === "partial" ? "201/288 intervals" : "288/288 intervals"}</dd>
+              <dt>Fuel mix</dt><dd>${d[4] === "missing" ? "—" : "complete"}</dd>
+            </dl></div>
+            <div class="insp-sec"><h3>Baseline (v2 unusual ramps)</h3><dl class="kv">
+              <dt>State</dt><dd>${d[5]}</dd>
+              <dt>Complete prior days</dt><dd>${d[5] === "ready" ? "68/90" : d[5] === "insufficient baseline" ? "41/90" : "—"}</dd>
+              <dt>Same-class days</dt><dd>${d[5] === "ready" ? "29" : "—"}</dd>
+            </dl></div>
+            <div class="insp-sec"><h3>Provenance</h3><dl class="kv">
+              <dt>Revision</dt><dd class="mono">${d[6]}</dd>
+              <dt>Source</dt><dd>OpenElectricity fetch</dd>
+            </dl></div>
+            ${owner
+              ? `<div class="insp-actions">
+                  <button class="btn primary" onclick="openDrawer('drawerLoad')">Load data</button>
+                  <button class="btn" onclick="openDrawer('drawerPublish')">Review publication</button>
+                </div>`
+              : `<div class="insp-sec"><p class="note">Loading and publishing are owner actions — your read-only access covers inspection, history and replay links.</p></div>`}`;
+        } else if (state.tab === "jobs") {
+          const j = JOBS[state.sel];
+          el.innerHTML = `
+            <div class="insp-head"><h2 class="mono">${j[7]}…</h2><div class="sub">${j[1]} · ${j[2]} · ${j[3]}</div></div>
+            <div class="insp-sec"><dl class="kv">
+              <dt>Status</dt><dd>${chip(j[0])}</dd>
+              <dt>Progress</dt><dd>${j[4]}</dd>
+              <dt>Attempts</dt><dd>${j[5]}</dd>
+              <dt>Updated</dt><dd>${j[6]}</dd>
+              <dt>Operation</dt><dd class="mono">7d3e…91</dd>
+            </dl></div>
+            <div class="insp-sec"><h3>Events</h3>
+              <p class="note">09:05 queued · 09:05 submitted (key <code>load:7d3e…:grid:2023-09-04</code>) · 09:07 intervals stored · ${j[0] === "FAILED" ? "09:10 upstream 502 — safe to resubmit" : "09:08 complete"}</p>
+            </div>
+            ${owner ? `<div class="insp-actions">
+              ${j[0] === "FAILED" ? '<button class="btn primary">Submit again</button>' : ""}
+              ${j[0] === "RUNNING" ? '<button class="btn">Stop further dispatch</button>' : ""}
+              <button class="btn">Copy request key</button>
+            </div>` : ""}`;
+        } else {
+          const p = PUBS[state.sel];
+          el.innerHTML = `
+            <div class="insp-head"><h2>${p[1]} ${p[2]}</h2><div class="sub">${p[0] ? "Current region pointer" : "Superseded — replay links stay readable"}</div></div>
+            <div class="insp-sec"><dl class="kv">
+              <dt>Suite</dt><dd>${p[3]}</dd>
+              <dt>Events</dt><dd>${p[4]}</dd>
+              <dt>By type</dt><dd>price spike 5 · unusual ramp 4 · negative run 3 · reversal 2</dd>
+              <dt>Published</dt><dd>${p[5]}</dd>
+              <dt>Attempt key</dt><dd class="mono">admin-ui:c564…</dd>
+            </dl></div>
+            <div class="insp-actions">
+              <button class="linklike">Open in GridReplay ↗</button>
+            </div>`;
+        }
+      }
+
+      /* ---------- activity ---------- */
+      function renderActivity() {
+        $("activityBody").innerHTML = `<table class="grid"><tbody>${JOBS.slice(0, 5).map(j => `
+          <tr><td>${chip(j[0])}</td><td>${j[1]}</td><td class="mono">${j[3]}</td>
+          <td class="dim">${j[4]}</td><td>${j[6]}</td><td class="mono dim">${j[7]}</td></tr>`).join("")}
+        </tbody></table>`;
+      }
+
+      /* ---------- drawers / controls ---------- */
+      window.openDrawer = (id) => $(id).classList.remove("hidden");
+      document.querySelectorAll(".drawer .close, [data-close]").forEach((b) =>
+        b.addEventListener("click", () => b.closest(".drawer").classList.add("hidden")));
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") document.querySelectorAll(".drawer").forEach((d) => d.classList.add("hidden"));
+      });
+
+      $("tabs").addEventListener("click", (e) => {
+        const t = e.target.closest(".tab");
+        if (!t) return;
+        document.querySelectorAll(".tab").forEach((x) => x.classList.toggle("active", x === t));
+        state.tab = t.dataset.tab; state.sel = 0;
+        renderStrip(); renderTable(); renderInspector();
+      });
+      $("theme").addEventListener("change", (e) => {
+        const v = e.target.value;
+        if (v === "auto") document.documentElement.removeAttribute("data-theme");
+        else document.documentElement.dataset.theme = v;
+      });
+      $("density").addEventListener("change", (e) => { document.body.dataset.density = e.target.value; });
+      $("role").addEventListener("change", (e) => {
+        state.role = e.target.value;
+        $("railAccess").classList.toggle("hidden", state.role !== "owner");
+        $("accountSub").textContent = state.role === "owner"
+          ? "owner · session until 9 Oct, 3:17 am"
+          : "viewer · grant expires 7 Nov";
+        renderInspector();
+      });
+      $("scenario").addEventListener("change", (e) => { state.scenario = e.target.value; renderTable(); });
+      $("activityToggle").addEventListener("click", (e) => {
+        $("activity").classList.toggle("collapsed");
+        e.target.textContent = $("activity").classList.contains("collapsed") ? "Expand" : "Collapse";
+      });
+
+      renderStrip(); renderTable(); renderInspector(); renderActivity();
+    </script>
+  </body>
+</html>

@@ -7,4 +7,4 @@
 - `apps/public` is the public browser application. A future Admin is a separately built application within this repository; do not add operator credentials or administrative capabilities to the public bundle.
 - Never put OE keys, database credentials or operator tokens in frontend code or Vite environment variables. Vite variables are public bundle inputs.
 - Keep implementation and setup documentation local; shared product requirements and decisions remain canonical in the backend.
-- Follow the public-app UI conventions in [docs/ui-standards.md](docs/ui-standards.md) for new pages and components.
+- Follow [docs/ui-standards.md](docs/ui-standards.md) for public-app pages/components. Admin follows the canonical [desktop redesign](../nemlab/docs/project/features/admin-desktop-redesign.md); do not apply public page-width/layout rules to Admin.
