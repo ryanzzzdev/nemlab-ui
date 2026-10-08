@@ -5,10 +5,10 @@ import type { SessionView } from "./api";
 /** Session truth lives server-side; the client polls it on a bounded
  * interval so a grant revocation or expiry surfaces without a reload. */
 export function useSession() {
-  return useQuery<SessionView, ApiError>({
+  return useQuery<SessionView | null, ApiError>({
     queryKey: ["session"],
     queryFn: ({ signal }) => getSession(signal),
-    retry: (count, error) => error.status !== 401 && count < 1,
+    retry: 1,
     staleTime: 30_000,
     refetchInterval: 60_000,
   });

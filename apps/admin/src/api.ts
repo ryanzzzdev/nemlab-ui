@@ -61,20 +61,65 @@ export function apiGet<T>(path: string, signal?: AbortSignal): Promise<T> {
 
 /** Cookie-authenticated mutation — the backend requires the session CSRF
  * token; the browser already sends same-origin Origin/Referer on POST. */
-export function apiPost<T>(path: string, csrfToken: string, body?: unknown): Promise<T | null> {
+export function apiPost<T>(path: string, csrfToken?: string, body?: unknown): Promise<T | null> {
+  const headers: Record<string, string> = {
+    Accept: "application/json",
+    "Content-Type": "application/json",
+  };
+  if (csrfToken) headers["x-csrf-token"] = csrfToken;
   return fetch(path, {
     method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      "x-csrf-token": csrfToken,
-    },
+    headers,
     body: body === undefined ? "" : JSON.stringify(body),
   }).then((response) => (response.status === 204 ? null : parse<T>(response)));
 }
 
-export function getSession(signal?: AbortSignal): Promise<SessionView> {
-  return apiGet<SessionView>("/api/auth/v1/session", signal);
+/** `null` means no active session — a normal state, not a failure, so
+ * consumers never see stale session data after a 401. */
+export async function getSession(signal?: AbortSignal): Promise<SessionView | null> {
+  try {
+    return await apiGet<SessionView>("/api/auth/v1/session", signal);
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401) return null;
+    throw error;
+  }
+}
+
+export type ApplicantStatus = components["schemas"]["ApplicantStatus"];
+export type SignInAccepted = components["schemas"]["SignInAccepted"];
+
+/** Anonymous auth endpoints carry no CSRF (no session exists yet) and are
+ * deliberately generic — the response never reveals account existence. */
+export function requestAccess(body: {
+  displayName: string;
+  email: string;
+  message: string;
+}): Promise<SignInAccepted | null> {
+  return apiPost<SignInAccepted>("/api/access/v1/requests", undefined, body);
+}
+
+export function requestSignInLink(email: string): Promise<SignInAccepted | null> {
+  return apiPost<SignInAccepted>("/api/auth/v1/sign-in-requests", undefined, {
+    email,
+  });
+}
+
+export function exchangeSignInToken(token: string): Promise<SessionView | null> {
+  return apiPost<SessionView>("/api/auth/v1/sessions", undefined, { token });
+}
+
+export function verifyAccessRequest(token: string): Promise<SessionView | null> {
+  return apiPost<SessionView>("/api/access/v1/verifications", undefined, {
+    token,
+  });
+}
+
+export function applicantStatus(signal?: AbortSignal): Promise<ApplicantStatus> {
+  return apiGet<ApplicantStatus>("/api/access/v1/requests/status", signal);
+}
+
+export function resendVerification(csrfToken: string) {
+  return apiPost("/api/access/v1/requests/resend", csrfToken);
 }
 
 /** NEM market days run UTC+10 — same helper convention as the public app. */

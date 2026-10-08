@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { Link, NavLink, Outlet, useLocation } from "react-router";
+import { Link, Navigate, NavLink, Outlet, useLocation } from "react-router";
 import { ThemePicker } from "../../../public/src/components/Theme";
 import type { SessionView } from "../api";
 import { useSession, useSignOut } from "../session";
-import { Loading, Panel } from "./States";
+import { Loading } from "./States";
 
 function Account({ session }: { session: SessionView }) {
   const signOut = useSignOut();
@@ -44,6 +44,8 @@ const NAV = [
   { to: "/how-it-works", label: "How it works" },
 ] as const;
 
+const PUBLIC_ROUTES = new Set(["/welcome", "/request-access", "/sign-in", "/verify"]);
+
 export function Shell() {
   const session = useSession();
   const { pathname } = useLocation();
@@ -58,27 +60,22 @@ export function Shell() {
     }
   }, [pathname]);
 
+  const role = session.data?.role;
   let content: ReactNode;
-  if (session.isPending) {
+  if (PUBLIC_ROUTES.has(pathname) || pathname === "/request-status") {
+    // Auth pages manage their own session states — welcome, request form,
+    // fragment exchanges and the applicant status view must render without
+    // an owner/viewer session.
+    content = <Outlet context={session.data} />;
+  } else if (session.isPending) {
     content = <Loading label="Checking your session…" />;
-  } else if (session.isError || session.data.role === "applicant") {
-    content = (
-      <Panel title="Sign in required">
-        <p>
-          The Admin console needs an active owner or viewer session. Sign in with the single-use
-          link NEMLab emailed you — it stays valid for 15 minutes.
-        </p>
-        <p className="hint">
-          No link yet? Access is granted by the site owner; request it from the person who runs this
-          deployment.
-        </p>
-      </Panel>
-    );
+  } else if (session.isError || role === "applicant" || !role) {
+    content = <Navigate to="/welcome" replace />;
   } else {
     content = <Outlet context={session.data} />;
   }
 
-  const signedIn = session.data && session.data.role !== "applicant";
+  const signedIn = role === "owner" || role === "viewer";
   return (
     <div className="site">
       <a className="skip-link" href="#main">
@@ -103,7 +100,7 @@ export function Shell() {
           </nav>
         )}
         <div className="header-right">
-          {signedIn && <Account session={session.data} />}
+          {signedIn && session.data && <Account session={session.data} />}
           <ThemePicker />
         </div>
       </header>

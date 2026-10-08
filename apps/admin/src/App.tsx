@@ -1,5 +1,12 @@
 import { BrowserRouter, Route, Routes } from "react-router";
 import { Shell } from "./components/Shell";
+import {
+  RequestAccessPage,
+  RequestStatusPage,
+  SignInPage,
+  VerifyPage,
+  WelcomePage,
+} from "./pages/AuthPages";
 import { CoveragePage } from "./pages/CoveragePage";
 import { HowItWorksPage } from "./pages/HowItWorksPage";
 import { JobsPage } from "./pages/JobsPage";
@@ -23,6 +30,11 @@ export function App() {
           <Route path="jobs" element={<JobsPage />} />
           <Route path="publications" element={<PublicationsPage />} />
           <Route path="how-it-works" element={<HowItWorksPage />} />
+          <Route path="welcome" element={<WelcomePage />} />
+          <Route path="request-access" element={<RequestAccessPage />} />
+          <Route path="request-status" element={<RequestStatusPage />} />
+          <Route path="sign-in" element={<SignInPage />} />
+          <Route path="verify" element={<VerifyPage />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

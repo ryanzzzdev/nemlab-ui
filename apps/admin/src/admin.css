@@ -179,3 +179,31 @@
 .cov-dot.cov-partial {
   background: light-dark(#b47a00, #ffca7a);
 }
+
+.auth-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.auth-grid .state-panel {
+  margin: 0;
+  max-width: none;
+}
+
+.primary-link {
+  color: var(--color-focus);
+  font-weight: 600;
+}
+
+.scenario-fields textarea {
+  font: inherit;
+  font-size: 13px;
+  padding: 7px 9px;
+  border: 1px solid var(--color-rule);
+  border-radius: 6px;
+  background: var(--color-panel);
+  color: var(--color-text);
+  resize: vertical;
+}
