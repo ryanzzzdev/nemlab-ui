@@ -2,8 +2,8 @@
  "openapi": "3.0.3",
  "info": {
   "title": "NEMLab shared API",
-  "version": "2.0.0",
-  "description": "Independently enabled price reads, operator controls, bounded grid imports and simulation lifecycle. Disabled routes return 404. Market dates use fixed UTC+10. Simulation bodies are at most 16384 bytes and decimal inputs are strings. The public GridReplay catalogue and replay API are not yet implemented; grid imports are operator-only."
+  "version": "2.2.0",
+  "description": "Independently enabled price reads, operator controls, bounded grid imports, simulation lifecycle and browser-admin authentication. Disabled routes return 404. Market dates use fixed UTC+10. Simulation bodies are at most 16384 bytes and decimal inputs are strings. The public GridReplay catalogue and replay API are not yet implemented; grid imports are operator-only."
  },
  "paths": {
   "/api/v1/prices/{region}/coverage": {
@@ -430,7 +430,30 @@
       }
      },
      "403": {
-      "description": "Authenticated operator lacks permission; empty body"
+      "description": "Authenticated identity lacks the required capability, or a cookie-authenticated mutation failed CSRF/Origin checks",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "FORBIDDEN"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
      }
     },
     "requestBody": {
@@ -565,7 +588,30 @@
       }
      },
      "403": {
-      "description": "Authenticated operator lacks permission; empty body"
+      "description": "Authenticated identity lacks the required capability, or a cookie-authenticated mutation failed CSRF/Origin checks",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "FORBIDDEN"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
      }
     }
    }
@@ -713,7 +759,30 @@
       }
      },
      "403": {
-      "description": "Authenticated operator lacks permission; empty body"
+      "description": "Authenticated identity lacks the required capability, or a cookie-authenticated mutation failed CSRF/Origin checks",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "FORBIDDEN"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
      }
     }
    }
@@ -886,7 +955,30 @@
       }
      },
      "403": {
-      "description": "Authenticated operator lacks permission; empty body"
+      "description": "Authenticated identity lacks the required capability, or a cookie-authenticated mutation failed CSRF/Origin checks",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "FORBIDDEN"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
      }
     }
    }
@@ -1034,7 +1126,30 @@
       }
      },
      "403": {
-      "description": "Authenticated operator lacks permission; empty body"
+      "description": "Authenticated identity lacks the required capability, or a cookie-authenticated mutation failed CSRF/Origin checks",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "FORBIDDEN"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
      }
     }
    }
@@ -1646,7 +1761,30 @@
       }
      },
      "403": {
-      "description": "Authenticated operator lacks permission; empty body"
+      "description": "Authenticated identity lacks the required capability, or a cookie-authenticated mutation failed CSRF/Origin checks",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "FORBIDDEN"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
      }
     },
     "requestBody": {
@@ -1781,7 +1919,30 @@
       }
      },
      "403": {
-      "description": "Authenticated operator lacks permission; empty body"
+      "description": "Authenticated identity lacks the required capability, or a cookie-authenticated mutation failed CSRF/Origin checks",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "FORBIDDEN"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
      }
     }
    }
@@ -1929,7 +2090,30 @@
       }
      },
      "403": {
-      "description": "Authenticated operator lacks permission; empty body"
+      "description": "Authenticated identity lacks the required capability, or a cookie-authenticated mutation failed CSRF/Origin checks",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "FORBIDDEN"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
      }
     }
    }
@@ -2102,7 +2286,30 @@
       }
      },
      "403": {
-      "description": "Authenticated operator lacks permission; empty body"
+      "description": "Authenticated identity lacks the required capability, or a cookie-authenticated mutation failed CSRF/Origin checks",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "FORBIDDEN"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
      }
     }
    }
@@ -2250,7 +2457,203 @@
       }
      },
      "403": {
-      "description": "Authenticated operator lacks permission; empty body"
+      "description": "Authenticated identity lacks the required capability, or a cookie-authenticated mutation failed CSRF/Origin checks",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "FORBIDDEN"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/admin/v1/grid-coverage/{region}": {
+   "get": {
+    "operationId": "getGridCoverage",
+    "summary": "Stored grid-observation coverage for 1-31 completed NEM days",
+    "security": [
+     {
+      "operatorBearer": []
+     }
+    ],
+    "parameters": [
+     {
+      "name": "region",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$ref": "#/components/schemas/Region"
+      }
+     },
+     {
+      "name": "start",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "date"
+      },
+      "description": "ISO date in fixed UTC+10. Start must be since 2021-10-01 and before today; endExclusive must be after start and no later than today. Coverage spans at most 31 days."
+     },
+     {
+      "name": "endExclusive",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "date"
+      },
+      "description": "ISO date in fixed UTC+10. Start must be since 2021-10-01 and before today; endExclusive must be after start and no later than today. Coverage spans at most 31 days."
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Per-day stored coverage: the three required market series are always present (NOT_IMPORTED when absent); optional power fueltech series appear only when stored",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/GridCoverage"
+        }
+       }
+      },
+      "headers": {
+       "Cache-Control": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "pattern": "no-store"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "INVALID_REQUEST",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "INVALID_REQUEST"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Missing or invalid operator bearer token",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "UNAUTHORISED"
+           ]
+          }
+         }
+        }
+       }
+      },
+      "headers": {
+       "WWW-Authenticate": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "enum": [
+          "Bearer"
+         ]
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Authenticated identity lacks the required capability, or a cookie-authenticated mutation failed CSRF/Origin checks",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "FORBIDDEN"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "503": {
+      "description": "STORAGE_UNAVAILABLE",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "STORAGE_UNAVAILABLE"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
      }
     }
    }
@@ -2289,7 +2692,7 @@
       "content": {
        "application/json": {
         "schema": {
-         "$ref": "#/components/schemas/GridPublication"
+         "$ref": "#/components/schemas/AdminGridPublication"
         }
        }
       }
@@ -2378,6 +2781,32 @@
         }
        }
       }
+     },
+     "403": {
+      "description": "Authenticated identity lacks the required capability, or a cookie-authenticated mutation failed CSRF/Origin checks",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "FORBIDDEN"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
      }
     }
    },
@@ -2409,7 +2838,7 @@
         "schema": {
          "type": "array",
          "items": {
-          "$ref": "#/components/schemas/GridPublication"
+          "$ref": "#/components/schemas/AdminGridPublication"
          }
         }
        }
@@ -2473,8 +2902,157 @@
         }
        }
       }
+     },
+     "403": {
+      "description": "Authenticated identity lacks the required capability, or a cookie-authenticated mutation failed CSRF/Origin checks",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "FORBIDDEN"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
      }
     }
+   }
+  },
+  "/api/admin/v1/grid-publications/attempts": {
+   "get": {
+    "operationId": "listDetectionAttempts",
+    "summary": "Bounded publication-attempt history (COMPLETE and FAILED runs) with actor labels and caller correlation for lost-response reconciliation",
+    "parameters": [
+     {
+      "name": "limit",
+      "in": "query",
+      "schema": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 200,
+       "default": 50
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Detection attempts",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/GridDetectionAttempt"
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Missing or invalid operator bearer token",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "UNAUTHORISED"
+           ]
+          }
+         }
+        }
+       }
+      },
+      "headers": {
+       "WWW-Authenticate": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "enum": [
+          "Bearer"
+         ]
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "FORBIDDEN",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "FORBIDDEN"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "503": {
+      "description": "STORAGE_UNAVAILABLE",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "STORAGE_UNAVAILABLE"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "operatorBearer": []
+     }
+    ]
    }
   },
   "/api/admin/v1/grid-publications/{id}": {
@@ -2503,7 +3081,7 @@
       "content": {
        "application/json": {
         "schema": {
-         "$ref": "#/components/schemas/GridPublication"
+         "$ref": "#/components/schemas/GridPublicationDetail"
         }
        }
       }
@@ -2609,6 +3187,32 @@
            "type": "string",
            "enum": [
             "INVALID_REQUEST"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "Authenticated identity lacks the required capability, or a cookie-authenticated mutation failed CSRF/Origin checks",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "FORBIDDEN"
            ]
           },
           "message": {
@@ -3394,6 +3998,3024 @@
      }
     }
    }
+  },
+  "/api/auth/v1/sign-in-requests": {
+   "post": {
+    "operationId": "requestSignIn",
+    "summary": "Queue a sign-in email when the address belongs to an enabled grant-active account; the 202 response is identical whether or not an account exists",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/SignInRequest"
+       }
+      }
+     }
+    },
+    "responses": {
+     "202": {
+      "description": "Generic acceptance \u2014 no account-existence signal",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SignInAccepted"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "INVALID_REQUEST",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "INVALID_REQUEST"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "429": {
+      "description": "RATE_LIMITED",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "RATE_LIMITED"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "503": {
+      "description": "STORAGE_UNAVAILABLE",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "STORAGE_UNAVAILABLE"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "security": []
+   }
+  },
+  "/api/auth/v1/sessions": {
+   "post": {
+    "operationId": "exchangeSignInToken",
+    "summary": "Consume a single-use sign-in token and open a session cookie; every failure is the same INVALID_TOKEN so unknown, expired and replayed links are indistinguishable",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/TokenExchange"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Session established; the opaque token is set as an HttpOnly SameSite=Lax cookie",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SessionView"
+        }
+       }
+      },
+      "headers": {
+       "Set-Cookie": {
+        "required": true,
+        "schema": {
+         "type": "string"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "INVALID_REQUEST",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "INVALID_REQUEST"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "INVALID_TOKEN",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "INVALID_TOKEN"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "429": {
+      "description": "RATE_LIMITED",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "RATE_LIMITED"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "503": {
+      "description": "STORAGE_UNAVAILABLE",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "STORAGE_UNAVAILABLE"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "security": []
+   }
+  },
+  "/api/auth/v1/session": {
+   "get": {
+    "operationId": "getSession",
+    "summary": "Current session principal and CSRF token",
+    "security": [
+     {
+      "sessionCookie": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Active session",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SessionView"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "UNAUTHORISED",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "UNAUTHORISED"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "503": {
+      "description": "STORAGE_UNAVAILABLE",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "STORAGE_UNAVAILABLE"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/auth/v1/logout": {
+   "post": {
+    "operationId": "logout",
+    "summary": "Revoke the session; requires X-CSRF-Token and same-origin Origin/Referer",
+    "security": [
+     {
+      "sessionCookie": []
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": "Session revoked; cookie cleared"
+     },
+     "401": {
+      "description": "UNAUTHORISED",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "UNAUTHORISED"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "FORBIDDEN",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "FORBIDDEN"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "503": {
+      "description": "STORAGE_UNAVAILABLE",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "STORAGE_UNAVAILABLE"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/access/v1/requests": {
+   "post": {
+    "operationId": "submitAccessRequest",
+    "summary": "Queue an access-request verification email; the 202 response is identical whether or not the address is deliverable or already pending",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/AccessSubmission"
+       }
+      }
+     }
+    },
+    "responses": {
+     "202": {
+      "description": "Generic acceptance \u2014 no existence signal",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SignInAccepted"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "INVALID_REQUEST",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "INVALID_REQUEST"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "429": {
+      "description": "RATE_LIMITED",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "RATE_LIMITED"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "503": {
+      "description": "STORAGE_UNAVAILABLE",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "STORAGE_UNAVAILABLE"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "security": []
+   }
+  },
+  "/api/access/v1/verifications": {
+   "post": {
+    "operationId": "verifyAccessRequest",
+    "summary": "Consume a single-use request-verification token and open an applicant session cookie; every failure is the same INVALID_TOKEN",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/TokenExchange"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Applicant session established",
+      "headers": {
+       "Set-Cookie": {
+        "required": true,
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SessionView"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "INVALID_REQUEST",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "INVALID_REQUEST"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "INVALID_TOKEN",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "INVALID_TOKEN"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "429": {
+      "description": "RATE_LIMITED",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "RATE_LIMITED"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "503": {
+      "description": "STORAGE_UNAVAILABLE",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "STORAGE_UNAVAILABLE"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "security": []
+   }
+  },
+  "/api/access/v1/requests/status": {
+   "get": {
+    "operationId": "applicantRequestStatus",
+    "summary": "Applicant-session-only view of the caller's own request state; never other requests",
+    "responses": {
+     "200": {
+      "description": "Own request state",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ApplicantStatus"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "UNAUTHORISED",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "UNAUTHORISED"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "FORBIDDEN",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "FORBIDDEN"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "REQUEST_NOT_FOUND",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "REQUEST_NOT_FOUND"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "503": {
+      "description": "STORAGE_UNAVAILABLE",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "STORAGE_UNAVAILABLE"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "sessionCookie": []
+     }
+    ]
+   }
+  },
+  "/api/access/v1/requests/resend": {
+   "post": {
+    "operationId": "resendAccessVerification",
+    "summary": "Re-queue the caller's own verification email while the request remains unverified",
+    "responses": {
+     "202": {
+      "description": "Verification re-queued",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/SignInAccepted"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "UNAUTHORISED",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "UNAUTHORISED"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "FORBIDDEN",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "FORBIDDEN"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "409": {
+      "description": "ACCESS_CONFLICT",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "ACCESS_CONFLICT"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "503": {
+      "description": "STORAGE_UNAVAILABLE",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "STORAGE_UNAVAILABLE"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "sessionCookie": []
+     }
+    ]
+   }
+  },
+  "/api/admin/v1/access-requests": {
+   "get": {
+    "operationId": "listAccessRequests",
+    "summary": "Owner-only pending access-request queue, bounded",
+    "parameters": [
+     {
+      "name": "state",
+      "in": "query",
+      "schema": {
+       "type": "string",
+       "enum": [
+        "pending"
+       ],
+       "default": "pending"
+      }
+     },
+     {
+      "name": "limit",
+      "in": "query",
+      "schema": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 100,
+       "default": 100
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Pending requests",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/AccessRequestView"
+         }
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "INVALID_REQUEST",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "INVALID_REQUEST"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "UNAUTHORISED",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "UNAUTHORISED"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "FORBIDDEN",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "FORBIDDEN"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "503": {
+      "description": "STORAGE_UNAVAILABLE",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "STORAGE_UNAVAILABLE"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "sessionCookie": []
+     }
+    ]
+   }
+  },
+  "/api/admin/v1/access-requests/{id}": {
+   "get": {
+    "operationId": "accessRequestDetail",
+    "summary": "Owner-only request detail including mail delivery state",
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Request detail",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AccessRequestDetail"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "UNAUTHORISED",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "UNAUTHORISED"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "FORBIDDEN",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "FORBIDDEN"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "REQUEST_NOT_FOUND",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "REQUEST_NOT_FOUND"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "503": {
+      "description": "STORAGE_UNAVAILABLE",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "STORAGE_UNAVAILABLE"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "sessionCookie": []
+     }
+    ]
+   }
+  },
+  "/api/admin/v1/access-requests/{id}/decisions": {
+   "post": {
+    "operationId": "decideAccessRequest",
+    "summary": "Atomically approve (viewer grant + sign-in invite) or reject a pending request; requires a recent owner sign-in and the current version",
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/AccessDecision"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Decided request",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AccessRequestView"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "INVALID_REQUEST",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "INVALID_REQUEST"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "UNAUTHORISED",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "UNAUTHORISED"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "FORBIDDEN|RECENT_AUTH_REQUIRED",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "FORBIDDEN",
+            "RECENT_AUTH_REQUIRED"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "REQUEST_NOT_FOUND",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "REQUEST_NOT_FOUND"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "409": {
+      "description": "ACCESS_CONFLICT",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "ACCESS_CONFLICT"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "503": {
+      "description": "STORAGE_UNAVAILABLE",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "STORAGE_UNAVAILABLE"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "sessionCookie": []
+     }
+    ]
+   }
+  },
+  "/api/admin/v1/access-requests/{id}/resend": {
+   "post": {
+    "operationId": "resendAccessDelivery",
+    "summary": "Re-queue the request's pending verification or approval invite within limits",
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid"
+      }
+     }
+    ],
+    "responses": {
+     "202": {
+      "description": "Delivery re-queued",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Queued"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "UNAUTHORISED",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "UNAUTHORISED"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "FORBIDDEN",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "FORBIDDEN"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "REQUEST_NOT_FOUND",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "REQUEST_NOT_FOUND"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "409": {
+      "description": "ACCESS_CONFLICT",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "ACCESS_CONFLICT"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "503": {
+      "description": "STORAGE_UNAVAILABLE",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "STORAGE_UNAVAILABLE"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "sessionCookie": []
+     }
+    ]
+   }
+  },
+  "/api/admin/v1/viewer-grants": {
+   "get": {
+    "operationId": "listViewerGrants",
+    "summary": "Owner-only viewer-grant list, optionally filtered by state, bounded",
+    "parameters": [
+     {
+      "name": "state",
+      "in": "query",
+      "schema": {
+       "type": "string",
+       "enum": [
+        "active",
+        "expired",
+        "revoked"
+       ]
+      }
+     },
+     {
+      "name": "limit",
+      "in": "query",
+      "schema": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 100,
+       "default": 100
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Viewer grants",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/ViewerGrantView"
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "UNAUTHORISED",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "UNAUTHORISED"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "FORBIDDEN",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "FORBIDDEN"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "503": {
+      "description": "STORAGE_UNAVAILABLE",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "STORAGE_UNAVAILABLE"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "sessionCookie": []
+     }
+    ]
+   }
+  },
+  "/api/admin/v1/viewer-grants/{id}/extend": {
+   "post": {
+    "operationId": "extendViewerGrant",
+    "summary": "Extend an active grant by 7, 30 or 90 days; requires a recent owner sign-in",
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/GrantExtension"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Updated grant",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ViewerGrantView"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "INVALID_REQUEST",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "INVALID_REQUEST"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "UNAUTHORISED",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "UNAUTHORISED"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "FORBIDDEN|RECENT_AUTH_REQUIRED",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "FORBIDDEN",
+            "RECENT_AUTH_REQUIRED"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "GRANT_NOT_FOUND",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "GRANT_NOT_FOUND"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "409": {
+      "description": "ACCESS_CONFLICT",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "ACCESS_CONFLICT"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "503": {
+      "description": "STORAGE_UNAVAILABLE",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "STORAGE_UNAVAILABLE"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "sessionCookie": []
+     }
+    ]
+   }
+  },
+  "/api/admin/v1/viewer-grants/{id}/revoke": {
+   "post": {
+    "operationId": "revokeViewerGrant",
+    "summary": "Revoke a grant immediately; the viewer's next request is denied",
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/GrantRevocation"
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "Updated grant",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ViewerGrantView"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "INVALID_REQUEST",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "INVALID_REQUEST"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "UNAUTHORISED",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "UNAUTHORISED"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "FORBIDDEN|RECENT_AUTH_REQUIRED",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "FORBIDDEN",
+            "RECENT_AUTH_REQUIRED"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "GRANT_NOT_FOUND",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "GRANT_NOT_FOUND"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "409": {
+      "description": "ACCESS_CONFLICT",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "ACCESS_CONFLICT"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "503": {
+      "description": "STORAGE_UNAVAILABLE",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "STORAGE_UNAVAILABLE"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "sessionCookie": []
+     }
+    ]
+   }
+  },
+  "/api/admin/v1/grid-coverage/{region}/baseline": {
+   "get": {
+    "operationId": "gridBaselineReadiness",
+    "summary": "Per-candidate-day ramp-baseline readiness: demand-complete and same-class day counts in each day's own preceding 90-day window",
+    "parameters": [
+     {
+      "name": "region",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$ref": "#/components/schemas/Region"
+      }
+     },
+     {
+      "name": "startDay",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "date"
+      }
+     },
+     {
+      "name": "endExclusive",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "date"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Baseline readiness",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/GridBaselineReadiness"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "INVALID_REQUEST",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "INVALID_REQUEST"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Missing or invalid operator bearer token",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "UNAUTHORISED"
+           ]
+          }
+         }
+        }
+       }
+      },
+      "headers": {
+       "WWW-Authenticate": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "enum": [
+          "Bearer"
+         ]
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "FORBIDDEN",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "FORBIDDEN"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "503": {
+      "description": "STORAGE_UNAVAILABLE",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "STORAGE_UNAVAILABLE"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "operatorBearer": []
+     }
+    ]
+   }
+  },
+  "/api/admin/v1/load-operations": {
+   "post": {
+    "operationId": "beginLoadOperation",
+    "summary": "Declare a bounded owner load operation (scope recorded, nothing dispatched yet)",
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/BeginLoadOperation"
+       }
+      }
+     }
+    },
+    "responses": {
+     "201": {
+      "description": "Operation created",
+      "headers": {
+       "Location": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/LoadOperation"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "INVALID_REQUEST",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "INVALID_REQUEST"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Missing or invalid operator bearer token",
+      "headers": {
+       "WWW-Authenticate": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "UNAUTHORISED"
+           ]
+          }
+         }
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "FORBIDDEN",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "FORBIDDEN"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "operatorBearer": []
+     }
+    ]
+   },
+   "get": {
+    "operationId": "listLoadOperations",
+    "summary": "Recent load operations, newest first",
+    "parameters": [
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "integer",
+       "default": 50,
+       "minimum": 1,
+       "maximum": 200
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Operations",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/LoadOperation"
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Missing or invalid operator bearer token",
+      "headers": {
+       "WWW-Authenticate": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "UNAUTHORISED"
+           ]
+          }
+         }
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "FORBIDDEN",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "FORBIDDEN"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "operatorBearer": []
+     }
+    ]
+   }
+  },
+  "/api/admin/v1/load-operations/{id}": {
+   "get": {
+    "operationId": "loadOperationDetail",
+    "summary": "Operation detail with child chunk submissions and live queue job state",
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Detail",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/LoadOperationDetail"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Missing or invalid operator bearer token",
+      "headers": {
+       "WWW-Authenticate": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "UNAUTHORISED"
+           ]
+          }
+         }
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "FORBIDDEN",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "FORBIDDEN"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "OPERATION_NOT_FOUND",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "OPERATION_NOT_FOUND"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "operatorBearer": []
+     }
+    ]
+   }
+  },
+  "/api/admin/v1/load-operations/{id}/dispatch": {
+   "post": {
+    "operationId": "dispatchLoadOperation",
+    "summary": "Submit the next <=31-day chunk of the current phase; backpressured leaves the cursor unmoved",
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Submit the next <=31-day chunk of the current phase; backpressured leaves the cursor unmoved",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/LoadDispatchOutcome"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Missing or invalid operator bearer token",
+      "headers": {
+       "WWW-Authenticate": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "UNAUTHORISED"
+           ]
+          }
+         }
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "FORBIDDEN",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "FORBIDDEN"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "OPERATION_NOT_FOUND",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "OPERATION_NOT_FOUND"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "409": {
+      "description": "OPERATION_CONFLICT",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "OPERATION_CONFLICT"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "operatorBearer": []
+     }
+    ]
+   }
+  },
+  "/api/admin/v1/load-operations/{id}/pause": {
+   "post": {
+    "operationId": "pauseLoadOperation",
+    "summary": "Stop dispatching new chunks \u2014 queued children keep running",
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Stop dispatching new chunks \u2014 queued children keep running",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/LoadOperation"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Missing or invalid operator bearer token",
+      "headers": {
+       "WWW-Authenticate": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "UNAUTHORISED"
+           ]
+          }
+         }
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "FORBIDDEN",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "FORBIDDEN"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "OPERATION_NOT_FOUND",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "OPERATION_NOT_FOUND"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "409": {
+      "description": "OPERATION_CONFLICT",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "OPERATION_CONFLICT"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "operatorBearer": []
+     }
+    ]
+   }
+  },
+  "/api/admin/v1/load-operations/{id}/resume": {
+   "post": {
+    "operationId": "resumeLoadOperation",
+    "summary": "Explicitly resume dispatch after pause or interruption",
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Explicitly resume dispatch after pause or interruption",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/LoadOperation"
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "Missing or invalid operator bearer token",
+      "headers": {
+       "WWW-Authenticate": {
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "UNAUTHORISED"
+           ]
+          }
+         }
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "FORBIDDEN",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "FORBIDDEN"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "OPERATION_NOT_FOUND",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "OPERATION_NOT_FOUND"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "409": {
+      "description": "OPERATION_CONFLICT",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "OPERATION_CONFLICT"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "operatorBearer": []
+     }
+    ]
+   }
   }
  },
  "components": {
@@ -3402,6 +7024,12 @@
     "type": "http",
     "scheme": "bearer",
     "description": "Locally configured opaque operator token; never embed in the public frontend."
+   },
+   "sessionCookie": {
+    "type": "apiKey",
+    "in": "cookie",
+    "name": "nemlab_session",
+    "description": "Opaque server-side session; HttpOnly SameSite=Lax. Cookie-authenticated mutations additionally require the X-CSRF-Token header and a same-origin Origin/Referer."
    }
   },
   "schemas": {
@@ -4579,6 +8207,13 @@
       ],
       "default": "v1",
       "description": "Detector suite to evaluate: v1 (frozen original rules) or v2 (v1 plus calibrated reversal/episode/unusual-ramp types). Absent means v1."
+     },
+     "attemptKey": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "nullable": true,
+      "description": "Optional caller correlation recorded on the detection run for lost-response reconciliation; never deduplicates."
      }
     }
    },
@@ -4625,6 +8260,142 @@
      "createdAt": {
       "type": "string",
       "format": "date-time"
+     }
+    }
+   },
+   "GridSeriesCoverage": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "metric",
+     "series",
+     "availability",
+     "revision",
+     "retrievedAt",
+     "valid",
+     "missing",
+     "sourceNull"
+    ],
+    "properties": {
+     "metric": {
+      "type": "string",
+      "enum": [
+       "demand",
+       "flow_imports",
+       "flow_exports",
+       "power"
+      ]
+     },
+     "series": {
+      "type": "string",
+      "maxLength": 80,
+      "description": "Empty string for single-series metrics; the provider fueltech label for power"
+     },
+     "availability": {
+      "type": "string",
+      "enum": [
+       "NOT_IMPORTED",
+       "COMPLETE",
+       "INCOMPLETE"
+      ]
+     },
+     "revision": {
+      "type": "string",
+      "format": "uuid",
+      "nullable": true
+     },
+     "retrievedAt": {
+      "type": "string",
+      "format": "date-time",
+      "nullable": true
+     },
+     "valid": {
+      "type": "integer",
+      "nullable": true,
+      "minimum": 0,
+      "maximum": 288
+     },
+     "missing": {
+      "type": "integer",
+      "nullable": true,
+      "minimum": 0,
+      "maximum": 288
+     },
+     "sourceNull": {
+      "type": "integer",
+      "nullable": true,
+      "minimum": 0,
+      "maximum": 288
+     }
+    },
+    "description": "NOT_IMPORTED has null revision, retrievedAt and counts and is used only for the three required market series; a stored series reports its current revision, and COMPLETE means valid = 288."
+   },
+   "GridCoverageDay": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "day",
+     "availability",
+     "series"
+    ],
+    "properties": {
+     "day": {
+      "type": "string",
+      "format": "date"
+     },
+     "availability": {
+      "type": "string",
+      "enum": [
+       "NOT_IMPORTED",
+       "PARTIAL",
+       "COMPLETE"
+      ],
+      "description": "Summary over the required market series only: COMPLETE when all three are stored complete, NOT_IMPORTED when none are stored, otherwise PARTIAL. Optional power series never affect it."
+     },
+     "series": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/GridSeriesCoverage"
+      },
+      "minItems": 3
+     }
+    }
+   },
+   "GridCoverage": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "region",
+     "start",
+     "endExclusive",
+     "marketOffset",
+     "days"
+    ],
+    "properties": {
+     "region": {
+      "$ref": "#/components/schemas/Region"
+     },
+     "start": {
+      "type": "string",
+      "format": "date"
+     },
+     "endExclusive": {
+      "type": "string",
+      "format": "date"
+     },
+     "marketOffset": {
+      "type": "string",
+      "enum": [
+       "+10:00"
+      ]
+     },
+     "days": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/GridCoverageDay"
+      },
+      "minItems": 1,
+      "maxItems": 31
      }
     }
    },
@@ -5242,6 +9013,1011 @@
        "$ref": "#/components/schemas/Job"
       },
       "description": "One job per market day in the submitted window, in day order."
+     }
+    }
+   },
+   "SignInRequest": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "email"
+    ],
+    "properties": {
+     "email": {
+      "type": "string",
+      "maxLength": 254
+     }
+    }
+   },
+   "SignInAccepted": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "status"
+    ],
+    "properties": {
+     "status": {
+      "type": "string",
+      "enum": [
+       "accepted"
+      ]
+     }
+    }
+   },
+   "TokenExchange": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "token"
+    ],
+    "properties": {
+     "token": {
+      "type": "string"
+     }
+    }
+   },
+   "SessionView": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "role",
+     "name",
+     "expiresAt",
+     "csrfToken"
+    ],
+    "properties": {
+     "role": {
+      "type": "string",
+      "enum": [
+       "owner",
+       "viewer",
+       "applicant"
+      ]
+     },
+     "name": {
+      "type": "string"
+     },
+     "expiresAt": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "csrfToken": {
+      "type": "string",
+      "minLength": 64,
+      "maxLength": 64
+     }
+    }
+   },
+   "AccessSubmission": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "displayName",
+     "email"
+    ],
+    "properties": {
+     "displayName": {
+      "type": "string"
+     },
+     "email": {
+      "type": "string",
+      "format": "email"
+     },
+     "message": {
+      "type": "string",
+      "nullable": true
+     }
+    }
+   },
+   "AccessRequestView": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "id",
+     "name",
+     "email",
+     "message",
+     "status",
+     "submittedAt",
+     "verifiedAt",
+     "decidedAt",
+     "version"
+    ],
+    "properties": {
+     "id": {
+      "type": "string",
+      "format": "uuid"
+     },
+     "name": {
+      "type": "string"
+     },
+     "email": {
+      "type": "string"
+     },
+     "message": {
+      "type": "string",
+      "nullable": true
+     },
+     "status": {
+      "type": "string",
+      "enum": [
+       "unverified",
+       "pending",
+       "approved",
+       "rejected"
+      ]
+     },
+     "submittedAt": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "verifiedAt": {
+      "type": "string",
+      "format": "date-time",
+      "nullable": true
+     },
+     "decidedAt": {
+      "type": "string",
+      "format": "date-time",
+      "nullable": true
+     },
+     "version": {
+      "type": "integer"
+     }
+    }
+   },
+   "DeliveryView": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "kind",
+     "status",
+     "attempts",
+     "sentAt",
+     "diagnostic",
+     "createdAt"
+    ],
+    "properties": {
+     "kind": {
+      "type": "string"
+     },
+     "status": {
+      "type": "string",
+      "enum": [
+       "pending",
+       "sent",
+       "failed"
+      ]
+     },
+     "attempts": {
+      "type": "integer"
+     },
+     "sentAt": {
+      "type": "string",
+      "format": "date-time",
+      "nullable": true
+     },
+     "diagnostic": {
+      "type": "string",
+      "nullable": true
+     },
+     "createdAt": {
+      "type": "string",
+      "format": "date-time"
+     }
+    }
+   },
+   "AccessRequestDetail": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "id",
+     "name",
+     "email",
+     "message",
+     "status",
+     "submittedAt",
+     "verifiedAt",
+     "decidedAt",
+     "version",
+     "deliveries"
+    ],
+    "properties": {
+     "id": {
+      "type": "string",
+      "format": "uuid"
+     },
+     "name": {
+      "type": "string"
+     },
+     "email": {
+      "type": "string"
+     },
+     "message": {
+      "type": "string",
+      "nullable": true
+     },
+     "status": {
+      "type": "string",
+      "enum": [
+       "unverified",
+       "pending",
+       "approved",
+       "rejected"
+      ]
+     },
+     "submittedAt": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "verifiedAt": {
+      "type": "string",
+      "format": "date-time",
+      "nullable": true
+     },
+     "decidedAt": {
+      "type": "string",
+      "format": "date-time",
+      "nullable": true
+     },
+     "version": {
+      "type": "integer"
+     },
+     "deliveries": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/DeliveryView"
+      }
+     }
+    }
+   },
+   "ApplicantStatus": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "status",
+     "submittedAt",
+     "verifiedAt",
+     "decidedAt",
+     "grantExpiresAt"
+    ],
+    "properties": {
+     "status": {
+      "type": "string",
+      "enum": [
+       "unverified",
+       "pending",
+       "approved",
+       "rejected"
+      ]
+     },
+     "submittedAt": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "verifiedAt": {
+      "type": "string",
+      "format": "date-time",
+      "nullable": true
+     },
+     "decidedAt": {
+      "type": "string",
+      "format": "date-time",
+      "nullable": true
+     },
+     "grantExpiresAt": {
+      "type": "string",
+      "format": "date-time",
+      "nullable": true
+     }
+    }
+   },
+   "ViewerGrantView": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "id",
+     "requestId",
+     "userId",
+     "email",
+     "state",
+     "grantedAt",
+     "expiresAt",
+     "revokedAt"
+    ],
+    "properties": {
+     "id": {
+      "type": "string",
+      "format": "uuid"
+     },
+     "requestId": {
+      "type": "string",
+      "format": "uuid"
+     },
+     "userId": {
+      "type": "string",
+      "format": "uuid"
+     },
+     "email": {
+      "type": "string"
+     },
+     "state": {
+      "type": "string",
+      "enum": [
+       "active",
+       "expired",
+       "revoked"
+      ]
+     },
+     "grantedAt": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "expiresAt": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "revokedAt": {
+      "type": "string",
+      "format": "date-time",
+      "nullable": true
+     }
+    }
+   },
+   "AccessDecision": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "decision",
+     "version"
+    ],
+    "properties": {
+     "decision": {
+      "type": "string",
+      "enum": [
+       "approve",
+       "reject"
+      ]
+     },
+     "days": {
+      "type": "integer",
+      "enum": [
+       7,
+       30,
+       90
+      ],
+      "nullable": true
+     },
+     "version": {
+      "type": "integer"
+     }
+    }
+   },
+   "GrantExtension": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "days"
+    ],
+    "properties": {
+     "days": {
+      "type": "integer",
+      "enum": [
+       7,
+       30,
+       90
+      ]
+     }
+    }
+   },
+   "GrantRevocation": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+     "reason": {
+      "type": "string",
+      "nullable": true
+     }
+    }
+   },
+   "Queued": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "status"
+    ],
+    "properties": {
+     "status": {
+      "type": "string",
+      "enum": [
+       "queued"
+      ]
+     }
+    }
+   },
+   "GridPublicationDetail": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "id",
+     "region",
+     "startDay",
+     "endExclusive",
+     "detectorVersion",
+     "eventCount",
+     "coverage",
+     "createdAt",
+     "runId",
+     "actor",
+     "attemptKey",
+     "eventCounts",
+     "highlights"
+    ],
+    "properties": {
+     "id": {
+      "type": "string",
+      "format": "uuid"
+     },
+     "region": {
+      "$ref": "#/components/schemas/Region"
+     },
+     "startDay": {
+      "type": "string",
+      "format": "date"
+     },
+     "endExclusive": {
+      "type": "string",
+      "format": "date"
+     },
+     "detectorVersion": {
+      "type": "string"
+     },
+     "eventCount": {
+      "type": "integer",
+      "minimum": 0
+     },
+     "coverage": {
+      "type": "object",
+      "description": "Per-day evaluated/missing counts plus detector outcomes (demand_ramp and, under the v2 suite, unusual_demand_ramp)."
+     },
+     "createdAt": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "runId": {
+      "type": "string",
+      "format": "uuid",
+      "nullable": true
+     },
+     "actor": {
+      "type": "string",
+      "nullable": true,
+      "description": "Role label only (Owner/Operator/Worker) \u2014 never an identity; null for runs predating provenance."
+     },
+     "attemptKey": {
+      "type": "string",
+      "nullable": true,
+      "maxLength": 128
+     },
+     "eventCounts": {
+      "type": "object",
+      "additionalProperties": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "description": "Per-event-type totals pinned to this publication."
+     },
+     "highlights": {
+      "$ref": "#/components/schemas/GridPublicationHighlights"
+     }
+    }
+   },
+   "GridPublicationHighlights": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "version",
+     "matching",
+     "selected",
+     "eligible",
+     "excluded",
+     "totals"
+    ],
+    "properties": {
+     "version": {
+      "type": "string",
+      "enum": [
+       "highlights-v2"
+      ]
+     },
+     "matching": {
+      "type": "integer",
+      "minimum": 0
+     },
+     "selected": {
+      "type": "integer",
+      "minimum": 0
+     },
+     "eligible": {
+      "type": "integer",
+      "minimum": 0
+     },
+     "excluded": {
+      "type": "integer",
+      "minimum": 0
+     },
+     "totals": {
+      "type": "object",
+      "additionalProperties": {
+       "type": "integer",
+       "minimum": 0
+      }
+     }
+    }
+   },
+   "GridDetectionAttempt": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "id",
+     "region",
+     "startDay",
+     "endExclusive",
+     "detectorVersion",
+     "status",
+     "publicationId",
+     "diagnostic",
+     "actor",
+     "attemptKey",
+     "createdAt"
+    ],
+    "properties": {
+     "id": {
+      "type": "string",
+      "format": "uuid"
+     },
+     "region": {
+      "$ref": "#/components/schemas/Region"
+     },
+     "startDay": {
+      "type": "string",
+      "format": "date"
+     },
+     "endExclusive": {
+      "type": "string",
+      "format": "date"
+     },
+     "detectorVersion": {
+      "type": "string"
+     },
+     "status": {
+      "type": "string",
+      "enum": [
+       "COMPLETE",
+       "FAILED"
+      ]
+     },
+     "publicationId": {
+      "type": "string",
+      "format": "uuid",
+      "nullable": true
+     },
+     "diagnostic": {
+      "type": "string",
+      "nullable": true,
+      "description": "Raw failure text for owner/automation; null in viewer projections."
+     },
+     "actor": {
+      "type": "string",
+      "nullable": true
+     },
+     "attemptKey": {
+      "type": "string",
+      "nullable": true,
+      "maxLength": 128
+     },
+     "createdAt": {
+      "type": "string",
+      "format": "date-time"
+     }
+    }
+   },
+   "GridBaselineReadiness": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "region",
+     "candidateStart",
+     "candidateEndExclusive",
+     "baselineDays",
+     "minCompleteDays",
+     "minClassDays",
+     "days"
+    ],
+    "properties": {
+     "region": {
+      "$ref": "#/components/schemas/Region"
+     },
+     "candidateStart": {
+      "type": "string",
+      "format": "date"
+     },
+     "candidateEndExclusive": {
+      "type": "string",
+      "format": "date"
+     },
+     "baselineDays": {
+      "type": "integer",
+      "enum": [
+       90
+      ]
+     },
+     "minCompleteDays": {
+      "type": "integer",
+      "enum": [
+       60
+      ]
+     },
+     "minClassDays": {
+      "type": "integer",
+      "enum": [
+       20
+      ]
+     },
+     "days": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 31,
+      "items": {
+       "$ref": "#/components/schemas/GridBaselineDay"
+      }
+     }
+    }
+   },
+   "GridBaselineDay": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "day",
+     "completeDays",
+     "classDays",
+     "ready"
+    ],
+    "properties": {
+     "day": {
+      "type": "string",
+      "format": "date"
+     },
+     "completeDays": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 90
+     },
+     "classDays": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 90
+     },
+     "ready": {
+      "type": "boolean"
+     }
+    }
+   },
+   "AdminGridPublication": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "id",
+     "region",
+     "startDay",
+     "endExclusive",
+     "detectorVersion",
+     "eventCount",
+     "coverage",
+     "createdAt",
+     "runId",
+     "actor",
+     "attemptKey"
+    ],
+    "properties": {
+     "id": {
+      "type": "string",
+      "format": "uuid"
+     },
+     "region": {
+      "$ref": "#/components/schemas/Region"
+     },
+     "startDay": {
+      "type": "string",
+      "format": "date"
+     },
+     "endExclusive": {
+      "type": "string",
+      "format": "date"
+     },
+     "detectorVersion": {
+      "type": "string"
+     },
+     "eventCount": {
+      "type": "integer",
+      "minimum": 0
+     },
+     "coverage": {
+      "type": "object",
+      "description": "Per-day evaluated/missing counts plus detector outcomes (demand_ramp and, under the v2 suite, unusual_demand_ramp)."
+     },
+     "createdAt": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "runId": {
+      "type": "string",
+      "format": "uuid",
+      "nullable": true
+     },
+     "actor": {
+      "type": "string",
+      "nullable": true,
+      "description": "Role label only (Owner/Operator/Worker) \u2014 never an identity; null for runs predating provenance."
+     },
+     "attemptKey": {
+      "type": "string",
+      "nullable": true,
+      "maxLength": 128
+     }
+    }
+   },
+   "BeginLoadOperation": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "region",
+     "startDay",
+     "endExclusive"
+    ],
+    "properties": {
+     "region": {
+      "type": "string",
+      "enum": [
+       "NSW1",
+       "QLD1",
+       "SA1",
+       "TAS1",
+       "VIC1"
+      ]
+     },
+     "startDay": {
+      "type": "string",
+      "format": "date"
+     },
+     "endExclusive": {
+      "type": "string",
+      "format": "date"
+     }
+    }
+   },
+   "LoadOperation": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "id",
+     "region",
+     "startDay",
+     "endExclusive",
+     "status",
+     "phase",
+     "nextDay",
+     "actor",
+     "createdAt",
+     "updatedAt"
+    ],
+    "properties": {
+     "id": {
+      "type": "string",
+      "format": "uuid"
+     },
+     "region": {
+      "type": "string"
+     },
+     "startDay": {
+      "type": "string",
+      "format": "date"
+     },
+     "endExclusive": {
+      "type": "string",
+      "format": "date"
+     },
+     "nextDay": {
+      "type": "string",
+      "format": "date"
+     },
+     "status": {
+      "type": "string",
+      "enum": [
+       "dispatching",
+       "paused",
+       "dispatched"
+      ]
+     },
+     "phase": {
+      "type": "string",
+      "enum": [
+       "grid",
+       "price"
+      ]
+     },
+     "actor": {
+      "type": "string"
+     },
+     "createdAt": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+     }
+    }
+   },
+   "LoadOperationJob": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "id",
+     "status"
+    ],
+    "properties": {
+     "id": {
+      "type": "string",
+      "format": "uuid"
+     },
+     "status": {
+      "type": "string"
+     },
+     "attempts": {
+      "type": "integer",
+      "nullable": true
+     },
+     "diagnostic": {
+      "type": "string",
+      "nullable": true
+     },
+     "nextDay": {
+      "type": "string",
+      "format": "date",
+      "nullable": true
+     }
+    }
+   },
+   "LoadOperationChild": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "phase",
+     "requestKey",
+     "startDay",
+     "endExclusive",
+     "submittedAt",
+     "jobs"
+    ],
+    "properties": {
+     "phase": {
+      "type": "string",
+      "enum": [
+       "grid",
+       "price"
+      ]
+     },
+     "requestKey": {
+      "type": "string"
+     },
+     "startDay": {
+      "type": "string",
+      "format": "date"
+     },
+     "endExclusive": {
+      "type": "string",
+      "format": "date"
+     },
+     "submittedAt": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "jobs": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/LoadOperationJob"
+      }
+     }
+    }
+   },
+   "LoadOperationDetail": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "id",
+     "region",
+     "startDay",
+     "endExclusive",
+     "status",
+     "phase",
+     "nextDay",
+     "actor",
+     "createdAt",
+     "updatedAt",
+     "children"
+    ],
+    "properties": {
+     "id": {
+      "type": "string",
+      "format": "uuid"
+     },
+     "region": {
+      "type": "string"
+     },
+     "startDay": {
+      "type": "string",
+      "format": "date"
+     },
+     "endExclusive": {
+      "type": "string",
+      "format": "date"
+     },
+     "nextDay": {
+      "type": "string",
+      "format": "date"
+     },
+     "status": {
+      "type": "string",
+      "enum": [
+       "dispatching",
+       "paused",
+       "dispatched"
+      ]
+     },
+     "phase": {
+      "type": "string",
+      "enum": [
+       "grid",
+       "price"
+      ]
+     },
+     "actor": {
+      "type": "string"
+     },
+     "createdAt": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "children": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/LoadOperationChild"
+      }
+     }
+    }
+   },
+   "LoadDispatchOutcome": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "outcome"
+    ],
+    "properties": {
+     "outcome": {
+      "type": "string",
+      "enum": [
+       "submitted",
+       "backpressured",
+       "dispatched"
+      ]
+     },
+     "child": {
+      "$ref": "#/components/schemas/LoadOperationChild"
      }
     }
    }

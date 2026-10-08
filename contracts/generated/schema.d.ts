@@ -233,6 +233,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/v1/grid-coverage/{region}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Stored grid-observation coverage for 1-31 completed NEM days */
+        get: operations["getGridCoverage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/v1/grid-publications": {
         parameters: {
             query?: never;
@@ -245,6 +262,23 @@ export interface paths {
         put?: never;
         /** Run detectors over a bounded window and publish the catalogue atomically */
         post: operations["publishGridCatalogue"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/v1/grid-publications/attempts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Bounded publication-attempt history (COMPLETE and FAILED runs) with actor labels and caller correlation for lost-response reconciliation */
+        get: operations["listDetectionAttempts"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -347,6 +381,364 @@ export interface paths {
         get: operations["gridEventReplay"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/v1/sign-in-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Queue a sign-in email when the address belongs to an enabled grant-active account; the 202 response is identical whether or not an account exists */
+        post: operations["requestSignIn"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/v1/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Consume a single-use sign-in token and open a session cookie; every failure is the same INVALID_TOKEN so unknown, expired and replayed links are indistinguishable */
+        post: operations["exchangeSignInToken"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/v1/session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Current session principal and CSRF token */
+        get: operations["getSession"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/auth/v1/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Revoke the session; requires X-CSRF-Token and same-origin Origin/Referer */
+        post: operations["logout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/access/v1/requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Queue an access-request verification email; the 202 response is identical whether or not the address is deliverable or already pending */
+        post: operations["submitAccessRequest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/access/v1/verifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Consume a single-use request-verification token and open an applicant session cookie; every failure is the same INVALID_TOKEN */
+        post: operations["verifyAccessRequest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/access/v1/requests/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Applicant-session-only view of the caller's own request state; never other requests */
+        get: operations["applicantRequestStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/access/v1/requests/resend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Re-queue the caller's own verification email while the request remains unverified */
+        post: operations["resendAccessVerification"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/v1/access-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Owner-only pending access-request queue, bounded */
+        get: operations["listAccessRequests"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/v1/access-requests/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Owner-only request detail including mail delivery state */
+        get: operations["accessRequestDetail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/v1/access-requests/{id}/decisions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Atomically approve (viewer grant + sign-in invite) or reject a pending request; requires a recent owner sign-in and the current version */
+        post: operations["decideAccessRequest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/v1/access-requests/{id}/resend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Re-queue the request's pending verification or approval invite within limits */
+        post: operations["resendAccessDelivery"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/v1/viewer-grants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Owner-only viewer-grant list, optionally filtered by state, bounded */
+        get: operations["listViewerGrants"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/v1/viewer-grants/{id}/extend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Extend an active grant by 7, 30 or 90 days; requires a recent owner sign-in */
+        post: operations["extendViewerGrant"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/v1/viewer-grants/{id}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Revoke a grant immediately; the viewer's next request is denied */
+        post: operations["revokeViewerGrant"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/v1/grid-coverage/{region}/baseline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Per-candidate-day ramp-baseline readiness: demand-complete and same-class day counts in each day's own preceding 90-day window */
+        get: operations["gridBaselineReadiness"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/v1/load-operations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Recent load operations, newest first */
+        get: operations["listLoadOperations"];
+        put?: never;
+        /** Declare a bounded owner load operation (scope recorded, nothing dispatched yet) */
+        post: operations["beginLoadOperation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/v1/load-operations/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Operation detail with child chunk submissions and live queue job state */
+        get: operations["loadOperationDetail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/v1/load-operations/{id}/dispatch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit the next <=31-day chunk of the current phase; backpressured leaves the cursor unmoved */
+        post: operations["dispatchLoadOperation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/v1/load-operations/{id}/pause": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Stop dispatching new chunks — queued children keep running */
+        post: operations["pauseLoadOperation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/v1/load-operations/{id}/resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Explicitly resume dispatch after pause or interruption */
+        post: operations["resumeLoadOperation"];
         delete?: never;
         options?: never;
         head?: never;
@@ -667,6 +1059,8 @@ export interface components {
              * @enum {string}
              */
             detectorSuite: "v1" | "v2";
+            /** @description Optional caller correlation recorded on the detection run for lost-response reconciliation; never deduplicates. */
+            attemptKey?: string | null;
         };
         GridPublication: {
             /** Format: uuid */
@@ -682,6 +1076,42 @@ export interface components {
             coverage: Record<string, never>;
             /** Format: date-time */
             createdAt: string;
+        };
+        /** @description NOT_IMPORTED has null revision, retrievedAt and counts and is used only for the three required market series; a stored series reports its current revision, and COMPLETE means valid = 288. */
+        GridSeriesCoverage: {
+            /** @enum {string} */
+            metric: "demand" | "flow_imports" | "flow_exports" | "power";
+            /** @description Empty string for single-series metrics; the provider fueltech label for power */
+            series: string;
+            /** @enum {string} */
+            availability: "NOT_IMPORTED" | "COMPLETE" | "INCOMPLETE";
+            /** Format: uuid */
+            revision: string | null;
+            /** Format: date-time */
+            retrievedAt: string | null;
+            valid: number | null;
+            missing: number | null;
+            sourceNull: number | null;
+        };
+        GridCoverageDay: {
+            /** Format: date */
+            day: string;
+            /**
+             * @description Summary over the required market series only: COMPLETE when all three are stored complete, NOT_IMPORTED when none are stored, otherwise PARTIAL. Optional power series never affect it.
+             * @enum {string}
+             */
+            availability: "NOT_IMPORTED" | "PARTIAL" | "COMPLETE";
+            series: components["schemas"]["GridSeriesCoverage"][];
+        };
+        GridCoverage: {
+            region: components["schemas"]["Region"];
+            /** Format: date */
+            start: string;
+            /** Format: date */
+            endExclusive: string;
+            /** @enum {string} */
+            marketOffset: "+10:00";
+            days: components["schemas"]["GridCoverageDay"][];
         };
         /**
          * @description Detector event types. The v2 suite adds unusual_demand_ramp, price_reversal and negative_price_episode; consumers must tolerate unknown type strings for forward compatibility.
@@ -871,6 +1301,293 @@ export interface components {
             /** @description One job per market day in the submitted window, in day order. */
             jobs: components["schemas"]["Job"][];
         };
+        SignInRequest: {
+            email: string;
+        };
+        SignInAccepted: {
+            /** @enum {string} */
+            status: "accepted";
+        };
+        TokenExchange: {
+            token: string;
+        };
+        SessionView: {
+            /** @enum {string} */
+            role: "owner" | "viewer" | "applicant";
+            name: string;
+            /** Format: date-time */
+            expiresAt: string;
+            csrfToken: string;
+        };
+        AccessSubmission: {
+            displayName: string;
+            /** Format: email */
+            email: string;
+            message?: string | null;
+        };
+        AccessRequestView: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            email: string;
+            message: string | null;
+            /** @enum {string} */
+            status: "unverified" | "pending" | "approved" | "rejected";
+            /** Format: date-time */
+            submittedAt: string;
+            /** Format: date-time */
+            verifiedAt: string | null;
+            /** Format: date-time */
+            decidedAt: string | null;
+            version: number;
+        };
+        DeliveryView: {
+            kind: string;
+            /** @enum {string} */
+            status: "pending" | "sent" | "failed";
+            attempts: number;
+            /** Format: date-time */
+            sentAt: string | null;
+            diagnostic: string | null;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        AccessRequestDetail: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            email: string;
+            message: string | null;
+            /** @enum {string} */
+            status: "unverified" | "pending" | "approved" | "rejected";
+            /** Format: date-time */
+            submittedAt: string;
+            /** Format: date-time */
+            verifiedAt: string | null;
+            /** Format: date-time */
+            decidedAt: string | null;
+            version: number;
+            deliveries: components["schemas"]["DeliveryView"][];
+        };
+        ApplicantStatus: {
+            /** @enum {string} */
+            status: "unverified" | "pending" | "approved" | "rejected";
+            /** Format: date-time */
+            submittedAt: string;
+            /** Format: date-time */
+            verifiedAt: string | null;
+            /** Format: date-time */
+            decidedAt: string | null;
+            /** Format: date-time */
+            grantExpiresAt: string | null;
+        };
+        ViewerGrantView: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            requestId: string;
+            /** Format: uuid */
+            userId: string;
+            email: string;
+            /** @enum {string} */
+            state: "active" | "expired" | "revoked";
+            /** Format: date-time */
+            grantedAt: string;
+            /** Format: date-time */
+            expiresAt: string;
+            /** Format: date-time */
+            revokedAt: string | null;
+        };
+        AccessDecision: {
+            /** @enum {string} */
+            decision: "approve" | "reject";
+            /** @enum {integer|null} */
+            days?: 7 | 30 | 90 | null;
+            version: number;
+        };
+        GrantExtension: {
+            /** @enum {integer} */
+            days: 7 | 30 | 90;
+        };
+        GrantRevocation: {
+            reason?: string | null;
+        };
+        Queued: {
+            /** @enum {string} */
+            status: "queued";
+        };
+        GridPublicationDetail: {
+            /** Format: uuid */
+            id: string;
+            region: components["schemas"]["Region"];
+            /** Format: date */
+            startDay: string;
+            /** Format: date */
+            endExclusive: string;
+            detectorVersion: string;
+            eventCount: number;
+            /** @description Per-day evaluated/missing counts plus detector outcomes (demand_ramp and, under the v2 suite, unusual_demand_ramp). */
+            coverage: Record<string, never>;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            runId: string | null;
+            /** @description Role label only (Owner/Operator/Worker) — never an identity; null for runs predating provenance. */
+            actor: string | null;
+            attemptKey: string | null;
+            /** @description Per-event-type totals pinned to this publication. */
+            eventCounts: {
+                [key: string]: number;
+            };
+            highlights: components["schemas"]["GridPublicationHighlights"];
+        };
+        GridPublicationHighlights: {
+            /** @enum {string} */
+            version: "highlights-v2";
+            matching: number;
+            selected: number;
+            eligible: number;
+            excluded: number;
+            totals: {
+                [key: string]: number;
+            };
+        };
+        GridDetectionAttempt: {
+            /** Format: uuid */
+            id: string;
+            region: components["schemas"]["Region"];
+            /** Format: date */
+            startDay: string;
+            /** Format: date */
+            endExclusive: string;
+            detectorVersion: string;
+            /** @enum {string} */
+            status: "COMPLETE" | "FAILED";
+            /** Format: uuid */
+            publicationId: string | null;
+            /** @description Raw failure text for owner/automation; null in viewer projections. */
+            diagnostic: string | null;
+            actor: string | null;
+            attemptKey: string | null;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        GridBaselineReadiness: {
+            region: components["schemas"]["Region"];
+            /** Format: date */
+            candidateStart: string;
+            /** Format: date */
+            candidateEndExclusive: string;
+            /** @enum {integer} */
+            baselineDays: 90;
+            /** @enum {integer} */
+            minCompleteDays: 60;
+            /** @enum {integer} */
+            minClassDays: 20;
+            days: components["schemas"]["GridBaselineDay"][];
+        };
+        GridBaselineDay: {
+            /** Format: date */
+            day: string;
+            completeDays: number;
+            classDays: number;
+            ready: boolean;
+        };
+        AdminGridPublication: {
+            /** Format: uuid */
+            id: string;
+            region: components["schemas"]["Region"];
+            /** Format: date */
+            startDay: string;
+            /** Format: date */
+            endExclusive: string;
+            detectorVersion: string;
+            eventCount: number;
+            /** @description Per-day evaluated/missing counts plus detector outcomes (demand_ramp and, under the v2 suite, unusual_demand_ramp). */
+            coverage: Record<string, never>;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            runId: string | null;
+            /** @description Role label only (Owner/Operator/Worker) — never an identity; null for runs predating provenance. */
+            actor: string | null;
+            attemptKey: string | null;
+        };
+        BeginLoadOperation: {
+            /** @enum {string} */
+            region: "NSW1" | "QLD1" | "SA1" | "TAS1" | "VIC1";
+            /** Format: date */
+            startDay: string;
+            /** Format: date */
+            endExclusive: string;
+        };
+        LoadOperation: {
+            /** Format: uuid */
+            id: string;
+            region: string;
+            /** Format: date */
+            startDay: string;
+            /** Format: date */
+            endExclusive: string;
+            /** Format: date */
+            nextDay: string;
+            /** @enum {string} */
+            status: "dispatching" | "paused" | "dispatched";
+            /** @enum {string} */
+            phase: "grid" | "price";
+            actor: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        LoadOperationJob: {
+            /** Format: uuid */
+            id: string;
+            status: string;
+            attempts?: number;
+            diagnostic?: string;
+            /** Format: date */
+            nextDay?: string;
+        };
+        LoadOperationChild: {
+            /** @enum {string} */
+            phase: "grid" | "price";
+            requestKey: string;
+            /** Format: date */
+            startDay: string;
+            /** Format: date */
+            endExclusive: string;
+            /** Format: date-time */
+            submittedAt: string;
+            jobs: components["schemas"]["LoadOperationJob"][];
+        };
+        LoadOperationDetail: {
+            /** Format: uuid */
+            id: string;
+            region: string;
+            /** Format: date */
+            startDay: string;
+            /** Format: date */
+            endExclusive: string;
+            /** Format: date */
+            nextDay: string;
+            /** @enum {string} */
+            status: "dispatching" | "paused" | "dispatched";
+            /** @enum {string} */
+            phase: "grid" | "price";
+            actor: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            children: components["schemas"]["LoadOperationChild"][];
+        };
+        LoadDispatchOutcome: {
+            /** @enum {string} */
+            outcome: "submitted" | "backpressured" | "dispatched";
+            child?: components["schemas"]["LoadOperationChild"];
+        };
     };
     responses: never;
     parameters: never;
@@ -1044,12 +1761,18 @@ export interface operations {
                     };
                 };
             };
-            /** @description Authenticated operator lacks permission; empty body */
+            /** @description Authenticated identity lacks the required capability, or a cookie-authenticated mutation failed CSRF/Origin checks */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "FORBIDDEN";
+                        message: string;
+                    };
+                };
             };
             /** @description STORAGE_UNAVAILABLE */
             503: {
@@ -1117,12 +1840,18 @@ export interface operations {
                     };
                 };
             };
-            /** @description Authenticated operator lacks permission; empty body */
+            /** @description Authenticated identity lacks the required capability, or a cookie-authenticated mutation failed CSRF/Origin checks */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "FORBIDDEN";
+                        message: string;
+                    };
+                };
             };
             /** @description IDEMPOTENCY_CONFLICT */
             409: {
@@ -1212,12 +1941,18 @@ export interface operations {
                     };
                 };
             };
-            /** @description Authenticated operator lacks permission; empty body */
+            /** @description Authenticated identity lacks the required capability, or a cookie-authenticated mutation failed CSRF/Origin checks */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "FORBIDDEN";
+                        message: string;
+                    };
+                };
             };
             /** @description JOB_NOT_FOUND */
             404: {
@@ -1296,12 +2031,18 @@ export interface operations {
                     };
                 };
             };
-            /** @description Authenticated operator lacks permission; empty body */
+            /** @description Authenticated identity lacks the required capability, or a cookie-authenticated mutation failed CSRF/Origin checks */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "FORBIDDEN";
+                        message: string;
+                    };
+                };
             };
             /** @description JOB_NOT_FOUND */
             404: {
@@ -1377,12 +2118,18 @@ export interface operations {
                     };
                 };
             };
-            /** @description Authenticated operator lacks permission; empty body */
+            /** @description Authenticated identity lacks the required capability, or a cookie-authenticated mutation failed CSRF/Origin checks */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "FORBIDDEN";
+                        message: string;
+                    };
+                };
             };
             /** @description JOB_NOT_FOUND */
             404: {
@@ -1673,12 +2420,18 @@ export interface operations {
                     };
                 };
             };
-            /** @description Authenticated operator lacks permission; empty body */
+            /** @description Authenticated identity lacks the required capability, or a cookie-authenticated mutation failed CSRF/Origin checks */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "FORBIDDEN";
+                        message: string;
+                    };
+                };
             };
             /** @description STORAGE_UNAVAILABLE */
             503: {
@@ -1747,12 +2500,18 @@ export interface operations {
                     };
                 };
             };
-            /** @description Authenticated operator lacks permission; empty body */
+            /** @description Authenticated identity lacks the required capability, or a cookie-authenticated mutation failed CSRF/Origin checks */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "FORBIDDEN";
+                        message: string;
+                    };
+                };
             };
             /** @description IDEMPOTENCY_CONFLICT */
             409: {
@@ -1842,12 +2601,18 @@ export interface operations {
                     };
                 };
             };
-            /** @description Authenticated operator lacks permission; empty body */
+            /** @description Authenticated identity lacks the required capability, or a cookie-authenticated mutation failed CSRF/Origin checks */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "FORBIDDEN";
+                        message: string;
+                    };
+                };
             };
             /** @description JOB_NOT_FOUND */
             404: {
@@ -1926,12 +2691,18 @@ export interface operations {
                     };
                 };
             };
-            /** @description Authenticated operator lacks permission; empty body */
+            /** @description Authenticated identity lacks the required capability, or a cookie-authenticated mutation failed CSRF/Origin checks */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "FORBIDDEN";
+                        message: string;
+                    };
+                };
             };
             /** @description JOB_NOT_FOUND */
             404: {
@@ -2007,12 +2778,18 @@ export interface operations {
                     };
                 };
             };
-            /** @description Authenticated operator lacks permission; empty body */
+            /** @description Authenticated identity lacks the required capability, or a cookie-authenticated mutation failed CSRF/Origin checks */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "FORBIDDEN";
+                        message: string;
+                    };
+                };
             };
             /** @description JOB_NOT_FOUND */
             404: {
@@ -2023,6 +2800,86 @@ export interface operations {
                     "application/json": {
                         /** @enum {string} */
                         code: "JOB_NOT_FOUND";
+                        message: string;
+                    };
+                };
+            };
+            /** @description STORAGE_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "STORAGE_UNAVAILABLE";
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    getGridCoverage: {
+        parameters: {
+            query: {
+                /** @description ISO date in fixed UTC+10. Start must be since 2021-10-01 and before today; endExclusive must be after start and no later than today. Coverage spans at most 31 days. */
+                start: string;
+                /** @description ISO date in fixed UTC+10. Start must be since 2021-10-01 and before today; endExclusive must be after start and no later than today. Coverage spans at most 31 days. */
+                endExclusive: string;
+            };
+            header?: never;
+            path: {
+                region: components["schemas"]["Region"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Per-day stored coverage: the three required market series are always present (NOT_IMPORTED when absent); optional power fueltech series appear only when stored */
+            200: {
+                headers: {
+                    "Cache-Control": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GridCoverage"];
+                };
+            };
+            /** @description INVALID_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "INVALID_REQUEST";
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid operator bearer token */
+            401: {
+                headers: {
+                    "WWW-Authenticate": "Bearer";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "UNAUTHORISED";
+                    };
+                };
+            };
+            /** @description Authenticated identity lacks the required capability, or a cookie-authenticated mutation failed CSRF/Origin checks */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "FORBIDDEN";
                         message: string;
                     };
                 };
@@ -2059,7 +2916,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GridPublication"][];
+                    "application/json": components["schemas"]["AdminGridPublication"][];
                 };
             };
             /** @description Missing or invalid operator bearer token */
@@ -2072,6 +2929,19 @@ export interface operations {
                     "application/json": {
                         /** @enum {string} */
                         code: "UNAUTHORISED";
+                    };
+                };
+            };
+            /** @description Authenticated identity lacks the required capability, or a cookie-authenticated mutation failed CSRF/Origin checks */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "FORBIDDEN";
+                        message: string;
                     };
                 };
             };
@@ -2110,7 +2980,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GridPublication"];
+                    "application/json": components["schemas"]["AdminGridPublication"];
                 };
             };
             /** @description INVALID_REQUEST */
@@ -2136,6 +3006,80 @@ export interface operations {
                     "application/json": {
                         /** @enum {string} */
                         code: "UNAUTHORISED";
+                    };
+                };
+            };
+            /** @description Authenticated identity lacks the required capability, or a cookie-authenticated mutation failed CSRF/Origin checks */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "FORBIDDEN";
+                        message: string;
+                    };
+                };
+            };
+            /** @description STORAGE_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "STORAGE_UNAVAILABLE";
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    listDetectionAttempts: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Detection attempts */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GridDetectionAttempt"][];
+                };
+            };
+            /** @description Missing or invalid operator bearer token */
+            401: {
+                headers: {
+                    "WWW-Authenticate": "Bearer";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "UNAUTHORISED";
+                    };
+                };
+            };
+            /** @description FORBIDDEN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "FORBIDDEN";
+                        message: string;
                     };
                 };
             };
@@ -2171,7 +3115,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["GridPublication"];
+                    "application/json": components["schemas"]["GridPublicationDetail"];
                 };
             };
             /** @description INVALID_REQUEST */
@@ -2197,6 +3141,19 @@ export interface operations {
                     "application/json": {
                         /** @enum {string} */
                         code: "UNAUTHORISED";
+                    };
+                };
+            };
+            /** @description Authenticated identity lacks the required capability, or a cookie-authenticated mutation failed CSRF/Origin checks */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "FORBIDDEN";
+                        message: string;
                     };
                 };
             };
@@ -2564,6 +3521,1615 @@ export interface operations {
                     "application/json": {
                         /** @enum {string} */
                         code: "STORAGE_UNAVAILABLE";
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    requestSignIn: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SignInRequest"];
+            };
+        };
+        responses: {
+            /** @description Generic acceptance — no account-existence signal */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SignInAccepted"];
+                };
+            };
+            /** @description INVALID_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "INVALID_REQUEST";
+                        message: string;
+                    };
+                };
+            };
+            /** @description RATE_LIMITED */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "RATE_LIMITED";
+                        message: string;
+                    };
+                };
+            };
+            /** @description STORAGE_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "STORAGE_UNAVAILABLE";
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    exchangeSignInToken: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TokenExchange"];
+            };
+        };
+        responses: {
+            /** @description Session established; the opaque token is set as an HttpOnly SameSite=Lax cookie */
+            200: {
+                headers: {
+                    "Set-Cookie": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionView"];
+                };
+            };
+            /** @description INVALID_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "INVALID_REQUEST";
+                        message: string;
+                    };
+                };
+            };
+            /** @description INVALID_TOKEN */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "INVALID_TOKEN";
+                        message: string;
+                    };
+                };
+            };
+            /** @description RATE_LIMITED */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "RATE_LIMITED";
+                        message: string;
+                    };
+                };
+            };
+            /** @description STORAGE_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "STORAGE_UNAVAILABLE";
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    getSession: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Active session */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionView"];
+                };
+            };
+            /** @description UNAUTHORISED */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "UNAUTHORISED";
+                        message: string;
+                    };
+                };
+            };
+            /** @description STORAGE_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "STORAGE_UNAVAILABLE";
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    logout: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Session revoked; cookie cleared */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description UNAUTHORISED */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "UNAUTHORISED";
+                        message: string;
+                    };
+                };
+            };
+            /** @description FORBIDDEN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "FORBIDDEN";
+                        message: string;
+                    };
+                };
+            };
+            /** @description STORAGE_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "STORAGE_UNAVAILABLE";
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    submitAccessRequest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccessSubmission"];
+            };
+        };
+        responses: {
+            /** @description Generic acceptance — no existence signal */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SignInAccepted"];
+                };
+            };
+            /** @description INVALID_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "INVALID_REQUEST";
+                        message: string;
+                    };
+                };
+            };
+            /** @description RATE_LIMITED */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "RATE_LIMITED";
+                        message: string;
+                    };
+                };
+            };
+            /** @description STORAGE_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "STORAGE_UNAVAILABLE";
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    verifyAccessRequest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TokenExchange"];
+            };
+        };
+        responses: {
+            /** @description Applicant session established */
+            200: {
+                headers: {
+                    "Set-Cookie": string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionView"];
+                };
+            };
+            /** @description INVALID_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "INVALID_REQUEST";
+                        message: string;
+                    };
+                };
+            };
+            /** @description INVALID_TOKEN */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "INVALID_TOKEN";
+                        message: string;
+                    };
+                };
+            };
+            /** @description RATE_LIMITED */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "RATE_LIMITED";
+                        message: string;
+                    };
+                };
+            };
+            /** @description STORAGE_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "STORAGE_UNAVAILABLE";
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    applicantRequestStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Own request state */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicantStatus"];
+                };
+            };
+            /** @description UNAUTHORISED */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "UNAUTHORISED";
+                        message: string;
+                    };
+                };
+            };
+            /** @description FORBIDDEN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "FORBIDDEN";
+                        message: string;
+                    };
+                };
+            };
+            /** @description REQUEST_NOT_FOUND */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "REQUEST_NOT_FOUND";
+                        message: string;
+                    };
+                };
+            };
+            /** @description STORAGE_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "STORAGE_UNAVAILABLE";
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    resendAccessVerification: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Verification re-queued */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SignInAccepted"];
+                };
+            };
+            /** @description UNAUTHORISED */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "UNAUTHORISED";
+                        message: string;
+                    };
+                };
+            };
+            /** @description FORBIDDEN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "FORBIDDEN";
+                        message: string;
+                    };
+                };
+            };
+            /** @description ACCESS_CONFLICT */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "ACCESS_CONFLICT";
+                        message: string;
+                    };
+                };
+            };
+            /** @description STORAGE_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "STORAGE_UNAVAILABLE";
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    listAccessRequests: {
+        parameters: {
+            query?: {
+                state?: "pending";
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Pending requests */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessRequestView"][];
+                };
+            };
+            /** @description INVALID_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "INVALID_REQUEST";
+                        message: string;
+                    };
+                };
+            };
+            /** @description UNAUTHORISED */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "UNAUTHORISED";
+                        message: string;
+                    };
+                };
+            };
+            /** @description FORBIDDEN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "FORBIDDEN";
+                        message: string;
+                    };
+                };
+            };
+            /** @description STORAGE_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "STORAGE_UNAVAILABLE";
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    accessRequestDetail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Request detail */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessRequestDetail"];
+                };
+            };
+            /** @description UNAUTHORISED */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "UNAUTHORISED";
+                        message: string;
+                    };
+                };
+            };
+            /** @description FORBIDDEN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "FORBIDDEN";
+                        message: string;
+                    };
+                };
+            };
+            /** @description REQUEST_NOT_FOUND */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "REQUEST_NOT_FOUND";
+                        message: string;
+                    };
+                };
+            };
+            /** @description STORAGE_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "STORAGE_UNAVAILABLE";
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    decideAccessRequest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccessDecision"];
+            };
+        };
+        responses: {
+            /** @description Decided request */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessRequestView"];
+                };
+            };
+            /** @description INVALID_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "INVALID_REQUEST";
+                        message: string;
+                    };
+                };
+            };
+            /** @description UNAUTHORISED */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "UNAUTHORISED";
+                        message: string;
+                    };
+                };
+            };
+            /** @description FORBIDDEN|RECENT_AUTH_REQUIRED */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "FORBIDDEN" | "RECENT_AUTH_REQUIRED";
+                        message: string;
+                    };
+                };
+            };
+            /** @description REQUEST_NOT_FOUND */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "REQUEST_NOT_FOUND";
+                        message: string;
+                    };
+                };
+            };
+            /** @description ACCESS_CONFLICT */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "ACCESS_CONFLICT";
+                        message: string;
+                    };
+                };
+            };
+            /** @description STORAGE_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "STORAGE_UNAVAILABLE";
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    resendAccessDelivery: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Delivery re-queued */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Queued"];
+                };
+            };
+            /** @description UNAUTHORISED */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "UNAUTHORISED";
+                        message: string;
+                    };
+                };
+            };
+            /** @description FORBIDDEN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "FORBIDDEN";
+                        message: string;
+                    };
+                };
+            };
+            /** @description REQUEST_NOT_FOUND */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "REQUEST_NOT_FOUND";
+                        message: string;
+                    };
+                };
+            };
+            /** @description ACCESS_CONFLICT */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "ACCESS_CONFLICT";
+                        message: string;
+                    };
+                };
+            };
+            /** @description STORAGE_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "STORAGE_UNAVAILABLE";
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    listViewerGrants: {
+        parameters: {
+            query?: {
+                state?: "active" | "expired" | "revoked";
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Viewer grants */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ViewerGrantView"][];
+                };
+            };
+            /** @description UNAUTHORISED */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "UNAUTHORISED";
+                        message: string;
+                    };
+                };
+            };
+            /** @description FORBIDDEN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "FORBIDDEN";
+                        message: string;
+                    };
+                };
+            };
+            /** @description STORAGE_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "STORAGE_UNAVAILABLE";
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    extendViewerGrant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GrantExtension"];
+            };
+        };
+        responses: {
+            /** @description Updated grant */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ViewerGrantView"];
+                };
+            };
+            /** @description INVALID_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "INVALID_REQUEST";
+                        message: string;
+                    };
+                };
+            };
+            /** @description UNAUTHORISED */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "UNAUTHORISED";
+                        message: string;
+                    };
+                };
+            };
+            /** @description FORBIDDEN|RECENT_AUTH_REQUIRED */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "FORBIDDEN" | "RECENT_AUTH_REQUIRED";
+                        message: string;
+                    };
+                };
+            };
+            /** @description GRANT_NOT_FOUND */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "GRANT_NOT_FOUND";
+                        message: string;
+                    };
+                };
+            };
+            /** @description ACCESS_CONFLICT */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "ACCESS_CONFLICT";
+                        message: string;
+                    };
+                };
+            };
+            /** @description STORAGE_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "STORAGE_UNAVAILABLE";
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    revokeViewerGrant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GrantRevocation"];
+            };
+        };
+        responses: {
+            /** @description Updated grant */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ViewerGrantView"];
+                };
+            };
+            /** @description INVALID_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "INVALID_REQUEST";
+                        message: string;
+                    };
+                };
+            };
+            /** @description UNAUTHORISED */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "UNAUTHORISED";
+                        message: string;
+                    };
+                };
+            };
+            /** @description FORBIDDEN|RECENT_AUTH_REQUIRED */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "FORBIDDEN" | "RECENT_AUTH_REQUIRED";
+                        message: string;
+                    };
+                };
+            };
+            /** @description GRANT_NOT_FOUND */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "GRANT_NOT_FOUND";
+                        message: string;
+                    };
+                };
+            };
+            /** @description ACCESS_CONFLICT */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "ACCESS_CONFLICT";
+                        message: string;
+                    };
+                };
+            };
+            /** @description STORAGE_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "STORAGE_UNAVAILABLE";
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    gridBaselineReadiness: {
+        parameters: {
+            query: {
+                startDay: string;
+                endExclusive: string;
+            };
+            header?: never;
+            path: {
+                region: components["schemas"]["Region"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Baseline readiness */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GridBaselineReadiness"];
+                };
+            };
+            /** @description INVALID_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "INVALID_REQUEST";
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid operator bearer token */
+            401: {
+                headers: {
+                    "WWW-Authenticate": "Bearer";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "UNAUTHORISED";
+                    };
+                };
+            };
+            /** @description FORBIDDEN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "FORBIDDEN";
+                        message: string;
+                    };
+                };
+            };
+            /** @description STORAGE_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "STORAGE_UNAVAILABLE";
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    listLoadOperations: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Operations */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoadOperation"][];
+                };
+            };
+            /** @description Missing or invalid operator bearer token */
+            401: {
+                headers: {
+                    "WWW-Authenticate"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "UNAUTHORISED";
+                    };
+                };
+            };
+            /** @description FORBIDDEN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "FORBIDDEN";
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    beginLoadOperation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BeginLoadOperation"];
+            };
+        };
+        responses: {
+            /** @description Operation created */
+            201: {
+                headers: {
+                    Location?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoadOperation"];
+                };
+            };
+            /** @description INVALID_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "INVALID_REQUEST";
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid operator bearer token */
+            401: {
+                headers: {
+                    "WWW-Authenticate"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "UNAUTHORISED";
+                    };
+                };
+            };
+            /** @description FORBIDDEN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "FORBIDDEN";
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    loadOperationDetail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Detail */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoadOperationDetail"];
+                };
+            };
+            /** @description Missing or invalid operator bearer token */
+            401: {
+                headers: {
+                    "WWW-Authenticate"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "UNAUTHORISED";
+                    };
+                };
+            };
+            /** @description FORBIDDEN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "FORBIDDEN";
+                        message: string;
+                    };
+                };
+            };
+            /** @description OPERATION_NOT_FOUND */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "OPERATION_NOT_FOUND";
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    dispatchLoadOperation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Submit the next <=31-day chunk of the current phase; backpressured leaves the cursor unmoved */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoadDispatchOutcome"];
+                };
+            };
+            /** @description Missing or invalid operator bearer token */
+            401: {
+                headers: {
+                    "WWW-Authenticate"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "UNAUTHORISED";
+                    };
+                };
+            };
+            /** @description FORBIDDEN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "FORBIDDEN";
+                        message: string;
+                    };
+                };
+            };
+            /** @description OPERATION_NOT_FOUND */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "OPERATION_NOT_FOUND";
+                        message: string;
+                    };
+                };
+            };
+            /** @description OPERATION_CONFLICT */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "OPERATION_CONFLICT";
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    pauseLoadOperation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Stop dispatching new chunks — queued children keep running */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoadOperation"];
+                };
+            };
+            /** @description Missing or invalid operator bearer token */
+            401: {
+                headers: {
+                    "WWW-Authenticate"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "UNAUTHORISED";
+                    };
+                };
+            };
+            /** @description FORBIDDEN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "FORBIDDEN";
+                        message: string;
+                    };
+                };
+            };
+            /** @description OPERATION_NOT_FOUND */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "OPERATION_NOT_FOUND";
+                        message: string;
+                    };
+                };
+            };
+            /** @description OPERATION_CONFLICT */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "OPERATION_CONFLICT";
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    resumeLoadOperation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Explicitly resume dispatch after pause or interruption */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoadOperation"];
+                };
+            };
+            /** @description Missing or invalid operator bearer token */
+            401: {
+                headers: {
+                    "WWW-Authenticate"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "UNAUTHORISED";
+                    };
+                };
+            };
+            /** @description FORBIDDEN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "FORBIDDEN";
+                        message: string;
+                    };
+                };
+            };
+            /** @description OPERATION_NOT_FOUND */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "OPERATION_NOT_FOUND";
+                        message: string;
+                    };
+                };
+            };
+            /** @description OPERATION_CONFLICT */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "OPERATION_CONFLICT";
                         message: string;
                     };
                 };

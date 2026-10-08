@@ -13,8 +13,10 @@
   "packageManager": "npm@10.9.8",
   "scripts": {
     "dev": "npm run dev --workspace @nemlab/public",
-    "build": "tsc --project tsconfig.tools.json && npm run build --workspace @nemlab/public",
+    "dev:admin": "npm run dev --workspace @nemlab/admin",
+    "build": "tsc --project tsconfig.tools.json && npm run build --workspace @nemlab/public && npm run build --workspace @nemlab/admin",
     "preview": "npm run preview --workspace @nemlab/public",
+    "preview:admin": "npm run preview --workspace @nemlab/admin",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test:browser": "playwright test",

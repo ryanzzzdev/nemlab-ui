@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en-AU">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      // Apply the saved preference before the page paints.
+      try {
+        const theme = localStorage.getItem("nemlab-theme");
+        if (theme === "light" || theme === "dark") document.documentElement.dataset.theme = theme;
+      } catch {
+        // The CSS default follows the device appearance.
+      }
+    </script>
+    <meta name="description" content="NEMLab Admin — inspect coverage, jobs and publications." />
+    <title>NEMLab Admin</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>NEMLab Admin needs JavaScript to run.</noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
