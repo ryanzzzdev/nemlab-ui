@@ -14,6 +14,9 @@ export type Event = components["schemas"]["Event"];
 export type LoadOperation = components["schemas"]["LoadOperation"];
 export type LoadOperationDetail = components["schemas"]["LoadOperationDetail"];
 export type LoadOperationChild = components["schemas"]["LoadOperationChild"];
+export type LoadDispatchOutcome = components["schemas"]["LoadDispatchOutcome"];
+export type BeginLoadOperation = components["schemas"]["BeginLoadOperation"];
+export type GridPublicationSubmission = components["schemas"]["GridPublicationSubmission"];
 
 export const REGIONS: Region[] = ["NSW1", "QLD1", "SA1", "TAS1", "VIC1"];
 
@@ -61,10 +64,16 @@ export function apiGet<T>(path: string, signal?: AbortSignal): Promise<T> {
 
 /** Cookie-authenticated mutation — the backend requires the session CSRF
  * token; the browser already sends same-origin Origin/Referer on POST. */
-export function apiPost<T>(path: string, csrfToken?: string, body?: unknown): Promise<T | null> {
+export function apiPost<T>(
+  path: string,
+  csrfToken?: string,
+  body?: unknown,
+  extraHeaders?: Record<string, string>,
+): Promise<T | null> {
   const headers: Record<string, string> = {
     Accept: "application/json",
     "Content-Type": "application/json",
+    ...extraHeaders,
   };
   if (csrfToken) headers["x-csrf-token"] = csrfToken;
   return fetch(path, {
@@ -120,6 +129,51 @@ export function applicantStatus(signal?: AbortSignal): Promise<ApplicantStatus> 
 
 export function resendVerification(csrfToken: string) {
   return apiPost("/api/access/v1/requests/resend", csrfToken);
+}
+
+/** Owner data-loading mutations — all capability-gated `ops.write` server-
+ * side; the UI hides them from viewers but the boundary is the API. */
+export function beginLoadOperation(
+  csrfToken: string,
+  body: BeginLoadOperation,
+): Promise<LoadOperation | null> {
+  return apiPost<LoadOperation>("/api/admin/v1/load-operations", csrfToken, body);
+}
+
+export function dispatchLoadOperation(
+  csrfToken: string,
+  id: string,
+): Promise<LoadDispatchOutcome | null> {
+  return apiPost<LoadDispatchOutcome>(`/api/admin/v1/load-operations/${id}/dispatch`, csrfToken);
+}
+
+export function pauseLoadOperation(csrfToken: string, id: string): Promise<LoadOperation | null> {
+  return apiPost<LoadOperation>(`/api/admin/v1/load-operations/${id}/pause`, csrfToken);
+}
+
+export function resumeLoadOperation(csrfToken: string, id: string): Promise<LoadOperation | null> {
+  return apiPost<LoadOperation>(`/api/admin/v1/load-operations/${id}/resume`, csrfToken);
+}
+
+export function submitGridImport(
+  csrfToken: string,
+  idempotencyKey: string,
+  body: { region: Region; startDay: string; endExclusive: string },
+): Promise<GridImport | null> {
+  return apiPost<GridImport>("/api/admin/v1/grid-imports", csrfToken, body, {
+    "Idempotency-Key": idempotencyKey,
+  });
+}
+
+export function cancelGridImport(csrfToken: string, id: string): Promise<GridImport | null> {
+  return apiPost<GridImport>(`/api/admin/v1/grid-imports/${id}/cancel`, csrfToken);
+}
+
+export function publishGrid(
+  csrfToken: string,
+  body: GridPublicationSubmission,
+): Promise<AdminGridPublication | null> {
+  return apiPost<AdminGridPublication>("/api/admin/v1/grid-publications", csrfToken, body);
 }
 
 /** NEM market days run UTC+10 — same helper convention as the public app. */

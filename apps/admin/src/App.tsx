@@ -10,6 +10,7 @@ import {
 import { CoveragePage } from "./pages/CoveragePage";
 import { HowItWorksPage } from "./pages/HowItWorksPage";
 import { JobsPage } from "./pages/JobsPage";
+import { LoadPage } from "./pages/LoadPage";
 import { PublicationsPage } from "./pages/PublicationsPage";
 
 function NotFound() {
@@ -27,6 +28,7 @@ export function App() {
       <Routes>
         <Route element={<Shell />}>
           <Route index element={<CoveragePage />} />
+          <Route path="load" element={<LoadPage />} />
           <Route path="jobs" element={<JobsPage />} />
           <Route path="publications" element={<PublicationsPage />} />
           <Route path="how-it-works" element={<HowItWorksPage />} />

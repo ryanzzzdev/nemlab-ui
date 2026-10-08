@@ -4,6 +4,7 @@ import { Link, Navigate, useLocation } from "react-router";
 import {
   applicantStatus,
   exchangeSignInToken,
+  getSession,
   requestAccess,
   requestSignInLink,
   resendVerification,
@@ -202,7 +203,18 @@ export function VerifyPage() {
         await queryClient.invalidateQueries({ queryKey: ["session"] });
         setResult("done");
       })
-      .catch(() => setResult("failed"));
+      .catch(async () => {
+        // Same lost-response guard as sign-in: the token may have been
+        // consumed while the reply was lost — the applicant session then
+        // already exists, so re-check before declaring the link dead.
+        const current = await getSession().catch(() => null);
+        if (current) {
+          await queryClient.invalidateQueries({ queryKey: ["session"] });
+          setResult("done");
+        } else {
+          setResult("failed");
+        }
+      });
   }, [token, queryClient]);
 
   if (result === "done") return <Navigate to="/request-status" replace />;
@@ -348,7 +360,19 @@ export function SignInPage() {
         await queryClient.invalidateQueries({ queryKey: ["session"] });
         setExchange("done");
       })
-      .catch(() => setExchange("failed"));
+      .catch(async () => {
+        // A lost response can still mean the exchange landed (single-use
+        // tokens consume server-side first) — check before declaring the
+        // link dead so the user is not stranded on a failure panel while
+        // holding a live session.
+        const current = await getSession().catch(() => null);
+        if (current) {
+          await queryClient.invalidateQueries({ queryKey: ["session"] });
+          setExchange("done");
+        } else {
+          setExchange("failed");
+        }
+      });
   }, [token, queryClient]);
 
   if (exchange === "done" && session.data) {

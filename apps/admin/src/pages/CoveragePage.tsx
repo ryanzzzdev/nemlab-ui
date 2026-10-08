@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
-import { useOutletContext } from "react-router";
+import { useEffect, useState } from "react";
+import { useNavigate, useOutletContext, useSearchParams } from "react-router";
 import { REGIONS, apiGet, marketDay, plusDays } from "../api";
 import type {
   GridBaselineReadiness,
@@ -10,8 +10,13 @@ import type {
   SessionView,
 } from "../api";
 import { Empty, Failure, Loading, Panel } from "../components/States";
+import { LOAD_DRAFT_KEY } from "./LoadPage";
 
 const MAX_DAYS = 31;
+
+function daysBetween(start: string, end: string): number {
+  return Math.round((Date.parse(`${end}T00:00:00Z`) - Date.parse(`${start}T00:00:00Z`)) / 86400000);
+}
 
 function availabilityLabel(day: GridCoverageDay): string {
   if (day.availability === "COMPLETE") return "Complete";
@@ -155,15 +160,51 @@ function Baseline({ readiness }: { readiness: GridBaselineReadiness }) {
 
 export function CoveragePage() {
   const session = useOutletContext<SessionView>();
-  const [region, setRegion] = useState<Region>("NSW1");
-  const [start, setStart] = useState(() => plusDays(marketDay(), -31));
-  const [end, setEnd] = useState(() => plusDays(marketDay(), -1));
+  const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const [region, setRegion] = useState<Region>(
+    () => (REGIONS.find((r) => r === params.get("region")) as Region) ?? "NSW1",
+  );
+  const [start, setStart] = useState(() => params.get("start") ?? plusDays(marketDay(), -31));
+  const [end, setEnd] = useState(() => params.get("end") ?? plusDays(marketDay(), -1));
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState<{
     region: Region;
     start: string;
     endExclusive: string;
   } | null>(null);
+
+  // Deep links (e.g. "Recheck coverage" from a finished load operation)
+  // arrive as ?region=&start=&end= — inspect once on mount.
+  useEffect(() => {
+    const pRegion = params.get("region");
+    const pStart = params.get("start");
+    const pEnd = params.get("end");
+    if (
+      pRegion &&
+      pStart &&
+      pEnd &&
+      REGIONS.includes(pRegion as Region) &&
+      pEnd >= pStart &&
+      daysBetween(pStart, pEnd) < MAX_DAYS
+    ) {
+      setQuery({ region: pRegion as Region, start: pStart, endExclusive: plusDays(pEnd, 1) });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function loadThisWindow() {
+    if (!query) return;
+    sessionStorage.setItem(
+      LOAD_DRAFT_KEY,
+      JSON.stringify({
+        region: query.region,
+        start: query.start,
+        end: plusDays(query.endExclusive, -1),
+      }),
+    );
+    void navigate("/load");
+  }
 
   const coverage = useQuery({
     queryKey: ["grid-coverage", query],
@@ -250,7 +291,7 @@ export function CoveragePage() {
           <p className="hint">
             Up to {MAX_DAYS} days at once.{" "}
             {session.role === "owner"
-              ? "As owner you can load missing days from the Jobs workflow — that action arrives with the guided load screen."
+              ? "Inspect a window, then carry it into the guided load screen."
               : "Loading data is an owner action; you can inspect what is stored."}
           </p>
         </div>
@@ -274,6 +315,11 @@ export function CoveragePage() {
               summary.
             </p>
             <DayTable days={coverage.data.days} />
+            {session.role === "owner" && (
+              <button type="button" className="primary" onClick={loadThisWindow}>
+                Load this window
+              </button>
+            )}
           </section>
           {baseline.isPending ? (
             <Loading label="Checking baseline readiness…" />

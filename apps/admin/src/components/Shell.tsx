@@ -39,6 +39,7 @@ function Account({ session }: { session: SessionView }) {
 
 const NAV = [
   { to: "/", label: "Coverage", end: true },
+  { to: "/load", label: "Load data" },
   { to: "/jobs", label: "Jobs" },
   { to: "/publications", label: "Publications" },
   { to: "/how-it-works", label: "How it works" },

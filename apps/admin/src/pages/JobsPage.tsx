@@ -1,9 +1,18 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { apiGet } from "../api";
-import type { Event, GridImport, Job, LoadOperation, LoadOperationDetail } from "../api";
+import { useNavigate, useOutletContext } from "react-router";
+import { apiGet, cancelGridImport, plusDays } from "../api";
+import type {
+  Event,
+  GridImport,
+  Job,
+  LoadOperation,
+  LoadOperationDetail,
+  SessionView,
+} from "../api";
 import { StatusChip } from "../components/StatusChip";
 import { Empty, Failure, Loading, Panel } from "../components/States";
+import { LOAD_DRAFT_KEY } from "./LoadPage";
 
 const POLL_MS = 20_000;
 
@@ -104,8 +113,45 @@ function OperationRow({ operation }: { operation: LoadOperation }) {
   );
 }
 
-function GridImportRow({ job }: { job: GridImport }) {
+const CANCELLABLE = new Set(["QUEUED", "RUNNING", "PAUSED"]);
+const RESUBMITTABLE = new Set(["FAILED", "CANCELLED"]);
+
+function GridImportRow({ job, session }: { job: GridImport; session: SessionView }) {
   const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [failure, setFailure] = useState<unknown>(null);
+  const client = useQueryClient();
+  const navigate = useNavigate();
+  const owner = session.role === "owner";
+
+  async function cancel() {
+    setBusy(true);
+    setFailure(null);
+    try {
+      await cancelGridImport(session.csrfToken, job.id);
+      await client.invalidateQueries({ queryKey: ["grid-imports"] });
+    } catch (error) {
+      setFailure(error);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function submitAgain() {
+    // Recovery is a new bounded submission over the remaining window — the
+    // checkpoint (`nextDay`) marks where the old job stopped, never a retry
+    // in place.
+    sessionStorage.setItem(
+      LOAD_DRAFT_KEY,
+      JSON.stringify({
+        region: job.region,
+        start: job.nextDay < job.endExclusive ? job.nextDay : job.startDay,
+        end: plusDays(job.endExclusive, -1),
+      }),
+    );
+    void navigate("/load");
+  }
+
   return (
     <tr>
       <td>
@@ -118,6 +164,17 @@ function GridImportRow({ job }: { job: GridImport }) {
           {job.startDay} – {job.endExclusive}
         </button>
         {open && <Events path={`/api/admin/v1/grid-imports/${job.id}/events`} />}
+        {owner && CANCELLABLE.has(job.status) && (
+          <button type="button" className="ghost" disabled={busy} onClick={() => void cancel()}>
+            Cancel
+          </button>
+        )}
+        {owner && RESUBMITTABLE.has(job.status) && (
+          <button type="button" className="ghost" onClick={submitAgain}>
+            Submit again
+          </button>
+        )}
+        {failure !== null && <Failure error={failure} />}
       </td>
       <td>{job.region}</td>
       <td>
@@ -158,6 +215,7 @@ function RefreshRow({ job }: { job: Job }) {
 }
 
 export function JobsPage() {
+  const session = useOutletContext<SessionView>();
   const operations = useQuery({
     queryKey: ["load-operations"],
     queryFn: ({ signal }) => apiGet<LoadOperation[]>("/api/admin/v1/load-operations", signal),
@@ -228,7 +286,7 @@ export function JobsPage() {
               </thead>
               <tbody>
                 {imports.data.map((job) => (
-                  <GridImportRow key={job.id} job={job} />
+                  <GridImportRow key={job.id} job={job} session={session} />
                 ))}
               </tbody>
             </table>
