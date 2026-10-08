@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Link, Navigate, NavLink, Outlet, useLocation } from "react-router";
 import { ThemePicker } from "../../../public/src/components/Theme";
+import { PUBLIC_BASE } from "../api";
 import type { SessionView } from "../api";
 import { useSession, useSignOut } from "../session";
 import { Loading } from "./States";
@@ -111,7 +112,7 @@ export function Shell() {
       </main>
       <footer className="site-footer">
         <p>Owner and approved-visitor console. Read access only for visitors.</p>
-        <a href="/">Back to NEMLab</a>
+        <a href={`${PUBLIC_BASE}/`}>Back to NEMLab</a>
       </footer>
     </div>
   );

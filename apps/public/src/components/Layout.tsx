@@ -56,8 +56,10 @@ export function Layout() {
         <p>Historical analysis and experiments. No live trading.</p>
         <Link to="/methodology">How to read the results</Link>
         {/* Admin is a separate bundle on the same origin — a plain link, so
-            following it never leaks session state or loads private data. */}
-        <a href="/admin/">Admin</a>
+            following it never leaks session state or loads private data.
+            In dev the admin server runs on its own port, so the link is
+            absolute there. */}
+        <a href={import.meta.env.DEV ? "http://127.0.0.1:5274/admin/" : "/admin/"}>Admin</a>
       </footer>
     </div>
   );

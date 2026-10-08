@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useOutletContext } from "react-router";
-import { ApiError, REGIONS, apiGet, marketDay, plusDays, publishGrid } from "../api";
+import { ApiError, PUBLIC_BASE, REGIONS, apiGet, marketDay, plusDays, publishGrid } from "../api";
 import type {
   AdminGridPublication,
   GridCoverage,
@@ -17,7 +17,7 @@ const PUBLISH_ATTEMPT_KEY = "admin.publishAttempt";
 
 function replayLink(publication: AdminGridPublication): string {
   const to = plusDays(publication.endExclusive, -1);
-  return `/gridreplay?region=${publication.region}&from=${publication.startDay}&to=${to}&view=all`;
+  return `${PUBLIC_BASE}/gridreplay?region=${publication.region}&from=${publication.startDay}&to=${to}&view=all`;
 }
 
 interface PendingAttempt {

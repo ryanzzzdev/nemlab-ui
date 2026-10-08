@@ -20,6 +20,12 @@ export type GridPublicationSubmission = components["schemas"]["GridPublicationSu
 
 export const REGIONS: Region[] = ["NSW1", "QLD1", "SA1", "TAS1", "VIC1"];
 
+/** Public-app origin for cross-bundle links. Production serves both
+ * bundles on one origin so links are relative; in dev each Vite server
+ * has its own port, so links to the public app need the absolute dev
+ * origin. */
+export const PUBLIC_BASE = import.meta.env.DEV ? "http://127.0.0.1:5173" : "";
+
 /** Carries the API code so pages can distinguish "sign in again",
  * "no permission", "unavailable" and plain failures. */
 export class ApiError extends Error {
