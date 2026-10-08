@@ -55,6 +55,9 @@ export function Layout() {
       <footer className="site-footer">
         <p>Historical analysis and experiments. No live trading.</p>
         <Link to="/methodology">How to read the results</Link>
+        {/* Admin is a separate bundle on the same origin — a plain link, so
+            following it never leaks session state or loads private data. */}
+        <a href="/admin">Admin</a>
       </footer>
     </div>
   );
