@@ -80,7 +80,9 @@ function validEvent(event: EventSummary): boolean {
     typeof event.superseded === "boolean" &&
     typeof event.coverage === "object" &&
     event.coverage !== null &&
-    (event.detail === null || (typeof event.detail === "object" && !Array.isArray(event.detail)))
+    // Older contract responses may omit `detail` entirely; v2 writes null or
+    // an evidence object.
+    (event.detail == null || (typeof event.detail === "object" && !Array.isArray(event.detail)))
   );
 }
 
