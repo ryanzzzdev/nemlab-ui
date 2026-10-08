@@ -2,7 +2,7 @@
  "openapi": "3.0.3",
  "info": {
   "title": "NEMLab shared API",
-  "version": "1.4.0",
+  "version": "2.0.0",
   "description": "Independently enabled price reads, operator controls, bounded grid imports and simulation lifecycle. Disabled routes return 404. Market dates use fixed UTC+10. Simulation bodies are at most 16384 bytes and decimal inputs are strings. The public GridReplay catalogue and replay API are not yet implemented; grid imports are operator-only."
  },
  "paths": {
@@ -2663,6 +2663,59 @@
       }
      },
      {
+      "name": "sort",
+      "in": "query",
+      "description": "Catalogue order. newest/oldest apply to all types; typed sorts require `type`: longest (run/spike/episode), deepest (run/episode), highest (spike/reversal), largest_rise (ramp/unusual ramp).",
+      "schema": {
+       "type": "string",
+       "enum": [
+        "newest",
+        "oldest",
+        "longest",
+        "deepest",
+        "highest",
+        "largest_rise"
+       ],
+       "default": "newest"
+      }
+     },
+     {
+      "name": "minDurationMinutes",
+      "in": "query",
+      "description": "Minimum interval-count duration; only with type run, spike or episode.",
+      "schema": {
+       "type": "integer",
+       "minimum": 0
+      }
+     },
+     {
+      "name": "valueGte",
+      "in": "query",
+      "description": "Exact decimal lower bound on value; only with type spike, reversal or a ramp type.",
+      "schema": {
+       "type": "string",
+       "pattern": "^-?[0-9]+(\\.[0-9]+)?$"
+      }
+     },
+     {
+      "name": "valueLte",
+      "in": "query",
+      "description": "Exact decimal upper bound on value; only with type run or episode.",
+      "schema": {
+       "type": "string",
+       "pattern": "^-?[0-9]+(\\.[0-9]+)?$"
+      }
+     },
+     {
+      "name": "publication",
+      "in": "query",
+      "description": "Pin a specific immutable publication instead of the current one.",
+      "schema": {
+       "type": "string",
+       "format": "uuid"
+      }
+     },
+     {
       "name": "limit",
       "in": "query",
       "schema": {
@@ -2687,6 +2740,202 @@
        "application/json": {
         "schema": {
          "$ref": "#/components/schemas/GridEventPage"
+        }
+       }
+      },
+      "headers": {
+       "Cache-Control": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "enum": [
+          "no-store"
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "INVALID_REQUEST",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "INVALID_REQUEST"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "CATALOGUE_NOT_PUBLISHED, PUBLICATION_NOT_FOUND (stale or wrong-region pin)",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "CATALOGUE_NOT_PUBLISHED",
+            "PUBLICATION_NOT_FOUND"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "503": {
+      "description": "STORAGE_UNAVAILABLE",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "STORAGE_UNAVAILABLE"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/events/highlights": {
+   "get": {
+    "operationId": "gridEventHighlights",
+    "summary": "Publication-wide highlight selection \u2014 exact-value ranking with caps",
+    "security": [],
+    "parameters": [
+     {
+      "name": "region",
+      "in": "query",
+      "required": true,
+      "schema": {
+       "$ref": "#/components/schemas/Region"
+      }
+     },
+     {
+      "name": "type",
+      "in": "query",
+      "schema": {
+       "$ref": "#/components/schemas/GridEventType"
+      }
+     },
+     {
+      "name": "from",
+      "in": "query",
+      "schema": {
+       "type": "string",
+       "format": "date"
+      },
+      "description": "Inclusive market-day filter; requires `to`."
+     },
+     {
+      "name": "to",
+      "in": "query",
+      "schema": {
+       "type": "string",
+       "format": "date"
+      }
+     },
+     {
+      "name": "sort",
+      "in": "query",
+      "description": "Catalogue order. newest/oldest apply to all types; typed sorts require `type`: longest (run/spike/episode), deepest (run/episode), highest (spike/reversal), largest_rise (ramp/unusual ramp).",
+      "schema": {
+       "type": "string",
+       "enum": [
+        "newest",
+        "oldest",
+        "longest",
+        "deepest",
+        "highest",
+        "largest_rise"
+       ],
+       "default": "newest"
+      }
+     },
+     {
+      "name": "minDurationMinutes",
+      "in": "query",
+      "description": "Minimum interval-count duration; only with type run, spike or episode.",
+      "schema": {
+       "type": "integer",
+       "minimum": 0
+      }
+     },
+     {
+      "name": "valueGte",
+      "in": "query",
+      "description": "Exact decimal lower bound on value; only with type spike, reversal or a ramp type.",
+      "schema": {
+       "type": "string",
+       "pattern": "^-?[0-9]+(\\.[0-9]+)?$"
+      }
+     },
+     {
+      "name": "valueLte",
+      "in": "query",
+      "description": "Exact decimal upper bound on value; only with type run or episode.",
+      "schema": {
+       "type": "string",
+       "pattern": "^-?[0-9]+(\\.[0-9]+)?$"
+      }
+     },
+     {
+      "name": "publication",
+      "in": "query",
+      "description": "Pin a specific immutable publication instead of the current one.",
+      "schema": {
+       "type": "string",
+       "format": "uuid"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Selected highlight cards in display order",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/GridHighlights"
         }
        }
       },
@@ -2853,6 +3102,126 @@
            "type": "string",
            "enum": [
             "EVENT_NOT_FOUND"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "503": {
+      "description": "STORAGE_UNAVAILABLE",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "STORAGE_UNAVAILABLE"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/api/v1/events/{id}/preview": {
+   "get": {
+    "operationId": "gridEventPreview",
+    "summary": "Bounded immutable card preview built from the stored replay snapshot",
+    "security": [],
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "format": "uuid"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Bounded preview slots with event ranges",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/GridEventPreview"
+        }
+       }
+      },
+      "headers": {
+       "Cache-Control": {
+        "required": true,
+        "schema": {
+         "type": "string",
+         "enum": [
+          "no-store"
+         ]
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "INVALID_REQUEST",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "INVALID_REQUEST"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "EVENT_NOT_FOUND or PREVIEW_NOT_FOUND",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "EVENT_NOT_FOUND",
+            "PREVIEW_NOT_FOUND"
            ]
           },
           "message": {
@@ -4210,6 +4579,15 @@
      "endExclusive": {
       "type": "string",
       "format": "date"
+     },
+     "detectorSuite": {
+      "type": "string",
+      "enum": [
+       "v1",
+       "v2"
+      ],
+      "default": "v1",
+      "description": "Detector suite to evaluate: v1 (frozen original rules) or v2 (v1 plus calibrated reversal/episode/unusual-ramp types). Absent means v1."
      }
     }
    },
@@ -4251,7 +4629,7 @@
      },
      "coverage": {
       "type": "object",
-      "description": "Per-day evaluated/missing counts and ramp outcome."
+      "description": "Per-day evaluated/missing counts plus detector outcomes (demand_ramp and, under the v2 suite, unusual_demand_ramp)."
      },
      "createdAt": {
       "type": "string",
@@ -4264,8 +4642,12 @@
     "enum": [
      "negative_price_run",
      "price_spike",
-     "demand_ramp"
-    ]
+     "demand_ramp",
+     "unusual_demand_ramp",
+     "price_reversal",
+     "negative_price_episode"
+    ],
+    "description": "Detector event types. The v2 suite adds unusual_demand_ramp, price_reversal and negative_price_episode; consumers must tolerate unknown type strings for forward compatibility."
    },
    "GridEventSummary": {
     "type": "object",
@@ -4284,7 +4666,8 @@
      "edgeIncomplete",
      "version",
      "superseded",
-     "coverage"
+     "coverage",
+     "detail"
     ],
     "properties": {
      "id": {
@@ -4337,6 +4720,11 @@
      "coverage": {
       "type": "object",
       "description": "{evaluated, missing, edge_incomplete}"
+     },
+     "detail": {
+      "type": "object",
+      "nullable": true,
+      "description": "Immutable event evidence (reversal trough/peak, episode members, ramp baseline). Null for v1 types."
      }
     }
    },
@@ -4360,7 +4748,8 @@
      "superseded",
      "coverage",
      "sourceRevisions",
-     "replay"
+     "replay",
+     "detail"
     ],
     "properties": {
      "id": {
@@ -4434,6 +4823,11 @@
         "format": "date"
        }
       }
+     },
+     "detail": {
+      "type": "object",
+      "nullable": true,
+      "description": "Immutable event evidence (reversal trough/peak, episode members, ramp baseline). Null for v1 types."
      }
     }
    },
@@ -4443,7 +4837,9 @@
     "required": [
      "publication",
      "events",
-     "nextCursor"
+     "nextCursor",
+     "matchingTotal",
+     "typeTotals"
     ],
     "properties": {
      "publication": {
@@ -4458,7 +4854,20 @@
      "nextCursor": {
       "type": "string",
       "nullable": true,
-      "description": "Opaque cursor pinning the publication; pass as `cursor`."
+      "description": "Opaque cursor pinning the publication and the normalised query (type/from/to/sort/filters); pass unchanged as `cursor`."
+     },
+     "matchingTotal": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Events matching the query scope across the whole pinned publication."
+     },
+     "typeTotals": {
+      "type": "object",
+      "additionalProperties": {
+       "type": "integer",
+       "minimum": 0
+      },
+      "description": "Per-type counts under the current scope."
      }
     }
    },
@@ -4481,6 +4890,309 @@
      "payload": {
       "type": "object",
       "description": "Materialised exact values: series -> day -> 288 slots (decimal strings or null)."
+     }
+    }
+   },
+   "GridHighlightReason": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "code",
+     "rank",
+     "population"
+    ],
+    "properties": {
+     "code": {
+      "type": "string",
+      "enum": [
+       "highest_price",
+       "longest_negative_run",
+       "deepest_negative_price",
+       "largest_demand_rise",
+       "unusual_demand_rise",
+       "largest_price_reversal",
+       "widest_negative_episode"
+      ]
+     },
+     "rank": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "1-based position in the reason\u2019s candidate list; truthful even when capped out."
+     },
+     "population": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Eligible candidates of the reason\u2019s event type under the scope."
+     }
+    }
+   },
+   "GridHighlight": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "id",
+     "region",
+     "type",
+     "detectorVersion",
+     "marketDay",
+     "startAt",
+     "endAt",
+     "intervalCount",
+     "durationMinutes",
+     "value",
+     "edgeIncomplete",
+     "version",
+     "superseded",
+     "coverage",
+     "detail",
+     "selectedBy",
+     "reasons"
+    ],
+    "properties": {
+     "id": {
+      "type": "string",
+      "format": "uuid"
+     },
+     "region": {
+      "$ref": "#/components/schemas/Region"
+     },
+     "type": {
+      "$ref": "#/components/schemas/GridEventType"
+     },
+     "detectorVersion": {
+      "type": "string"
+     },
+     "marketDay": {
+      "type": "string",
+      "format": "date"
+     },
+     "startAt": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "endAt": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "intervalCount": {
+      "type": "integer",
+      "minimum": 1
+     },
+     "durationMinutes": {
+      "type": "integer",
+      "minimum": 5
+     },
+     "value": {
+      "type": "string",
+      "description": "Exact decimal: extreme price (AUD/MWh) or ramp MW."
+     },
+     "edgeIncomplete": {
+      "type": "boolean"
+     },
+     "version": {
+      "type": "integer",
+      "minimum": 1
+     },
+     "superseded": {
+      "type": "boolean"
+     },
+     "coverage": {
+      "type": "object",
+      "description": "{evaluated, missing, edge_incomplete}"
+     },
+     "detail": {
+      "type": "object",
+      "nullable": true,
+      "description": "Immutable event evidence (reversal trough/peak, episode members, ramp baseline). Null for v1 types."
+     },
+     "selectedBy": {
+      "type": "string",
+      "enum": [
+       "highest_price",
+       "longest_negative_run",
+       "deepest_negative_price",
+       "largest_demand_rise",
+       "unusual_demand_rise",
+       "largest_price_reversal",
+       "widest_negative_episode"
+      ],
+      "description": "The list whose round-robin turn selected this card."
+     },
+     "reasons": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/GridHighlightReason"
+      }
+     }
+    }
+   },
+   "GridHighlights": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "publication",
+     "selectionVersion",
+     "scope",
+     "matchingTotal",
+     "typeTotals",
+     "eligibleCount",
+     "excludedCount",
+     "highlights"
+    ],
+    "properties": {
+     "publication": {
+      "$ref": "#/components/schemas/GridPublication"
+     },
+     "selectionVersion": {
+      "type": "string",
+      "enum": [
+       "highlights-v1",
+       "highlights-v2"
+      ]
+     },
+     "scope": {
+      "type": "object",
+      "description": "Echo of the normalised query scope the selection ran under."
+     },
+     "matchingTotal": {
+      "type": "integer",
+      "minimum": 0
+     },
+     "typeTotals": {
+      "type": "object",
+      "additionalProperties": {
+       "type": "integer",
+       "minimum": 0
+      }
+     },
+     "eligibleCount": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Matching events with complete coverage eligible for selection."
+     },
+     "excludedCount": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Matching events excluded for incomplete coverage or edge-incomplete data."
+     },
+     "highlights": {
+      "type": "array",
+      "items": {
+       "$ref": "#/components/schemas/GridHighlight"
+      },
+      "maxItems": 8
+     }
+    }
+   },
+   "GridEventPreview": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "version",
+     "metric",
+     "unit",
+     "intervalMinutes",
+     "startAt",
+     "endAt",
+     "sourcePoints",
+     "slots",
+     "eventRanges",
+     "markers",
+     "localScale"
+    ],
+    "properties": {
+     "version": {
+      "type": "string",
+      "enum": [
+       "preview-v1"
+      ]
+     },
+     "metric": {
+      "type": "string",
+      "enum": [
+       "price",
+       "demand"
+      ]
+     },
+     "unit": {
+      "type": "string",
+      "enum": [
+       "AUD/MWh",
+       "MW"
+      ]
+     },
+     "intervalMinutes": {
+      "type": "integer",
+      "enum": [
+       5
+      ]
+     },
+     "startAt": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "endAt": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "sourcePoints": {
+      "type": "integer",
+      "minimum": 0
+     },
+     "slots": {
+      "type": "array",
+      "maxItems": 48,
+      "items": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "min",
+        "max",
+        "gap"
+       ],
+       "properties": {
+        "min": {
+         "type": "string",
+         "nullable": true
+        },
+        "max": {
+         "type": "string",
+         "nullable": true
+        },
+        "gap": {
+         "type": "boolean"
+        }
+       }
+      }
+     },
+     "eventRanges": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [
+        "startSlot",
+        "endSlot"
+       ],
+       "properties": {
+        "startSlot": {
+         "type": "integer",
+         "minimum": 0
+        },
+        "endSlot": {
+         "type": "integer",
+         "minimum": 0
+        }
+       }
+      }
+     },
+     "markers": {
+      "type": "object",
+      "description": "Optional markers, e.g. peakSlot for a reversal."
+     },
+     "localScale": {
+      "type": "boolean",
+      "description": "Preview y-axis is local to the slot range, not a global scale."
      }
     }
    }

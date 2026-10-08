@@ -285,6 +285,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/events/highlights": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Publication-wide highlight selection — exact-value ranking with caps */
+        get: operations["gridEventHighlights"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/events/{id}": {
         parameters: {
             query?: never;
@@ -294,6 +311,23 @@ export interface paths {
         };
         /** Immutable event version detail — superseded ids stay reproducible */
         get: operations["gridEvent"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/events/{id}/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Bounded immutable card preview built from the stored replay snapshot */
+        get: operations["gridEventPreview"];
         put?: never;
         post?: never;
         delete?: never;
@@ -633,6 +667,12 @@ export interface components {
             startDay: string;
             /** Format: date */
             endExclusive: string;
+            /**
+             * @description Detector suite to evaluate: v1 (frozen original rules) or v2 (v1 plus calibrated reversal/episode/unusual-ramp types). Absent means v1.
+             * @default v1
+             * @enum {string}
+             */
+            detectorSuite: "v1" | "v2";
         };
         GridPublication: {
             /** Format: uuid */
@@ -644,13 +684,16 @@ export interface components {
             endExclusive: string;
             detectorVersion: string;
             eventCount: number;
-            /** @description Per-day evaluated/missing counts and ramp outcome. */
+            /** @description Per-day evaluated/missing counts plus detector outcomes (demand_ramp and, under the v2 suite, unusual_demand_ramp). */
             coverage: Record<string, never>;
             /** Format: date-time */
             createdAt: string;
         };
-        /** @enum {string} */
-        GridEventType: "negative_price_run" | "price_spike" | "demand_ramp";
+        /**
+         * @description Detector event types. The v2 suite adds unusual_demand_ramp, price_reversal and negative_price_episode; consumers must tolerate unknown type strings for forward compatibility.
+         * @enum {string}
+         */
+        GridEventType: "negative_price_run" | "price_spike" | "demand_ramp" | "unusual_demand_ramp" | "price_reversal" | "negative_price_episode";
         GridEventSummary: {
             /** Format: uuid */
             id: string;
@@ -672,6 +715,8 @@ export interface components {
             superseded: boolean;
             /** @description {evaluated, missing, edge_incomplete} */
             coverage: Record<string, never>;
+            /** @description Immutable event evidence (reversal trough/peak, episode members, ramp baseline). Null for v1 types. */
+            detail: Record<string, never> | null;
         };
         GridEventDetail: {
             /** Format: uuid */
@@ -703,12 +748,20 @@ export interface components {
                 /** Format: date */
                 endExclusive?: string;
             } | null;
+            /** @description Immutable event evidence (reversal trough/peak, episode members, ramp baseline). Null for v1 types. */
+            detail: Record<string, never> | null;
         };
         GridEventPage: {
             publication: components["schemas"]["GridPublication"];
             events: components["schemas"]["GridEventSummary"][];
-            /** @description Opaque cursor pinning the publication; pass as `cursor`. */
+            /** @description Opaque cursor pinning the publication and the normalised query (type/from/to/sort/filters); pass unchanged as `cursor`. */
             nextCursor: string | null;
+            /** @description Events matching the query scope across the whole pinned publication. */
+            matchingTotal: number;
+            /** @description Per-type counts under the current scope. */
+            typeTotals: {
+                [key: string]: number;
+            };
         };
         GridReplay: {
             event: components["schemas"]["GridEventDetail"];
@@ -716,6 +769,88 @@ export interface components {
             manifest: Record<string, never>;
             /** @description Materialised exact values: series -> day -> 288 slots (decimal strings or null). */
             payload: Record<string, never>;
+        };
+        GridHighlightReason: {
+            /** @enum {string} */
+            code: "highest_price" | "longest_negative_run" | "deepest_negative_price" | "largest_demand_rise" | "unusual_demand_rise" | "largest_price_reversal" | "widest_negative_episode";
+            /** @description 1-based position in the reason’s candidate list; truthful even when capped out. */
+            rank: number;
+            /** @description Eligible candidates of the reason’s event type under the scope. */
+            population: number;
+        };
+        GridHighlight: {
+            /** Format: uuid */
+            id: string;
+            region: components["schemas"]["Region"];
+            type: components["schemas"]["GridEventType"];
+            detectorVersion: string;
+            /** Format: date */
+            marketDay: string;
+            /** Format: date-time */
+            startAt: string;
+            /** Format: date-time */
+            endAt: string;
+            intervalCount: number;
+            durationMinutes: number;
+            /** @description Exact decimal: extreme price (AUD/MWh) or ramp MW. */
+            value: string;
+            edgeIncomplete: boolean;
+            version: number;
+            superseded: boolean;
+            /** @description {evaluated, missing, edge_incomplete} */
+            coverage: Record<string, never>;
+            /** @description Immutable event evidence (reversal trough/peak, episode members, ramp baseline). Null for v1 types. */
+            detail: Record<string, never> | null;
+            /**
+             * @description The list whose round-robin turn selected this card.
+             * @enum {string}
+             */
+            selectedBy: "highest_price" | "longest_negative_run" | "deepest_negative_price" | "largest_demand_rise" | "unusual_demand_rise" | "largest_price_reversal" | "widest_negative_episode";
+            reasons: components["schemas"]["GridHighlightReason"][];
+        };
+        GridHighlights: {
+            publication: components["schemas"]["GridPublication"];
+            /** @enum {string} */
+            selectionVersion: "highlights-v1" | "highlights-v2";
+            /** @description Echo of the normalised query scope the selection ran under. */
+            scope: Record<string, never>;
+            matchingTotal: number;
+            typeTotals: {
+                [key: string]: number;
+            };
+            /** @description Matching events with complete coverage eligible for selection. */
+            eligibleCount: number;
+            /** @description Matching events excluded for incomplete coverage or edge-incomplete data. */
+            excludedCount: number;
+            highlights: components["schemas"]["GridHighlight"][];
+        };
+        GridEventPreview: {
+            /** @enum {string} */
+            version: "preview-v1";
+            /** @enum {string} */
+            metric: "price" | "demand";
+            /** @enum {string} */
+            unit: "AUD/MWh" | "MW";
+            /** @enum {integer} */
+            intervalMinutes: 5;
+            /** Format: date-time */
+            startAt: string;
+            /** Format: date-time */
+            endAt: string;
+            sourcePoints: number;
+            slots: {
+                min: string | null;
+                max: string | null;
+                gap: boolean;
+            }[];
+            eventRanges: {
+                startSlot: number;
+                endSlot: number;
+            }[];
+            /** @description Optional markers, e.g. peakSlot for a reversal. */
+            markers: Record<string, never>;
+            /** @description Preview y-axis is local to the slot range, not a global scale. */
+            localScale: boolean;
         };
     };
     responses: never;
@@ -2083,6 +2218,16 @@ export interface operations {
                 /** @description Inclusive market-day filter; requires `to`. */
                 from?: string;
                 to?: string;
+                /** @description Catalogue order. newest/oldest apply to all types; typed sorts require `type`: longest (run/spike/episode), deepest (run/episode), highest (spike/reversal), largest_rise (ramp/unusual ramp). */
+                sort?: "newest" | "oldest" | "longest" | "deepest" | "highest" | "largest_rise";
+                /** @description Minimum interval-count duration; only with type run, spike or episode. */
+                minDurationMinutes?: number;
+                /** @description Exact decimal lower bound on value; only with type spike, reversal or a ramp type. */
+                valueGte?: string;
+                /** @description Exact decimal upper bound on value; only with type run or episode. */
+                valueLte?: string;
+                /** @description Pin a specific immutable publication instead of the current one. */
+                publication?: string;
                 limit?: number;
                 cursor?: string;
             };
@@ -2100,6 +2245,82 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GridEventPage"];
+                };
+            };
+            /** @description INVALID_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "INVALID_REQUEST";
+                        message: string;
+                    };
+                };
+            };
+            /** @description CATALOGUE_NOT_PUBLISHED, PUBLICATION_NOT_FOUND (stale or wrong-region pin) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "CATALOGUE_NOT_PUBLISHED" | "PUBLICATION_NOT_FOUND";
+                        message: string;
+                    };
+                };
+            };
+            /** @description STORAGE_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "STORAGE_UNAVAILABLE";
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    gridEventHighlights: {
+        parameters: {
+            query: {
+                region: components["schemas"]["Region"];
+                type?: components["schemas"]["GridEventType"];
+                /** @description Inclusive market-day filter; requires `to`. */
+                from?: string;
+                to?: string;
+                /** @description Catalogue order. newest/oldest apply to all types; typed sorts require `type`: longest (run/spike/episode), deepest (run/episode), highest (spike/reversal), largest_rise (ramp/unusual ramp). */
+                sort?: "newest" | "oldest" | "longest" | "deepest" | "highest" | "largest_rise";
+                /** @description Minimum interval-count duration; only with type run, spike or episode. */
+                minDurationMinutes?: number;
+                /** @description Exact decimal lower bound on value; only with type spike, reversal or a ramp type. */
+                valueGte?: string;
+                /** @description Exact decimal upper bound on value; only with type run or episode. */
+                valueLte?: string;
+                /** @description Pin a specific immutable publication instead of the current one. */
+                publication?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Selected highlight cards in display order */
+            200: {
+                headers: {
+                    "Cache-Control": "no-store";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GridHighlights"];
                 };
             };
             /** @description INVALID_REQUEST */
@@ -2185,6 +2406,68 @@ export interface operations {
                     "application/json": {
                         /** @enum {string} */
                         code: "EVENT_NOT_FOUND";
+                        message: string;
+                    };
+                };
+            };
+            /** @description STORAGE_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "STORAGE_UNAVAILABLE";
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    gridEventPreview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Bounded preview slots with event ranges */
+            200: {
+                headers: {
+                    "Cache-Control": "no-store";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GridEventPreview"];
+                };
+            };
+            /** @description INVALID_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "INVALID_REQUEST";
+                        message: string;
+                    };
+                };
+            };
+            /** @description EVENT_NOT_FOUND or PREVIEW_NOT_FOUND */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "EVENT_NOT_FOUND" | "PREVIEW_NOT_FOUND";
                         message: string;
                     };
                 };

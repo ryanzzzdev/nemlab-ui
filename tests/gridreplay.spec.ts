@@ -1,30 +1,24 @@
 import { expect, test } from "@playwright/test";
-import { eventPage, events, replay } from "./fixtures/gridreplay";
+import { eventPage, events, highlightsPage, routeGridReplay } from "./fixtures/gridreplay";
 
 test.beforeEach(async ({ page, context }) => {
   await context.addCookies([
     { name: "operator", value: "must-not-send", url: "http://127.0.0.1:4173" },
   ]);
-  await page.route("**/api/v1/events**", async (route) => {
-    const request = route.request();
-    expect(request.method()).toBe("GET");
-    expect(request.headers()["authorization"]).toBeUndefined();
-    expect(request.headers()["cookie"]).toBeUndefined();
-    const url = new URL(request.url());
-    const replayMatch = url.pathname.match(/^\/api\/v1\/events\/([0-9a-f-]{36})\/replay$/);
-    if (replayMatch) {
-      await route.fulfill({ json: replay(replayMatch[1]!) });
-      return;
-    }
-    await route.fulfill({ json: eventPage() });
-  });
+  await page.route("**/api/v1/events**", (route) => routeGridReplay(route));
 });
 
-test("the catalogue lists published events and replay renders the day", async ({ page }) => {
+test("highlights are the default view and a replay opens from a card", async ({ page }) => {
   await page.goto("/gridreplay");
   await expect(page.getByText(/NSW1 · 2023-09-01 to 2023-10-01 · 2 events/)).toBeVisible();
+  await expect(
+    page.getByText("2 highlights selected from 2 eligible of 2 matching events"),
+  ).toBeVisible();
   await expect(page.getByRole("button", { name: /Negative prices for 15 minutes/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /Price spike to 1500.25/ })).toBeVisible();
+  // Each card shows its truthful rank and a bounded preview sparkline.
+  await expect(page.getByText("#1 longest negative run of 12 eligible")).toBeVisible();
+  await expect(page.locator(".event-card svg.spark").first()).toBeVisible();
 
   await page.getByRole("button", { name: /Negative prices for 15 minutes/ }).click();
   await expect(page).toHaveURL(/event=aaaaaaaa-1111-4000-8000-000000000001/);
@@ -41,15 +35,55 @@ test("the catalogue lists published events and replay renders the day", async ({
   );
 });
 
-test("filters are sent to the catalogue request", async ({ page }) => {
-  const seen: string[] = [];
-  await page.route("**/api/v1/events**", async (route) => {
-    const url = new URL(route.request().url());
-    if (!url.pathname.includes("/replay")) seen.push(url.search);
-    await route.fulfill({ json: eventPage([]) });
-  });
+test("All events lists the catalogue with typed sorts and bounds", async ({ page }) => {
+  const seen: URL[] = [];
+  await page.route("**/api/v1/events**", (route) =>
+    routeGridReplay(route, { onList: (url) => seen.push(url) }),
+  );
   await page.goto("/gridreplay");
-  await expect(page.getByText("No events match these filters")).toBeVisible();
+  await page.getByRole("button", { name: "All events" }).click();
+  await expect(page).toHaveURL(/view=all/);
+  await expect(page.getByText("2 matching events")).toBeVisible();
+
+  await page
+    .locator(".replay-filters")
+    .getByRole("combobox", { name: "Event type" })
+    .selectOption("price_spike");
+  await page
+    .locator(".replay-filters")
+    .getByRole("combobox", { name: "Sort" })
+    .selectOption("highest");
+  await page.getByRole("button", { name: "Update list" }).click();
+  await expect(page).toHaveURL(/type=price_spike/);
+  await expect(page).toHaveURL(/sort=highest/);
+  // Requests so far: highlights on load, catalogue on view switch, filtered
+  // catalogue after Update list.
+  await expect.poll(() => seen.length).toBe(3);
+  const last = seen[2]!;
+  expect(last.pathname).toBe("/api/v1/events");
+  expect(last.searchParams.get("type")).toBe("price_spike");
+  expect(last.searchParams.get("sort")).toBe("highest");
+
+  // Numeric bounds appear only for the types that support them.
+  await page.locator(".replay-more summary").click();
+  await page
+    .locator(".replay-more")
+    .getByRole("spinbutton", { name: "Min duration (min)" })
+    .fill("10");
+  await page.locator(".replay-more").getByRole("textbox", { name: "Value at least" }).fill("500");
+  await page.getByRole("button", { name: "Update list" }).click();
+  await expect.poll(() => seen.length).toBe(4);
+  expect(seen[3]!.searchParams.get("minDurationMinutes")).toBe("10");
+  expect(seen[3]!.searchParams.get("valueGte")).toBe("500");
+});
+
+test("filters are sent to the highlights scope", async ({ page }) => {
+  const seen: URL[] = [];
+  await page.route("**/api/v1/events**", (route) =>
+    routeGridReplay(route, { highlights: highlightsPage([]), onList: (url) => seen.push(url) }),
+  );
+  await page.goto("/gridreplay");
+  await expect(page.getByText("No highlights in this scope")).toBeVisible();
   await page
     .locator(".replay-filters")
     .getByRole("combobox", { name: "Event type" })
@@ -64,11 +98,12 @@ test("filters are sent to the catalogue request", async ({ page }) => {
     .fill("2023-09-05");
   await page.getByRole("button", { name: "Update list" }).click();
   await expect.poll(() => seen.length).toBe(2);
-  const filtered = new URLSearchParams(seen[1]!);
-  expect(filtered.get("type")).toBe("price_spike");
-  expect(filtered.get("from")).toBe("2023-09-03");
-  expect(filtered.get("to")).toBe("2023-09-05");
-  expect(filtered.get("region")).toBe("NSW1");
+  const filtered = seen[1]!;
+  expect(filtered.pathname).toBe("/api/v1/events/highlights");
+  expect(filtered.searchParams.get("type")).toBe("price_spike");
+  expect(filtered.searchParams.get("from")).toBe("2023-09-03");
+  expect(filtered.searchParams.get("to")).toBe("2023-09-05");
+  expect(filtered.searchParams.get("region")).toBe("NSW1");
 });
 
 test("a shared replay link opens the same event", async ({ page }) => {
@@ -92,18 +127,17 @@ test("the replay slider and play controls move the shared cursor", async ({ page
 });
 
 test("filter and event state round-trip through the URL", async ({ page }) => {
-  const seen: string[] = [];
-  await page.route("**/api/v1/events**", async (route) => {
-    const url = new URL(route.request().url());
-    if (!url.pathname.includes("/replay")) seen.push(url.search);
-    await route.fulfill({ json: eventPage() });
-  });
+  const seen: URL[] = [];
+  await page.route("**/api/v1/events**", (route) =>
+    routeGridReplay(route, { onList: (url) => seen.push(url) }),
+  );
   // A shared filtered link applies its filters on direct load.
   await page.goto("/gridreplay?type=price_spike&from=2023-09-03&to=2023-09-05");
   await expect(page.getByRole("button", { name: /Price spike to 1500.25/ })).toBeVisible();
-  const loaded = new URLSearchParams(seen[0]!);
-  expect(loaded.get("type")).toBe("price_spike");
-  expect(loaded.get("from")).toBe("2023-09-03");
+  const loaded = seen[0]!;
+  expect(loaded.pathname).toBe("/api/v1/events/highlights");
+  expect(loaded.searchParams.get("type")).toBe("price_spike");
+  expect(loaded.searchParams.get("from")).toBe("2023-09-03");
   // Opening a card keeps the filter params and adds the event.
   await page.getByRole("button", { name: /Price spike to 1500.25/ }).click();
   await expect(page).toHaveURL(/type=price_spike/);
@@ -114,18 +148,20 @@ test("filter and event state round-trip through the URL", async ({ page }) => {
 });
 
 test("invalid URL parameters fall back to defaults", async ({ page }) => {
-  const seen: string[] = [];
-  await page.route("**/api/v1/events**", async (route) => {
-    const url = new URL(route.request().url());
-    if (!url.pathname.includes("/replay")) seen.push(url.search);
-    await route.fulfill({ json: eventPage() });
-  });
-  await page.goto("/gridreplay?region=XX9&type=bogus&from=nope&to=also-nope&event=not-a-uuid");
+  const seen: URL[] = [];
+  await page.route("**/api/v1/events**", (route) =>
+    routeGridReplay(route, { onList: (url) => seen.push(url) }),
+  );
+  await page.goto(
+    "/gridreplay?view=bogus&region=XX9&type=bogus&sort=highest&from=nope&to=also-nope&event=not-a-uuid",
+  );
   await expect(page.getByRole("button", { name: /Negative prices for 15 minutes/ })).toBeVisible();
-  const loaded = new URLSearchParams(seen[0]!);
-  expect(loaded.get("region")).toBe("NSW1");
-  expect(loaded.get("type")).toBeNull();
-  expect(loaded.get("from")).toBeNull();
+  const loaded = seen[0]!;
+  expect(loaded.pathname).toBe("/api/v1/events/highlights");
+  expect(loaded.searchParams.get("region")).toBe("NSW1");
+  expect(loaded.searchParams.get("type")).toBeNull();
+  expect(loaded.searchParams.get("from")).toBeNull();
+  expect(loaded.searchParams.get("sort")).toBeNull();
   await expect(page.getByRole("heading", { name: "Replay", exact: true })).toHaveCount(0);
 });
 
@@ -153,21 +189,17 @@ test("a removed event explains it is no longer available", async ({ page }) => {
 
 test("catalogue pagination fetches the pinned next page", async ({ page }) => {
   const cursors: (string | null)[] = [];
-  await page.route("**/api/v1/events**", async (route) => {
-    const url = new URL(route.request().url());
-    if (url.pathname.includes("/replay")) {
-      await route.fulfill({ json: replay(events[0]!.id) });
-      return;
-    }
-    const cursor = url.searchParams.get("cursor");
-    cursors.push(cursor);
-    await route.fulfill({
-      json: cursor
-        ? eventPage([{ ...events[1]!, id: "aaaaaaaa-1111-4000-8000-000000000099" }])
-        : { ...eventPage([events[0]!]), nextCursor: "pinned-cursor" },
-    });
-  });
-  await page.goto("/gridreplay");
+  await page.route("**/api/v1/events**", (route) =>
+    routeGridReplay(route, {
+      page: (cursor) => {
+        cursors.push(cursor);
+        return cursor
+          ? eventPage([{ ...events[1]!, id: "aaaaaaaa-1111-4000-8000-000000000099" }])
+          : { ...eventPage([events[0]!]), nextCursor: "pinned-cursor" };
+      },
+    }),
+  );
+  await page.goto("/gridreplay?view=all");
   await expect(page.getByText(/Negative prices for 15 minutes/)).toBeVisible();
   await page.getByRole("button", { name: "Show more events" }).click();
   await expect(page.getByText(/Price spike to 1500.25/)).toBeVisible();

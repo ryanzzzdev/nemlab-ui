@@ -7,6 +7,11 @@ export type EventSummary = components["schemas"]["GridEventSummary"];
 export type EventDetail = components["schemas"]["GridEventDetail"];
 export type Publication = components["schemas"]["GridPublication"];
 export type EventPage = components["schemas"]["GridEventPage"];
+export type Highlights = components["schemas"]["GridHighlights"];
+export type Highlight = components["schemas"]["GridHighlight"];
+export type HighlightReason = components["schemas"]["GridHighlightReason"];
+export type Preview = components["schemas"]["GridEventPreview"];
+export type Sort = "newest" | "oldest" | "longest" | "deepest" | "highest" | "largest_rise";
 
 export type ManifestSeries = {
   metric: string;
@@ -37,7 +42,23 @@ const day = /^\d{4}-\d{2}-\d{2}$/;
 const decimal = /^-?\d+(\.\d+)?$/;
 const instant = (value: unknown) => typeof value === "string" && Number.isFinite(Date.parse(value));
 const regions: Region[] = ["NSW1", "QLD1", "SA1", "TAS1", "VIC1"];
-const types: EventType[] = ["negative_price_run", "price_spike", "demand_ramp"];
+const types: EventType[] = [
+  "negative_price_run",
+  "price_spike",
+  "demand_ramp",
+  "unusual_demand_ramp",
+  "price_reversal",
+  "negative_price_episode",
+];
+const reasons = new Set<HighlightReason["code"]>([
+  "highest_price",
+  "longest_negative_run",
+  "deepest_negative_price",
+  "largest_demand_rise",
+  "unusual_demand_rise",
+  "largest_price_reversal",
+  "widest_negative_episode",
+]);
 
 function validEvent(event: EventSummary): boolean {
   return (
@@ -58,7 +79,24 @@ function validEvent(event: EventSummary): boolean {
     event.version >= 1 &&
     typeof event.superseded === "boolean" &&
     typeof event.coverage === "object" &&
-    event.coverage !== null
+    event.coverage !== null &&
+    (event.detail === null || (typeof event.detail === "object" && !Array.isArray(event.detail)))
+  );
+}
+
+function validHighlight(highlight: Highlight): boolean {
+  return (
+    validEvent(highlight) &&
+    reasons.has(highlight.selectedBy) &&
+    Array.isArray(highlight.reasons) &&
+    highlight.reasons.every(
+      (reason) =>
+        reasons.has(reason.code) &&
+        Number.isInteger(reason.rank) &&
+        reason.rank >= 1 &&
+        Number.isInteger(reason.population) &&
+        reason.population >= 0,
+    )
   );
 }
 
@@ -120,17 +158,27 @@ function validReplay(replay: Replay): boolean {
   });
 }
 
-type PublicPaths = Pick<paths, "/api/v1/events" | "/api/v1/events/{id}/replay">;
+type PublicPaths = Pick<
+  paths,
+  | "/api/v1/events"
+  | "/api/v1/events/highlights"
+  | "/api/v1/events/{id}/preview"
+  | "/api/v1/events/{id}/replay"
+>;
 
 const client = createClient<PublicPaths>({
   baseUrl: window.location.origin,
   fetch: async (request) => {
     const url = new URL(request.url);
-    const replayPath = /^\/api\/v1\/events\/[0-9a-f-]{36}\/replay$/;
+    const eventPath = /^\/api\/v1\/events\/[0-9a-f-]{36}\/(preview|replay)$/;
     if (
       url.origin !== window.location.origin ||
       request.method !== "GET" ||
-      !(url.pathname === "/api/v1/events" || replayPath.test(url.pathname))
+      !(
+        url.pathname === "/api/v1/events" ||
+        url.pathname === "/api/v1/events/highlights" ||
+        eventPath.test(url.pathname)
+      )
     ) {
       throw new Error("This request is not a public GridReplay read.");
     }
@@ -179,26 +227,57 @@ const client = createClient<PublicPaths>({
   },
 });
 
+// The query scope shared by the event list and the highlights selection:
+// both endpoints normalise the same filters and answer within one pinned
+// publication.
+export type EventScope = {
+  region: Region;
+  type?: EventType;
+  from?: string;
+  to?: string;
+  sort?: Sort;
+  minDurationMinutes?: number;
+  valueGte?: string;
+  valueLte?: string;
+  publication?: string;
+};
+
+function scopeQuery(scope: EventScope) {
+  return {
+    region: scope.region,
+    ...(scope.type ? { type: scope.type } : {}),
+    ...(scope.from && scope.to ? { from: scope.from, to: scope.to } : {}),
+    ...(scope.sort && scope.sort !== "newest" ? { sort: scope.sort } : {}),
+    ...(scope.minDurationMinutes !== undefined
+      ? { minDurationMinutes: scope.minDurationMinutes }
+      : {}),
+    ...(scope.valueGte ? { valueGte: scope.valueGte } : {}),
+    ...(scope.valueLte ? { valueLte: scope.valueLte } : {}),
+    ...(scope.publication ? { publication: scope.publication } : {}),
+  };
+}
+
+function validTotals(totals: Record<string, number>): boolean {
+  return (
+    typeof totals === "object" &&
+    totals !== null &&
+    Object.entries(totals).every(
+      ([type, count]) => types.includes(type as EventType) && Number.isInteger(count) && count >= 0,
+    )
+  );
+}
+
 export async function listEvents(
-  options: {
-    region: Region;
-    type?: EventType;
-    from?: string;
-    to?: string;
-    cursor?: string;
-    limit?: number;
-  },
+  scope: EventScope & { cursor?: string; limit?: number },
   signal: AbortSignal,
 ): Promise<EventPage> {
   try {
     const { data } = await client.GET("/api/v1/events", {
       params: {
         query: {
-          region: options.region,
-          ...(options.type ? { type: options.type } : {}),
-          ...(options.from && options.to ? { from: options.from, to: options.to } : {}),
-          ...(options.cursor ? { cursor: options.cursor } : {}),
-          ...(options.limit ? { limit: options.limit } : {}),
+          ...scopeQuery(scope),
+          ...(scope.cursor ? { cursor: scope.cursor } : {}),
+          ...(scope.limit ? { limit: scope.limit } : {}),
         },
       },
       signal,
@@ -207,12 +286,98 @@ export async function listEvents(
     if (
       !data ||
       !validPublication(data.publication) ||
-      data.publication.region !== options.region ||
+      data.publication.region !== scope.region ||
       !Array.isArray(data.events) ||
       !data.events.every(validEvent) ||
-      !(data.nextCursor === null || typeof data.nextCursor === "string")
+      !(data.nextCursor === null || typeof data.nextCursor === "string") ||
+      !Number.isInteger(data.matchingTotal) ||
+      !validTotals(data.typeTotals)
     ) {
       throw new Error("The GridReplay service returned an invalid catalogue page.");
+    }
+    return data;
+  } catch (error) {
+    if (error instanceof SyntaxError || error instanceof TypeError) {
+      throw new Error("The GridReplay service returned an unreadable response. Try again later.");
+    }
+    throw error;
+  }
+}
+
+export async function listHighlights(scope: EventScope, signal: AbortSignal): Promise<Highlights> {
+  try {
+    const { data } = await client.GET("/api/v1/events/highlights", {
+      params: { query: scopeQuery(scope) },
+      signal,
+    });
+    if (
+      !data ||
+      !validPublication(data.publication) ||
+      data.publication.region !== scope.region ||
+      !["highlights-v1", "highlights-v2"].includes(data.selectionVersion) ||
+      !Number.isInteger(data.matchingTotal) ||
+      !validTotals(data.typeTotals) ||
+      !Number.isInteger(data.eligibleCount) ||
+      !Number.isInteger(data.excludedCount) ||
+      !Array.isArray(data.highlights) ||
+      !data.highlights.every(validHighlight)
+    ) {
+      throw new Error("The GridReplay service returned an invalid highlights selection.");
+    }
+    return data;
+  } catch (error) {
+    if (error instanceof SyntaxError || error instanceof TypeError) {
+      throw new Error("The GridReplay service returned an unreadable response. Try again later.");
+    }
+    throw error;
+  }
+}
+
+function validPreview(preview: Preview): boolean {
+  return (
+    preview !== null &&
+    typeof preview === "object" &&
+    preview.version === "preview-v1" &&
+    ["price", "demand"].includes(preview.metric) &&
+    ["AUD/MWh", "MW"].includes(preview.unit) &&
+    preview.intervalMinutes === 5 &&
+    instant(preview.startAt) &&
+    instant(preview.endAt) &&
+    Date.parse(preview.endAt) > Date.parse(preview.startAt) &&
+    Number.isInteger(preview.sourcePoints) &&
+    preview.sourcePoints >= 0 &&
+    Array.isArray(preview.slots) &&
+    preview.slots.length >= 1 &&
+    preview.slots.length <= 96 &&
+    preview.slots.every(
+      (slot) =>
+        (slot.min === null || decimal.test(slot.min)) &&
+        (slot.max === null || decimal.test(slot.max)) &&
+        typeof slot.gap === "boolean",
+    ) &&
+    Array.isArray(preview.eventRanges) &&
+    preview.eventRanges.every(
+      (range) =>
+        Number.isInteger(range.startSlot) &&
+        Number.isInteger(range.endSlot) &&
+        range.startSlot >= 0 &&
+        range.endSlot < preview.slots.length &&
+        range.endSlot >= range.startSlot,
+    ) &&
+    typeof preview.markers === "object" &&
+    preview.markers !== null &&
+    preview.localScale === true
+  );
+}
+
+export async function readPreview(id: string, signal: AbortSignal): Promise<Preview> {
+  try {
+    const { data } = await client.GET("/api/v1/events/{id}/preview", {
+      params: { path: { id } },
+      signal,
+    });
+    if (!data || !validPreview(data)) {
+      throw new Error("The GridReplay service returned an invalid event preview.");
     }
     return data;
   } catch (error) {

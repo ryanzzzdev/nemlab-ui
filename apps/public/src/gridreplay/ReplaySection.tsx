@@ -58,6 +58,50 @@ function valueAt(values: (string | null)[], index: number): number | null {
   return value === null || value === undefined ? null : Number(value);
 }
 
+// One plain-language line of the immutable detector evidence stored on v2
+// events (reversal trough/peak, episode membership, ramp baseline).
+function detailSummary(replay: Replay): string | null {
+  const detail = replay.event.detail as Record<string, unknown> | null;
+  if (!detail) return null;
+  const num = (key: string) => {
+    const value = detail[key];
+    const parsed = typeof value === "string" || typeof value === "number" ? Number(value) : NaN;
+    return Number.isFinite(parsed) ? parsed : null;
+  };
+  const day = (key: string) => (typeof detail[key] === "string" ? (detail[key] as string) : null);
+  switch (replay.event.type) {
+    case "price_reversal": {
+      const trough = num("trough");
+      const rise = num("rise");
+      const riseMinutes = num("riseMinutes");
+      if (trough === null || rise === null) return null;
+      const parts = [`trough ${trough.toFixed(2)} AUD/MWh`, `rise ${rise.toFixed(2)} AUD/MWh`];
+      if (riseMinutes !== null) parts.push(`over ${riseMinutes} min`);
+      const members = Array.isArray(detail.memberRuns) ? detail.memberRuns.length : 0;
+      if (members > 1) parts.push(`${members} linked negative runs`);
+      return `Detected: ${parts.join(" · ")}`;
+    }
+    case "negative_price_episode": {
+      const count = num("memberCount");
+      const negative = num("negativeMinutes");
+      const gaps = num("gapMinutes");
+      if (count === null || negative === null || gaps === null) return null;
+      return `Detected: ${count} negative runs grouped · ${negative} min negative · ${gaps} min between runs`;
+    }
+    case "unusual_demand_ramp": {
+      const quantile = num("quantileValue");
+      const samples = num("classSamples");
+      const complete = num("completeDays");
+      const start = day("baselineStart");
+      const end = day("baselineEnd");
+      if (quantile === null || samples === null) return null;
+      return `Detected: rise above the ${detail.quantile ?? "P90"} baseline of ${quantile.toFixed(0)} MW (${samples} ${detail.dayClass ?? "same-class"} samples from ${complete ?? "?"} complete days, ${start ?? "?"} to ${end ?? "?"})`;
+    }
+    default:
+      return null;
+  }
+}
+
 // The event start/end instants are interval-end timestamps on the UTC+10 grid.
 function eventSpan(replay: Replay, windowStart: number): [number, number] {
   const start = Math.round((Date.parse(replay.event.startAt) - windowStart) / INTERVAL_MS) - 1;
@@ -148,6 +192,7 @@ export default function ReplaySection({ replay }: { replay: Replay }) {
             {marketTime(replay.event.endAt)} NEM · {replay.event.durationMinutes} minutes
             {replay.event.edgeIncomplete && " · touches the catalogue edge"}
           </p>
+          {detailSummary(replay) && <p className="availability">{detailSummary(replay)}</p>}
         </div>
         <div className="replay-actions">
           <Link className="ghost" to={`/batterylab?day=${replay.event.marketDay}`}>
