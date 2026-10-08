@@ -523,6 +523,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/v1/access-audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Owner-only bounded access-audit trail, newest first */
+        get: operations["listAccessAudit"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/v1/access-requests": {
         parameters: {
             query?: never;
@@ -1398,6 +1415,14 @@ export interface components {
             /** Format: date-time */
             revokedAt: string | null;
         };
+        AccessAuditView: {
+            /** Format: date-time */
+            occurredAt: string;
+            actor: string;
+            action: string;
+            subject: string | null;
+            result: string;
+        };
         AccessDecision: {
             /** @enum {string} */
             decision: "approve" | "reject";
@@ -1545,10 +1570,10 @@ export interface components {
             /** Format: uuid */
             id: string;
             status: string;
-            attempts?: number;
-            diagnostic?: string;
+            attempts?: number | null;
+            diagnostic?: string | null;
             /** Format: date */
-            nextDay?: string;
+            nextDay?: string | null;
         };
         LoadOperationChild: {
             /** @enum {string} */
@@ -4035,6 +4060,67 @@ export interface operations {
                     "application/json": {
                         /** @enum {string} */
                         code: "ACCESS_CONFLICT";
+                        message: string;
+                    };
+                };
+            };
+            /** @description STORAGE_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "STORAGE_UNAVAILABLE";
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    listAccessAudit: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Recent access-audit rows */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessAuditView"][];
+                };
+            };
+            /** @description UNAUTHORISED */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "UNAUTHORISED";
+                        message: string;
+                    };
+                };
+            };
+            /** @description FORBIDDEN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "FORBIDDEN";
                         message: string;
                     };
                 };

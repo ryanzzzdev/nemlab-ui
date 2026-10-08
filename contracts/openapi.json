@@ -4918,6 +4918,122 @@
     ]
    }
   },
+  "/api/admin/v1/access-audit": {
+   "get": {
+    "operationId": "listAccessAudit",
+    "summary": "Owner-only bounded access-audit trail, newest first",
+    "parameters": [
+     {
+      "name": "limit",
+      "in": "query",
+      "schema": {
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 100,
+       "default": 100
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Recent access-audit rows",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "array",
+         "items": {
+          "$ref": "#/components/schemas/AccessAuditView"
+         }
+        }
+       }
+      }
+     },
+     "401": {
+      "description": "UNAUTHORISED",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "UNAUTHORISED"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "403": {
+      "description": "FORBIDDEN",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "FORBIDDEN"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     },
+     "503": {
+      "description": "STORAGE_UNAVAILABLE",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "additionalProperties": false,
+         "required": [
+          "code",
+          "message"
+         ],
+         "properties": {
+          "code": {
+           "type": "string",
+           "enum": [
+            "STORAGE_UNAVAILABLE"
+           ]
+          },
+          "message": {
+           "type": "string"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "sessionCookie": []
+     }
+    ]
+   }
+  },
   "/api/admin/v1/access-requests": {
    "get": {
     "operationId": "listAccessRequests",
@@ -9361,6 +9477,36 @@
       "type": "string",
       "format": "date-time",
       "nullable": true
+     }
+    }
+   },
+   "AccessAuditView": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+     "occurredAt",
+     "actor",
+     "action",
+     "subject",
+     "result"
+    ],
+    "properties": {
+     "occurredAt": {
+      "type": "string",
+      "format": "date-time"
+     },
+     "actor": {
+      "type": "string"
+     },
+     "action": {
+      "type": "string"
+     },
+     "subject": {
+      "type": "string",
+      "nullable": true
+     },
+     "result": {
+      "type": "string"
      }
     }
    },
