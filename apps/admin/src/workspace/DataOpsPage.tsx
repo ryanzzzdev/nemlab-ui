@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { useNavigate, useOutletContext, useSearchParams } from "react-router";
+import { useOutletContext, useSearchParams } from "react-router";
 import { REGIONS, marketDay, plusDays } from "../api";
 import type { Region, SessionView } from "../api";
 import { ActivityPane, Inspector } from "../components/Panes";
@@ -8,6 +8,8 @@ import { Stat, StatStrip, Tabs, Toolbar } from "../components/Toolbar";
 import { Empty } from "../components/States";
 import { LOAD_DRAFT_KEY } from "../pages/LoadPage";
 import { CoverageView, DayInspector, baselineQuery, coverageQuery } from "./CoverageView";
+import { LoadDrawer } from "./LoadDrawer";
+import { PublishDrawer } from "./PublishDrawer";
 import {
   ActivityBody,
   ImportInspector,
@@ -56,7 +58,6 @@ function scopeFromParams(params: URLSearchParams): Scope {
 
 export function DataOpsPage() {
   const session = useOutletContext<SessionView>();
-  const navigate = useNavigate();
   const client = useQueryClient();
   const [params, setParams] = useSearchParams();
 
@@ -71,6 +72,7 @@ export function DataOpsPage() {
   const [note, setNote] = useState<string | null>(null);
   const [allRecent, setAllRecent] = useState(false);
   const [pubsTab, setPubsTab] = useState<"pubs" | "attempts">("pubs");
+  const [openDrawer, setOpenDrawer] = useState<"load" | "publish" | null>(null);
 
   useEffect(() => setDraft(scope), [scope.region, scope.start, scope.end]);
 
@@ -178,6 +180,15 @@ export function DataOpsPage() {
             baseline={baseline}
             day={selection.id}
             session={session}
+            onLoadDay={(d) => {
+              // Load-this-day is a new explicit draft — it replaces any
+              // unfinished drawer draft rather than resuming it.
+              sessionStorage.setItem(
+                LOAD_DRAFT_KEY,
+                JSON.stringify({ region: scope.region, start: d, end: d }),
+              );
+              setOpenDrawer("load");
+            }}
           />
         );
       case "op": {
@@ -259,17 +270,10 @@ export function DataOpsPage() {
         </button>
         {session.role === "owner" && (
           <>
-            <button
-              type="button"
-              className="btn"
-              onClick={() => {
-                sessionStorage.setItem(LOAD_DRAFT_KEY, JSON.stringify(draft));
-                void navigate("/load");
-              }}
-            >
+            <button type="button" className="btn" onClick={() => setOpenDrawer("load")}>
               Load data
             </button>
-            <button type="button" className="btn" onClick={() => void navigate("/publications")}>
+            <button type="button" className="btn" onClick={() => setOpenDrawer("publish")}>
               Review &amp; publish
             </button>
           </>
@@ -403,6 +407,23 @@ export function DataOpsPage() {
         </div>
         <Inspector>{inspector()}</Inspector>
       </div>
+      {session.role === "owner" && (
+        <>
+          <LoadDrawer
+            scope={scope}
+            session={session}
+            open={openDrawer === "load"}
+            onClose={() => setOpenDrawer(null)}
+            onStarted={() => changeView("jobs")}
+          />
+          <PublishDrawer
+            scope={scope}
+            session={session}
+            open={openDrawer === "publish"}
+            onClose={() => setOpenDrawer(null)}
+          />
+        </>
+      )}
     </>
   );
 }

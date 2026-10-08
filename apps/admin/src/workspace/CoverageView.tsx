@@ -1,5 +1,4 @@
 import type { UseQueryResult } from "@tanstack/react-query";
-import { useNavigate } from "react-router";
 import { apiGet, plusDays } from "../api";
 import type {
   GridBaselineReadiness,
@@ -11,7 +10,6 @@ import type {
 import { DataTable } from "../components/Table";
 import type { Column } from "../components/Table";
 import { Failure, Loading } from "../components/States";
-import { LOAD_DRAFT_KEY } from "../pages/LoadPage";
 import type { Scope } from "./scope";
 
 export function coverageQuery(region: Region, start: string, endEx: string) {
@@ -124,14 +122,15 @@ export function DayInspector({
   baseline,
   day,
   session,
+  onLoadDay,
 }: {
   scope: Scope;
   coverage: UseQueryResult<GridCoverage>;
   baseline: UseQueryResult<GridBaselineReadiness>;
   day: string;
   session: SessionView;
+  onLoadDay: (day: string) => void;
 }) {
-  const navigate = useNavigate();
   const row = coverage.data?.days.find((d) => d.day === day);
   if (!row) {
     return <p className="empty-insp">That day is outside the current scope.</p>;
@@ -198,17 +197,7 @@ export function DayInspector({
       )}
       <div className="insp-actions">
         {session.role === "owner" ? (
-          <button
-            type="button"
-            className="btn"
-            onClick={() => {
-              sessionStorage.setItem(
-                LOAD_DRAFT_KEY,
-                JSON.stringify({ region: scope.region, start: day, end: day }),
-              );
-              void navigate("/load");
-            }}
-          >
+          <button type="button" className="btn" onClick={() => onLoadDay(day)}>
             Load data
           </button>
         ) : (
