@@ -105,7 +105,7 @@ export function eventTitle(
   const detail = (event.detail ?? {}) as Record<string, unknown>;
   switch (event.type) {
     case "negative_price_run":
-      return `Negative prices for ${event.durationMinutes} minutes (low ${value.toFixed(2)})`;
+      return `Negative prices for ${durationText(event.durationMinutes)} (low ${value.toFixed(2)})`;
     case "price_spike":
       return `Price spike to ${value.toFixed(2)} AUD/MWh`;
     case "demand_ramp":
@@ -121,8 +121,8 @@ export function eventTitle(
     case "negative_price_episode": {
       const negative = typeof detail.negativeMinutes === "number" ? detail.negativeMinutes : null;
       return negative === null
-        ? `Negative-price episode over ${event.durationMinutes} minutes`
-        : `Negative-price episode — ${negative} min negative over ${event.durationMinutes} min`;
+        ? `Negative-price episode over ${durationText(event.durationMinutes)}`
+        : `Negative-price episode — ${negative} min negative over ${durationText(event.durationMinutes)}`;
     }
   }
 }
@@ -137,11 +137,19 @@ function coverageTag(event: EventSummary): string {
     : `${event.edgeIncomplete ? "edge-incomplete · " : ""}${coverage.missing} missing`;
 }
 
+// Duration is exact minutes; render it readably ("9h 5m", "45 min").
+export function durationText(minutes: number): string {
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  if (hours === 0) return `${rest} min`;
+  return rest === 0 ? `${hours}h` : `${hours}h ${rest}m`;
+}
+
 function statLine(event: EventSummary): string {
   const count = RAMP_TYPES.has(event.type)
     ? `${event.intervalCount} observations`
     : `${event.intervalCount} interval${event.intervalCount === 1 ? "" : "s"}`;
-  return `${count} · ${event.durationMinutes} min`;
+  return `${count} · ${durationText(event.durationMinutes)}`;
 }
 
 // A bounded sparkline rendered from the immutable preview endpoint — never a
@@ -267,6 +275,12 @@ function EventCard({
 const dayPattern = /^\d{4}-\d{2}-\d{2}$/;
 const idPattern = /^[0-9a-f-]{36}$/;
 const decimalPattern = /^-?\d+(\.\d+)?$/;
+
+// Market-day labels are UTC+10 calendar days extended in UTC space.
+function inclusiveEnd(endExclusive: string): string {
+  const last = new Date(Date.parse(`${endExclusive}T00:00:00Z`) - 86400000);
+  return last.toISOString().slice(0, 10);
+}
 
 type Filters = {
   view: "highlights" | "all";
@@ -466,8 +480,8 @@ export function GridReplayWorkspace() {
           <h2 id="catalogue-heading">Event catalogue</h2>
           {publication && (
             <span className="availability">
-              {publication.region} · {publication.startDay} to {publication.endExclusive} ·{" "}
-              {publication.eventCount} events
+              {publication.region} · {publication.startDay} to{" "}
+              {inclusiveEnd(publication.endExclusive)} · {publication.eventCount} events
             </span>
           )}
         </div>

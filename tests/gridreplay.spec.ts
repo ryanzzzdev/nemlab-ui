@@ -10,17 +10,17 @@ test.beforeEach(async ({ page, context }) => {
 
 test("highlights are the default view and a replay opens from a card", async ({ page }) => {
   await page.goto("/gridreplay");
-  await expect(page.getByText(/NSW1 · 2023-09-01 to 2023-10-01 · 2 events/)).toBeVisible();
+  await expect(page.getByText(/NSW1 · 2023-09-01 to 2023-09-30 · 2 events/)).toBeVisible();
   await expect(
     page.getByText("2 highlights selected from 2 eligible of 2 matching events"),
   ).toBeVisible();
-  await expect(page.getByRole("button", { name: /Negative prices for 15 minutes/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Negative prices for 15 min/ })).toBeVisible();
   await expect(page.getByRole("button", { name: /Price spike to 1500.25/ })).toBeVisible();
   // Each card shows its truthful rank and a bounded preview sparkline.
   await expect(page.getByText("#1 longest negative run of 12 eligible")).toBeVisible();
   await expect(page.locator(".event-card svg.spark").first()).toBeVisible();
 
-  await page.getByRole("button", { name: /Negative prices for 15 minutes/ }).click();
+  await page.getByRole("button", { name: /Negative prices for 15 min/ }).click();
   await expect(page).toHaveURL(/event=aaaaaaaa-1111-4000-8000-000000000001/);
   await expect(page.getByRole("heading", { name: "Replay", exact: true })).toBeVisible();
   await expect(page.locator(".chart-plot svg").first()).toBeVisible();
@@ -155,7 +155,7 @@ test("invalid URL parameters fall back to defaults", async ({ page }) => {
   await page.goto(
     "/gridreplay?view=bogus&region=XX9&type=bogus&sort=highest&from=nope&to=also-nope&event=not-a-uuid",
   );
-  await expect(page.getByRole("button", { name: /Negative prices for 15 minutes/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Negative prices for 15 min/ })).toBeVisible();
   const loaded = seen[0]!;
   expect(loaded.pathname).toBe("/api/v1/events/highlights");
   expect(loaded.searchParams.get("region")).toBe("NSW1");
@@ -200,7 +200,7 @@ test("catalogue pagination fetches the pinned next page", async ({ page }) => {
     }),
   );
   await page.goto("/gridreplay?view=all");
-  await expect(page.getByText(/Negative prices for 15 minutes/)).toBeVisible();
+  await expect(page.getByText(/Negative prices for 15 min/)).toBeVisible();
   await page.getByRole("button", { name: "Show more events" }).click();
   await expect(page.getByText(/Price spike to 1500.25/)).toBeVisible();
   expect(cursors).toEqual([null, "pinned-cursor"]);

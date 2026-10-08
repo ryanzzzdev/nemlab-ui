@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
-import { eventTitle, marketTime } from "./GridReplayWorkspace";
+import { durationText, eventTitle, marketTime } from "./GridReplayWorkspace";
 import type { Replay } from "./client";
 import ReplayCharts from "./ReplayCharts";
 
@@ -189,7 +189,7 @@ export default function ReplaySection({ replay }: { replay: Replay }) {
           <h3>{eventTitle(replay.event)}</h3>
           <p className="availability">
             {replay.event.region} · {replay.event.marketDay} · {marketTime(replay.event.startAt)}–
-            {marketTime(replay.event.endAt)} NEM · {replay.event.durationMinutes} minutes
+            {marketTime(replay.event.endAt)} NEM · {durationText(replay.event.durationMinutes)}
             {replay.event.edgeIncomplete && " · touches the catalogue edge"}
           </p>
           {detailSummary(replay) && <p className="availability">{detailSummary(replay)}</p>}
