@@ -520,7 +520,18 @@ export function GridReplayWorkspace() {
           </label>
           <label>
             Event type
-            <select value={type} onChange={(e) => setType(e.target.value as EventType | "")}>
+            <select
+              value={type}
+              onChange={(e) => {
+                const next = e.target.value as EventType | "";
+                setType(next);
+                // A sort that the new type cannot support falls back before
+                // it can reach the URL or the request.
+                if (!sortsFor(next).some((option) => option.value === sort)) {
+                  setSort("newest");
+                }
+              }}
+            >
               <option value="">All types</option>
               {Object.entries(typeLabels).map(([value, label]) => (
                 <option key={value} value={value}>
