@@ -1141,3 +1141,17 @@ table.grid tbody tr.sel td:first-child {
     font-size: 14px;
   }
 }
+
+/* Auth and request flows must stay usable on phones — the theme/density
+ * pickers yield to the appbar width before the page overflows. */
+@media (max-width: 720px) {
+  .appbar .picker {
+    display: none;
+  }
+  .appbar .account {
+    max-width: 46vw;
+  }
+  .appbar .account .sub {
+    display: none;
+  }
+}

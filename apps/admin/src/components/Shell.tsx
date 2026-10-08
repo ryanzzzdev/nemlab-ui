@@ -7,6 +7,7 @@ import type { SessionView } from "../api";
 import { useLayoutPrefs, useThemePreference } from "../prefs";
 import type { Density, Theme } from "../prefs";
 import { useSession, useSignOut } from "../session";
+import { HelpDrawer } from "./HelpDrawer";
 import { Loading } from "./States";
 
 const DENSITIES: { id: Density; label: string }[] = [
@@ -54,12 +55,7 @@ function Account({ session }: { session: SessionView }) {
   );
 }
 
-const NAV = [
-  { to: "/", label: "Coverage", icon: "▦", end: true },
-  { to: "/load", label: "Load data", icon: "⇥" },
-  { to: "/jobs", label: "Jobs", icon: "◫" },
-  { to: "/publications", label: "Publications", icon: "◈" },
-] as const;
+const NAV = [{ to: "/", label: "Data Ops", icon: "▦", end: true }] as const;
 
 const PUBLIC_ROUTES = new Set([
   "/welcome",
@@ -71,7 +67,7 @@ const PUBLIC_ROUTES = new Set([
 
 // Routes that own the full workspace frame — toolbar, panes, inspector —
 // rather than the padded scroll page used by auth/help and legacy pages.
-const WORKSPACE_ROUTES = new Set(["/"]);
+const WORKSPACE_ROUTES = new Set(["/", "/access"]);
 
 export function Shell() {
   const session = useSession();
@@ -80,6 +76,7 @@ export function Shell() {
   const workspace = useRef<HTMLElement>(null);
   const { prefs, update } = useLayoutPrefs();
   const [theme, setTheme] = useThemePreference();
+  const [helpOpen, setHelpOpen] = useState(false);
 
   const role = session.data?.role;
   const signedIn = role === "owner" || role === "viewer";
@@ -125,9 +122,9 @@ export function Shell() {
           {import.meta.env.DEV && <span className="env">development</span>}
         </Link>
         <div className="spacer" />
-        <Link className="btn appbar-link" to="/how-it-works">
+        <button type="button" className="btn appbar-link" onClick={() => setHelpOpen(true)}>
           Help
-        </Link>
+        </button>
         <label className="dim picker">
           Density
           <select
@@ -189,6 +186,11 @@ export function Shell() {
           {WORKSPACE_ROUTES.has(pathname) ? content : <div className="page">{content}</div>}
         </main>
       </div>
+      <HelpDrawer
+        session={session.data ?? null}
+        open={helpOpen}
+        onClose={() => setHelpOpen(false)}
+      />
     </div>
   );
 }

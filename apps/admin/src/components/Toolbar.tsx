@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 /** Workspace chrome matching the prototype: scope toolbar, summary
  * strip of stats, and the underline tab row. */
 
-export function Toolbar({ title, children }: { title: string; children: ReactNode }) {
+export function Toolbar({ title, children }: { title: string; children?: ReactNode }) {
   return (
     <div className="toolbar">
       <h1>{title}</h1>

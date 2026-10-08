@@ -7,7 +7,7 @@ import {
   VerifyPage,
   WelcomePage,
 } from "./pages/AuthPages";
-import { AccessPage } from "./pages/AccessPage";
+import { AccessPage } from "./workspace/AccessPage";
 import { HowItWorksPage } from "./pages/HowItWorksPage";
 import { JobsPage } from "./pages/JobsPage";
 import { LoadPage } from "./pages/LoadPage";
