@@ -24,7 +24,7 @@ export function Stat({
 }: {
   value: ReactNode;
   label: string;
-  tone?: "warn" | "ok";
+  tone?: "warn" | "ok" | undefined;
   onClick?: () => void;
 }) {
   return (

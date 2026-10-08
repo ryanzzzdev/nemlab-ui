@@ -8,11 +8,11 @@ import {
   WelcomePage,
 } from "./pages/AuthPages";
 import { AccessPage } from "./pages/AccessPage";
-import { CoveragePage } from "./pages/CoveragePage";
 import { HowItWorksPage } from "./pages/HowItWorksPage";
 import { JobsPage } from "./pages/JobsPage";
 import { LoadPage } from "./pages/LoadPage";
 import { PublicationsPage } from "./pages/PublicationsPage";
+import { DataOpsPage } from "./workspace/DataOpsPage";
 
 function NotFound() {
   return (
@@ -28,7 +28,7 @@ export function App() {
     <BrowserRouter basename="/admin">
       <Routes>
         <Route element={<Shell />}>
-          <Route index element={<CoveragePage />} />
+          <Route index element={<DataOpsPage />} />
           <Route path="load" element={<LoadPage />} />
           <Route path="jobs" element={<JobsPage />} />
           <Route path="publications" element={<PublicationsPage />} />

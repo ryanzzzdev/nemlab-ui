@@ -69,6 +69,10 @@ const PUBLIC_ROUTES = new Set([
   "/verify",
 ]);
 
+// Routes that own the full workspace frame — toolbar, panes, inspector —
+// rather than the padded scroll page used by auth/help and legacy pages.
+const WORKSPACE_ROUTES = new Set(["/"]);
+
 export function Shell() {
   const session = useSession();
   const { pathname } = useLocation();
@@ -182,7 +186,7 @@ export function Shell() {
           </nav>
         )}
         <main className="workspace" id="workspace" ref={workspace} tabIndex={-1}>
-          <div className="page">{content}</div>
+          {WORKSPACE_ROUTES.has(pathname) ? content : <div className="page">{content}</div>}
         </main>
       </div>
     </div>

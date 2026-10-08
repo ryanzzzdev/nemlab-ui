@@ -290,7 +290,7 @@ function OperationCard({ operation, session }: { operation: LoadOperation; sessi
     }
   }
 
-  const coverageHref = `/?region=${operation.region}&start=${operation.startDay}&end=${plusDays(
+  const coverageHref = `/?view=coverage&region=${operation.region}&from=${operation.startDay}&to=${plusDays(
     operation.endExclusive,
     -1,
   )}`;

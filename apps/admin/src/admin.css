@@ -564,6 +564,20 @@ table.grid tbody tr.sel td:first-child {
   flex: 1;
   overflow: auto;
 }
+.activity-toggle {
+  padding: 4px 12px;
+  border-bottom: 1px solid var(--rule-soft);
+  font-size: 12px;
+  color: var(--muted);
+}
+.activity-toggle label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.table-note {
+  margin: 4px 14px 8px;
+}
 .mini-btn {
   border: 0;
   background: none;
