@@ -562,7 +562,6 @@ export function AccessPage() {
               <Failure error={requests.error} />
             ) : (
               <DataTable
-                id="access-requests"
                 columns={REQUEST_COLUMNS}
                 rows={requests.data}
                 rowKey={(r) => r.id}
@@ -586,7 +585,6 @@ export function AccessPage() {
                 <Failure error={grants.error} />
               ) : (
                 <DataTable
-                  id="viewer-grants"
                   columns={GRANT_COLUMNS}
                   rows={grants.data}
                   rowKey={(g) => g.id}
@@ -604,7 +602,6 @@ export function AccessPage() {
               <Failure error={audit.error} />
             ) : (
               <DataTable
-                id="access-audit"
                 columns={AUDIT_COLUMNS}
                 rows={audit.data}
                 rowKey={auditKey}

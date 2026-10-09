@@ -78,7 +78,6 @@ export function PublicationsView({
   return (
     <>
       <DataTable
-        id="publications"
         columns={[
           {
             id: "current",
@@ -130,7 +129,6 @@ export function AttemptsView({
   const rows = [...attempts.data].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   return (
     <DataTable
-      id="attempts"
       columns={[
         {
           id: "window",

@@ -150,7 +150,6 @@ export function CoverageView({
   return (
     <>
       <DataTable
-        id="coverage"
         columns={coverageColumns(priceDays)}
         rows={days}
         rowKey={(d) => d.day}

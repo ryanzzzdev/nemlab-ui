@@ -153,7 +153,6 @@ export function JobsView({
         ))}
       </div>
       <DataTable
-        id="jobs"
         columns={COLUMNS}
         rows={sorted}
         rowKey={(r) => `${r.kind}:${r.id}`}

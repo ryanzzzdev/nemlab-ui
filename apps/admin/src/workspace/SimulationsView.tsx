@@ -171,7 +171,6 @@ export function SimulationsView({
         </label>
       </div>
       <DataTable
-        id="simulations"
         columns={COLUMNS}
         rows={rows}
         rowKey={(r) => r.id}
