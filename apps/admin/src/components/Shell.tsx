@@ -51,7 +51,35 @@ function Account({ session }: { session: SessionView }) {
   );
 }
 
-const NAV = [{ to: "/", label: "Data Ops", icon: "▦", end: true }] as const;
+function IconDatabase() {
+  return (
+    <svg viewBox="0 0 16 16" width="16" height="16" fill="none" aria-hidden="true">
+      <ellipse cx="8" cy="3.5" rx="5.5" ry="2.5" stroke="currentColor" strokeWidth="1.4" />
+      <path
+        d="M2.5 3.5v9c0 1.38 2.46 2.5 5.5 2.5s5.5-1.12 5.5-2.5v-9"
+        stroke="currentColor"
+        strokeWidth="1.4"
+      />
+      <path
+        d="M2.5 8c0 1.38 2.46 2.5 5.5 2.5s5.5-1.12 5.5-2.5"
+        stroke="currentColor"
+        strokeWidth="1.4"
+      />
+    </svg>
+  );
+}
+
+function IconLock() {
+  return (
+    <svg viewBox="0 0 16 16" width="16" height="16" fill="none" aria-hidden="true">
+      <rect x="3" y="7" width="10" height="6.5" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" stroke="currentColor" strokeWidth="1.4" />
+      <circle cx="8" cy="10.2" r="1.1" fill="currentColor" />
+    </svg>
+  );
+}
+
+const NAV = [{ to: "/", label: "Data Ops", icon: <IconDatabase />, end: true }] as const;
 
 const PUBLIC_ROUTES = new Set([
   "/welcome",
@@ -162,7 +190,7 @@ export function Shell() {
                 end={"end" in item}
                 className={({ isActive }) => `rail-item${isActive ? " active" : ""}`}
               >
-                <span aria-hidden="true">{item.icon}</span>
+                {item.icon}
                 <span className="label">{item.label}</span>
               </NavLink>
             ))}
@@ -171,7 +199,7 @@ export function Shell() {
                 to="/access"
                 className={({ isActive }) => `rail-item${isActive ? " active" : ""}`}
               >
-                <span aria-hidden="true">◔</span>
+                <IconLock />
                 <span className="label">Access</span>
                 {(pending.data?.length ?? 0) > 0 && (
                   <span className="badge">{pending.data!.length}</span>
