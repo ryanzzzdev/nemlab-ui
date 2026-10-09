@@ -91,9 +91,7 @@ for (const [w, h, tag] of [
   await page.goto(ADMIN);
   await page.locator(".table-wrap table.grid tbody tr").first().waitFor();
   await applyScope(page, "NSW1", "2023-09-01", "2023-10-01");
-  const railWidth = await page
-    .locator(".rail")
-    .evaluate((el) => el.getBoundingClientRect().width);
+  const railWidth = await page.locator(".rail").evaluate((el) => el.getBoundingClientRect().width);
   await page.locator(".table-wrap table.grid tbody tr").first().click();
   await shot(page, `04-${tag}-standard`);
   ok(`${tag} zero overflow`, (await overflow(page)) === 0);
@@ -137,7 +135,11 @@ for (const [w, h, tag] of [
   await page.locator(".table-wrap table.grid tbody tr").first().click();
   await expect(page.locator(".inspector")).not.toContainText("Select a row", { timeout: 5000 });
   const insp = await page.locator(".inspector").innerText();
-  ok("in-place job inspection", /Phase|Succeeded|Failed|Queued|next/i.test(insp), insp.slice(0, 80));
+  ok(
+    "in-place job inspection",
+    /Phase|Succeeded|Failed|Queued|next/i.test(insp),
+    insp.slice(0, 80),
+  );
   await shot(page, "07-jobs-inspection");
 
   // Load drawer — open, review, cancel (no mutation in review-only pass).
@@ -150,7 +152,11 @@ for (const [w, h, tag] of [
   // Publish drawer — coverage check renders, Escape out.
   await page.locator(".toolbar button", { hasText: "Review & publish" }).click();
   await page.locator(".drawer button", { hasText: "Check coverage" }).click();
-  await page.locator(".drawer").getByText(/complete|lack|ready/i).first().waitFor();
+  await page
+    .locator(".drawer")
+    .getByText(/complete|lack|ready/i)
+    .first()
+    .waitFor();
   await shot(page, "09-publish-drawer-coverage");
   await page.keyboard.press("Escape");
   await c.close();
@@ -161,7 +167,11 @@ for (const [w, h, tag] of [
   const { c, page } = await ctx(1440, 900);
   await page.goto(`${ADMIN}access`);
   await page.locator("h1").waitFor();
-  await page.locator(".table-wrap table.grid tbody tr").first().waitFor().catch(() => null);
+  await page
+    .locator(".table-wrap table.grid tbody tr")
+    .first()
+    .waitFor()
+    .catch(() => null);
   const rows = await page.locator(".table-wrap table.grid tbody tr").count();
   if (rows > 0) {
     await page.locator(".table-wrap table.grid tbody tr").first().click();
@@ -169,7 +179,11 @@ for (const [w, h, tag] of [
   }
   results.push(`INFO access request rows ${rows}`);
   await page.getByRole("tab", { name: "Visitors" }).click();
-  await page.locator(".table-wrap table.grid tbody tr").first().waitFor().catch(() => null);
+  await page
+    .locator(".table-wrap table.grid tbody tr")
+    .first()
+    .waitFor()
+    .catch(() => null);
   await shot(page, "11-access-visitors");
   await page.getByRole("tab", { name: "Audit" }).click();
   await page.locator(".table-wrap table.grid tbody tr").first().waitFor();
@@ -191,5 +205,7 @@ for (const [w, h, tag] of [
 }
 
 console.log(results.join("\n"));
-console.log(errors.length ? `\nERRORS:\n${[...new Set(errors)].join("\n")}` : "\nno console/page errors");
+console.log(
+  errors.length ? `\nERRORS:\n${[...new Set(errors)].join("\n")}` : "\nno console/page errors",
+);
 await browser.close();
