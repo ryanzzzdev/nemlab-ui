@@ -78,7 +78,7 @@ test.describe("DataOps workspace", () => {
 
   test("split handles resize the inspector and activity panes", async ({ page }) => {
     await ownerPage(page);
-    const vHandle = await page.locator(".split-handle.v").boundingBox();
+    const vHandle = (await page.locator(".split-handle.v").boundingBox())!;
     const before = await page
       .locator(".inspector")
       .evaluate((el) => el.getBoundingClientRect().width);
@@ -91,7 +91,7 @@ test.describe("DataOps workspace", () => {
       .evaluate((el) => el.getBoundingClientRect().width);
     expect(after - before).toBeGreaterThan(80); // ~100px drag, allow rounding
 
-    const hHandle = await page.locator(".split-handle.h").boundingBox();
+    const hHandle = (await page.locator(".split-handle.h").boundingBox())!;
     const hBefore = await page
       .locator(".activity")
       .evaluate((el) => el.getBoundingClientRect().height);
