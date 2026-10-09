@@ -762,6 +762,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/v1/simulations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Stored simulations in a region/date scope, keyset-paged */
+        get: operations["listAdminSimulations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/admin/v1/simulations/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Stored scenario, result summary, lifecycle and revision provenance */
+        get: operations["getAdminSimulation"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1612,6 +1646,102 @@ export interface components {
             /** @enum {string} */
             outcome: "submitted" | "backpressured" | "dispatched";
             child?: components["schemas"]["LoadOperationChild"];
+        };
+        AdminSimulationSummary: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            status: "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED";
+            region: components["schemas"]["Region"];
+            /** Format: date */
+            day: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            finishedAt: string | null;
+            /** @description Exact decimal string — the recorded scenario value. */
+            capacityMWh: string;
+            /** @description Exact decimal string — the recorded scenario value. */
+            chargeMW: string;
+            /** @description Exact decimal string — the recorded scenario value. */
+            dischargeMW: string;
+            strategies: ("fixed" | "threshold" | "hindsight")[];
+            attempts: number;
+            hasResult: boolean;
+            diagnostic: string | null;
+        };
+        AdminSimulationPage: {
+            rows: components["schemas"]["AdminSimulationSummary"][];
+            counts: {
+                QUEUED: number;
+                RUNNING: number;
+                SUCCEEDED: number;
+                FAILED: number;
+            };
+            total: number;
+            nextCursor: string | null;
+            /** Format: date-time */
+            asOf: string;
+        };
+        AdminSimulationEvent: {
+            /** @enum {string} */
+            kind: "QUEUED" | "CLAIMED" | "RETRY_SCHEDULED" | "LEASE_RECOVERED" | "SUCCEEDED" | "FAILED";
+            attempt: number | null;
+            diagnostic: string | null;
+            /** Format: date-time */
+            availableAt: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            attemptMs: number | null;
+        };
+        AdminSimulationDetail: {
+            simulation: components["schemas"]["AdminSimulationSummary"];
+            scenario: {
+                /** @description The stored request document verbatim; field types vary by era (Java rows carry decimal strings). */
+                request: Record<string, never>;
+                versions: components["schemas"]["SimulationVersions"];
+            };
+            result: {
+                /** @description Per-strategy accounting keyed by strategy name. */
+                accounting: {
+                    [key: string]: components["schemas"]["SimulationAccounting"];
+                };
+                solver: {
+                    status: string;
+                    objective: number | null;
+                    upperBound: number | null;
+                    absoluteGap: number | null;
+                };
+                /** Format: date-time */
+                createdAt: string;
+            } | null;
+            execution: {
+                /** @enum {string} */
+                status: "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED";
+                attempts: number;
+                /** Format: date-time */
+                availableAt: string;
+                diagnostic: string | null;
+                /** Format: date-time */
+                createdAt: string;
+                /** Format: date-time */
+                finishedAt: string | null;
+            };
+            lifecycle: {
+                /** @description False means the job predates lifecycle capture — display 'history was not recorded'. */
+                recorded: boolean;
+                events: components["schemas"]["AdminSimulationEvent"][];
+            };
+            provenance: {
+                /** Format: uuid */
+                pinnedRevision: string;
+                /** Format: uuid */
+                currentRevision: string | null;
+                /** @enum {string} */
+                comparison: "matches" | "different" | "unavailable";
+                /** Format: date-time */
+                checkedAt: string;
+            };
         };
     };
     responses: never;
@@ -5216,6 +5346,148 @@ export interface operations {
                     "application/json": {
                         /** @enum {string} */
                         code: "OPERATION_CONFLICT";
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    listAdminSimulations: {
+        parameters: {
+            query: {
+                region: components["schemas"]["Region"];
+                startDay: string;
+                endDay: string;
+                status?: "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED";
+                strategy?: "fixed" | "threshold" | "hindsight";
+                sort?: "newest" | "oldest";
+                limit?: number;
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Simulation page */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminSimulationPage"];
+                };
+            };
+            /** @description INVALID_SCOPE or INVALID_CURSOR or INVALID_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "INVALID_SCOPE" | "INVALID_CURSOR" | "INVALID_REQUEST";
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid credentials */
+            401: {
+                headers: {
+                    "WWW-Authenticate"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "UNAUTHORISED";
+                    };
+                };
+            };
+            /** @description FORBIDDEN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "FORBIDDEN";
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    getAdminSimulation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Simulation detail */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminSimulationDetail"];
+                };
+            };
+            /** @description INVALID_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "INVALID_REQUEST";
+                        message: string;
+                    };
+                };
+            };
+            /** @description Missing or invalid credentials */
+            401: {
+                headers: {
+                    "WWW-Authenticate"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "UNAUTHORISED";
+                    };
+                };
+            };
+            /** @description FORBIDDEN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "FORBIDDEN";
+                        message: string;
+                    };
+                };
+            };
+            /** @description SIMULATION_NOT_FOUND */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        code: "SIMULATION_NOT_FOUND";
                         message: string;
                     };
                 };

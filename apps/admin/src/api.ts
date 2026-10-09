@@ -182,6 +182,46 @@ export function publishGrid(
   return apiPost<AdminGridPublication>("/api/admin/v1/grid-publications", csrfToken, body);
 }
 
+export type AdminSimulationSummary = components["schemas"]["AdminSimulationSummary"];
+export type AdminSimulationPage = components["schemas"]["AdminSimulationPage"];
+export type AdminSimulationDetail = components["schemas"]["AdminSimulationDetail"];
+export type AdminSimulationEvent = components["schemas"]["AdminSimulationEvent"];
+export type SimulationStatus = "QUEUED" | "RUNNING" | "SUCCEEDED" | "FAILED";
+export type SimulationStrategy = "fixed" | "threshold" | "hindsight";
+export type SimulationSort = "newest" | "oldest";
+
+/** Scoped simulation catalogue — `ops.read`, viewer-safe. `cursor` continues
+ * a page; INVALID_CURSOR/INVALID_SCOPE surface as recoverable ApiErrors. */
+export function listSimulations(
+  scope: { region: Region; startDay: string; endDay: string },
+  filters: {
+    status?: SimulationStatus;
+    strategy?: SimulationStrategy;
+    sort?: SimulationSort;
+    limit?: number;
+    cursor?: string;
+  } = {},
+  signal?: AbortSignal,
+): Promise<AdminSimulationPage> {
+  const params = new URLSearchParams({
+    region: scope.region,
+    startDay: scope.startDay,
+    endDay: scope.endDay,
+  });
+  if (filters.status) params.set("status", filters.status);
+  if (filters.strategy) params.set("strategy", filters.strategy);
+  if (filters.sort) params.set("sort", filters.sort);
+  if (filters.limit !== undefined) params.set("limit", String(filters.limit));
+  if (filters.cursor) params.set("cursor", filters.cursor);
+  return apiGet<AdminSimulationPage>(`/api/admin/v1/simulations?${params}`, signal);
+}
+
+/** Stored-scenario inspector — verbatim request document, result summary,
+ * lifecycle events and pinned-vs-current revision provenance. */
+export function getSimulation(id: string, signal?: AbortSignal): Promise<AdminSimulationDetail> {
+  return apiGet<AdminSimulationDetail>(`/api/admin/v1/simulations/${id}`, signal);
+}
+
 export type AccessRequestView = components["schemas"]["AccessRequestView"];
 export type AccessRequestDetail = components["schemas"]["AccessRequestDetail"];
 export type DeliveryView = components["schemas"]["DeliveryView"];
