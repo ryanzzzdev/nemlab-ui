@@ -62,6 +62,26 @@ const GLOSSARY: [string, string][] = [
     "Stop submitting vs cancel",
     "Pausing a load operation stops new chunk submissions only; chunks already queued keep running. Cancelling individual jobs is a separate, explicit act.",
   ],
+  [
+    "Simulation",
+    "A stored BatteryLab comparison for one market day: the request (battery size, charge/discharge windows, optional price thresholds) runs the fixed, threshold and hindsight strategies over the pinned price day. Anyone with access can inspect stored scenarios — the catalogue identifies simulations, never submitters.",
+  ],
+  [
+    "Pinned vs current revision",
+    "A simulation pins the price revision it ran against. Re-fetched or corrected prices create a new revision — the saved result never changes, and provenance says so ('prices were corrected since this run') instead of hiding the difference.",
+  ],
+  [
+    "Deduplication",
+    "Identical requests share one stored simulation — resubmitting returns the same record instead of queueing again. One stored scenario does not imply a single user or a single submission.",
+  ],
+  [
+    "Lifecycle history",
+    "Each job transition (queued, claimed, retried, lease recovered, finished) is recorded from late 2026 onward. Older rows show 'history was not recorded' — an honest gap, not an empty timeline.",
+  ],
+  [
+    "Not recorded vs not applicable",
+    "'Not recorded' means the system did not capture the fact (pre-capture jobs); 'not applicable' would mean the field does not apply. Admin says which it means rather than leaving blanks.",
+  ],
 ];
 
 /** Workflow steps + glossary shared by the contextual Help drawer and the
@@ -87,6 +107,19 @@ export function HelpContent() {
           </div>
         ))}
       </dl>
+      <h3>BatteryLab pipeline</h3>
+      <p>
+        Stored prices feed a scenario — battery capacity, efficiency, ordered charge/discharge
+        windows and optional price thresholds — which is submitted once and run by the worker across
+        three strategies: fixed windows, an optional threshold rule, and certified hindsight
+        dispatch. The result is saved with the scenario and the exact price revision it used;
+        correcting prices afterwards never rewrites it.
+      </p>
+      <p>
+        Queued and running simulations show their job state and lifecycle; finished ones show the
+        accounting summary per strategy. The Simulations tab reads bounded projections — full price
+        and dispatch arrays stay on the public result endpoints.
+      </p>
       <h3>Event detection, briefly</h3>
       <p>
         The v2 detector recognises ordinary and unusual demand ramps, negative runs, price spikes,

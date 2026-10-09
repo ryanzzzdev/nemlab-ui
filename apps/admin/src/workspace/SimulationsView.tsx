@@ -301,6 +301,46 @@ function ResultSection({ result }: { result: AdminSimulationDetail["result"] }) 
   );
 }
 
+/** Selected simulation's lifecycle in the activity pane — reads the same
+ * `["simulation", id]` query the inspector owns, so it shares its cache and
+ * polls nothing extra. */
+export function SimulationActivity({ id }: { id: string }) {
+  const detail = useQuery({
+    queryKey: ["simulation", id],
+    queryFn: ({ signal }) => getSimulation(id, signal),
+  });
+  if (detail.isPending) return <Loading label="Reading simulation…" />;
+  if (detail.isError) return <Failure error={detail.error} />;
+  const d = detail.data;
+  return (
+    <>
+      <p className="hint">
+        <strong>
+          {d.simulation.region} {d.simulation.day}
+        </strong>{" "}
+        <StatusChip status={d.simulation.status} /> · simulation {d.simulation.id.slice(0, 8)}
+      </p>
+      {d.lifecycle.recorded ? (
+        <ol className="event-list">
+          {d.lifecycle.events.map((event, i) => (
+            <li key={`${event.kind}-${event.createdAt}-${i}`}>
+              <time dateTime={event.createdAt}>{fmtDateTime(event.createdAt)}</time>{" "}
+              <strong>{eventLabel(event.kind)}</strong>
+              {event.attempt !== null && <span> attempt {event.attempt}</span>}
+              {event.attemptMs !== null && (
+                <span className="hint"> · {(event.attemptMs / 1000).toFixed(1)}s</span>
+              )}
+              {event.diagnostic && <span className="hint"> — {event.diagnostic}</span>}
+            </li>
+          ))}
+        </ol>
+      ) : (
+        <p className="hint">Execution history was not recorded for this job.</p>
+      )}
+    </>
+  );
+}
+
 /** Detail inspector — fetches the projection directly so a deep link or an
  * out-of-page ID still resolves; status polls while the job is in flight. */
 export function SimulationInspector({

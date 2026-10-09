@@ -83,6 +83,16 @@ test.describe("Simulations catalogue", () => {
     await expect(page.locator(".table-wrap table.grid tbody tr")).toHaveCount(1);
   });
 
+  test("selecting a simulation swaps the activity pane to its lifecycle", async ({ page }) => {
+    await ownerPage(page);
+    await page.locator(".tab", { hasText: "Simulations" }).click();
+    await expect(page.locator(".activity-body")).toContainText("Load operation");
+    await page.locator(".table-wrap table.grid tbody tr").first().click();
+    const activity = page.locator(".activity-body");
+    await expect(activity).toContainText("simulation 11111111");
+    await expect(activity).toContainText("Claimed attempt 1");
+  });
+
   test("a direct simulation ID outside the scope keeps its inspector", async ({ page }) => {
     const calls = { mutations: [] };
     await installApiMock(page, "owner", calls);

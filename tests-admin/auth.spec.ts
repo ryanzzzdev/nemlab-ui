@@ -33,6 +33,10 @@ test.describe("auth and entry", () => {
     await expect(drawer).toContainText("How the console works");
     await expect(drawer).toContainText("owner access");
     await expect(drawer).toContainText("Baseline readiness");
+    // BatteryLab pipeline help — prices to saved result, provenance honesty.
+    await expect(drawer).toContainText("BatteryLab pipeline");
+    await expect(drawer).toContainText("Pinned vs current revision");
+    await expect(drawer).toContainText("history was not recorded");
     await page.keyboard.press("Escape");
     await expect(drawer).toHaveCount(0);
     // Focus returns to the opener.

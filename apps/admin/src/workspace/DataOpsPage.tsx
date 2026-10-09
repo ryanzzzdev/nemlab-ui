@@ -33,7 +33,12 @@ import {
   attemptsQuery,
   publicationsQuery,
 } from "./PublicationsView";
-import { SimulationInspector, SimulationsView, simulationsQuery } from "./SimulationsView";
+import {
+  SimulationActivity,
+  SimulationInspector,
+  SimulationsView,
+  simulationsQuery,
+} from "./SimulationsView";
 import type { SimFilters, SimStatusFilter, SimStrategyFilter } from "./SimulationsView";
 import { defaultScope, endExclusive, parseSelection, selectionParam, validateScope } from "./scope";
 import type { Scope, Selection } from "./scope";
@@ -527,14 +532,18 @@ export function DataOpsPage() {
                 All recent
               </label>
             </div>
-            <ActivityBody
-              rows={jobRows}
-              scope={scope}
-              allRecent={allRecent}
-              onSelect={(sel) => {
-                setParam({ view: "jobs", sel: selectionParam(sel) });
-              }}
-            />
+            {selection?.kind === "simulation" ? (
+              <SimulationActivity id={selection.id} />
+            ) : (
+              <ActivityBody
+                rows={jobRows}
+                scope={scope}
+                allRecent={allRecent}
+                onSelect={(sel) => {
+                  setParam({ view: "jobs", sel: selectionParam(sel) });
+                }}
+              />
+            )}
           </ActivityPane>
         </div>
         <Inspector>{inspector()}</Inspector>
