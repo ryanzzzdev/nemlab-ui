@@ -207,7 +207,9 @@ export function Shell() {
               </NavLink>
             )}
             <div className="rail-bottom">
-              <a href={`${PUBLIC_BASE}/`}>Public site ↗</a>
+              <a href={`${PUBLIC_BASE}/`} target="_blank" rel="noopener noreferrer">
+                Public site ↗
+              </a>
             </div>
           </nav>
         )}

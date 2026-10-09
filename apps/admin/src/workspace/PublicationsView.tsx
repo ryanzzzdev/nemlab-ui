@@ -239,6 +239,8 @@ export function PublicationInspector({ id }: { id: string }) {
         <a
           className="btn"
           href={`${PUBLIC_BASE}/gridreplay?region=${pub.region}&from=${pub.startDay}&to=${plusDays(pub.endExclusive, -1)}&view=all`}
+          target="_blank"
+          rel="noopener noreferrer"
         >
           Open in GridReplay
         </a>

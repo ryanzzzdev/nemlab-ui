@@ -329,7 +329,9 @@ export function PublishDrawer({
           <p>
             {published.eventCount} events under {published.detectorVersion} — {scope.region}'s
             catalogue pointer now pins this publication.{" "}
-            <a href={replayLink(published)}>Open in GridReplay</a>
+            <a href={replayLink(published)} target="_blank" rel="noopener noreferrer">
+              Open in GridReplay
+            </a>
           </p>
           <p className="hint">
             Existing replay links stay immutable; fresh data needs a deliberate republication.
