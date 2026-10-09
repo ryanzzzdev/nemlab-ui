@@ -8,6 +8,8 @@ const proxy = {
   "/api/admin": { target },
   "/api/auth": { target },
   "/api/access": { target },
+  // Shared public price-readiness read (NEM-121) — public data, no credentials.
+  "/api/v1/prices": { target },
 };
 
 // React Router emits the workspace index as `/admin?…` (basename without the

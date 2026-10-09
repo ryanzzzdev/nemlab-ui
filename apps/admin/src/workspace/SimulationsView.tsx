@@ -398,16 +398,19 @@ export function SimulationInspector({
             {request.site?.chargeMW ?? sim.chargeMW} /{" "}
             {request.site?.dischargeMW ?? sim.dischargeMW} MW
           </dd>
-          {request.efficiency && (
-            <>
-              <dt>Efficiency</dt>
-              <dd>
-                {request.efficiency.roundTrip !== undefined
-                  ? `round-trip ${request.efficiency.roundTrip}`
-                  : `charge ${request.efficiency.charge} · discharge ${request.efficiency.discharge}`}
-              </dd>
-            </>
-          )}
+          {request.efficiency &&
+            (request.efficiency.roundTrip != null ||
+              request.efficiency.charge != null ||
+              request.efficiency.discharge != null) && (
+              <>
+                <dt>Efficiency</dt>
+                <dd>
+                  {request.efficiency.roundTrip != null
+                    ? `round-trip ${request.efficiency.roundTrip}`
+                    : `charge ${request.efficiency.charge ?? "—"} · discharge ${request.efficiency.discharge ?? "—"}`}
+                </dd>
+              </>
+            )}
           {request.costs && (
             <>
               <dt>Costs</dt>
