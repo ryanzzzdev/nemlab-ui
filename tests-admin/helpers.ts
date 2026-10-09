@@ -204,6 +204,42 @@ export const ATTEMPTS = [
   },
 ];
 
+export const PRICE_COVERAGE = {
+  region: "NSW1",
+  start: "2023-09-01",
+  endExclusive: "2023-09-04",
+  marketOffset: "+10:00",
+  days: [
+    {
+      day: "2023-09-01",
+      availability: "COMPLETE",
+      revision: "aaaaaaaa-0000-4000-8000-000000000001",
+      retrievedAt: "2023-10-15T04:12:00Z",
+      valid: 288,
+      missing: 0,
+      sourceNull: 0,
+    },
+    {
+      day: "2023-09-02",
+      availability: "INCOMPLETE",
+      revision: "bbbbbbbb-0000-4000-8000-000000000002",
+      retrievedAt: "2023-10-15T04:13:00Z",
+      valid: 200,
+      missing: 88,
+      sourceNull: 0,
+    },
+    {
+      day: "2023-09-03",
+      availability: "NOT_IMPORTED",
+      revision: null,
+      retrievedAt: null,
+      valid: null,
+      missing: null,
+      sourceNull: null,
+    },
+  ],
+};
+
 export const SIMULATIONS_PAGE = {
   rows: [
     {
@@ -489,13 +525,29 @@ export async function installApiMock(
     if (path === "/api/admin/v1/grid-publications/attempts") return json(ATTEMPTS);
     if (path.startsWith("/api/admin/v1/grid-publications/")) return json(PUBLICATION_DETAIL);
 
-    // Simulation catalogue — the list honours status/strategy filters so the
-    // UI's URL state is exercised end to end.
+    // Shared public price coverage — the same bounded projection BatteryLab
+    // reads; Admin renders it alongside the grid matrix.
+    if (path.match(/^\/api\/v1\/prices\/[^/]+\/coverage$/) && method === "GET") {
+      // Like the grid-coverage fixture, the applied scope is test-agnostic —
+      // always return the fixture days.
+      return json(PRICE_COVERAGE);
+    }
+
+    // Simulation catalogue — the list honours scope/status/strategy filters
+    // so the UI's URL state is exercised end to end.
     if (path === "/api/admin/v1/simulations" && method === "GET") {
       const status = url.searchParams.get("status");
       const strategy = url.searchParams.get("strategy");
+      const startDay = url.searchParams.get("startDay") ?? "";
+      const endDay = url.searchParams.get("endDay") ?? "";
+      // Same-day scopes are inspector lookups — honour them; the wide applied
+      // scope is test-agnostic so broad listings keep all fixture rows.
+      const sameDay = startDay === endDay ? startDay : null;
       const rows = SIMULATIONS_PAGE.rows.filter(
-        (r) => (!status || r.status === status) && (!strategy || r.strategies.includes(strategy)),
+        (r) =>
+          (!sameDay || r.day === sameDay) &&
+          (!status || r.status === status) &&
+          (!strategy || r.strategies.includes(strategy)),
       );
       return json({ ...SIMULATIONS_PAGE, rows, total: rows.length });
     }
@@ -515,6 +567,8 @@ export async function installApiMock(
     if (path === "/api/admin/v1/access-audit") return json(AUDIT);
 
     // Owner mutations — success fixtures; failure paths asserted separately.
+    if (path === "/api/admin/v1/price-refreshes" && method === "POST")
+      return json(REFRESHES[0], 202);
     if (path === "/api/admin/v1/load-operations" && method === "POST") return json(OPERATION);
     if (path.endsWith("/dispatch")) return json({ outcome: "child", child: null });
     if (path.endsWith("/pause") || path.endsWith("/resume"))

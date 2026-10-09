@@ -182,6 +182,33 @@ export function publishGrid(
   return apiPost<AdminGridPublication>("/api/admin/v1/grid-publications", csrfToken, body);
 }
 
+export type PriceCoverage = components["schemas"]["Coverage"];
+export type PriceCoverageDay = components["schemas"]["DayCoverage"];
+
+/** Shared public price-coverage read — same bounded projection the BatteryLab
+ * day picker consumes; Admin renders it alongside grid metrics. */
+export function getPriceCoverage(
+  region: Region,
+  start: string,
+  endExclusive: string,
+  signal?: AbortSignal,
+): Promise<PriceCoverage> {
+  return apiGet<PriceCoverage>(
+    `/api/v1/prices/${region}/coverage?start=${start}&endExclusive=${endExclusive}`,
+    signal,
+  );
+}
+
+/** Owner-only price re-fetch for one market day — idempotent; a replayed
+ * submission returns the existing job rather than duplicating work. */
+export function submitPriceRefresh(
+  csrfToken: string,
+  region: Region,
+  day: string,
+): Promise<Job | null> {
+  return apiPost<Job>("/api/admin/v1/price-refreshes", csrfToken, { region, day });
+}
+
 export type AdminSimulationSummary = components["schemas"]["AdminSimulationSummary"];
 export type AdminSimulationPage = components["schemas"]["AdminSimulationPage"];
 export type AdminSimulationDetail = components["schemas"]["AdminSimulationDetail"];

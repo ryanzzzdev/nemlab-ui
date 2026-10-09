@@ -79,9 +79,8 @@ test.describe("Simulations catalogue", () => {
     await expect(page).toHaveURL(/view=simulations/);
     await expect(page).toHaveURL(/from=2023-09-01/);
     await expect(page).toHaveURL(/to=2023-09-01/);
-    await expect(page.locator(".table-wrap table.grid tbody tr")).toHaveCount(
-      SIMULATIONS_PAGE.rows.length,
-    );
+    // The mock honours the day scope — only the 2023-09-01 row remains.
+    await expect(page.locator(".table-wrap table.grid tbody tr")).toHaveCount(1);
   });
 
   test("a direct simulation ID outside the scope keeps its inspector", async ({ page }) => {

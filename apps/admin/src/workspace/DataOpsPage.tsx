@@ -7,7 +7,13 @@ import type { Region, SessionView } from "../api";
 import { ActivityPane, Inspector } from "../components/Panes";
 import { Stat, StatStrip, Tabs, Toolbar } from "../components/Toolbar";
 import { Empty } from "../components/States";
-import { CoverageView, DayInspector, baselineQuery, coverageQuery } from "./CoverageView";
+import {
+  CoverageView,
+  DayInspector,
+  baselineQuery,
+  coverageQuery,
+  priceCoverageQuery,
+} from "./CoverageView";
 import { LOAD_DRAFT_KEY, LoadDrawer } from "./LoadDrawer";
 import { PublishDrawer } from "./PublishDrawer";
 import {
@@ -110,6 +116,10 @@ export function DataOpsPage() {
     ...baselineQuery(scope.region, scope.start, endEx),
     enabled: view === "coverage",
   });
+  const priceCoverage = useQuery({
+    ...priceCoverageQuery(scope.region, scope.start, endEx),
+    enabled: view === "coverage",
+  });
   const operations = useQuery(jobsQueries.operations);
   const imports = useQuery(jobsQueries.imports);
   const refreshes = useQuery(jobsQueries.refreshes);
@@ -157,6 +167,8 @@ export function DataOpsPage() {
     const keys = [
       ["grid-coverage"],
       ["grid-baseline"],
+      ["price-coverage"],
+      ["day-simulations"],
       ["load-operations"],
       ["grid-imports"],
       ["price-refreshes"],
@@ -170,6 +182,7 @@ export function DataOpsPage() {
 
   const checkedAt = [
     coverage.dataUpdatedAt,
+    priceCoverage.dataUpdatedAt,
     operations.dataUpdatedAt,
     imports.dataUpdatedAt,
     refreshes.dataUpdatedAt,
@@ -210,6 +223,7 @@ export function DataOpsPage() {
             scope={scope}
             coverage={coverage}
             baseline={baseline}
+            priceCoverage={priceCoverage}
             day={selection.id}
             session={session}
             onLoadDay={(d) => {
@@ -226,6 +240,7 @@ export function DataOpsPage() {
               // so the catalogue reads it, same as Apply would.
               setParam({ view: "simulations", from: day, to: day, sel: null })
             }
+            onSelectSimulation={(id) => select({ kind: "simulation", id })}
           />
         );
       case "op": {
@@ -432,6 +447,7 @@ export function DataOpsPage() {
             <CoverageView
               scope={scope}
               coverage={coverage}
+              priceCoverage={priceCoverage}
               selectedDay={selection?.kind === "day" ? selection.id : null}
               onSelect={(day) => select({ kind: "day", id: day })}
             />

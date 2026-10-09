@@ -190,6 +190,52 @@ test.describe("owner drawers", () => {
   });
 });
 
+test.describe("price readiness", () => {
+  test("coverage rows carry the shared price state for the scoped days", async ({ page }) => {
+    await ownerPage(page);
+    const rows = page.locator(".table-wrap table.grid tbody tr");
+    await expect(rows.filter({ hasText: "2023-09-01" })).toContainText("Complete");
+    await expect(rows.filter({ hasText: "2023-09-02" })).toContainText("Partial");
+    await expect(rows.filter({ hasText: "2023-09-03" })).toContainText("Not imported");
+  });
+
+  test("the day inspector shows price readiness and related simulations", async ({ page }) => {
+    await ownerPage(page);
+    await page.locator(".table-wrap table.grid tbody tr:has-text('2023-09-01')").click();
+    const inspector = page.locator(".inspector");
+    await expect(inspector).toContainText("Price readiness");
+    await expect(inspector).toContainText("288 valid");
+    await expect(inspector).toContainText("Current revision");
+    await expect(inspector).toContainText("Simulations for this day");
+    await expect(inspector).toContainText("fixed, threshold, hindsight");
+    // Clicking a stored simulation opens its inspector in place.
+    await inspector.locator(".data-table tbody tr").first().click();
+    await expect(page).toHaveURL(/sel=simulation(%3A|:)/);
+    await expect(inspector).toContainText("Provenance");
+  });
+
+  test("owner refreshes prices through the protected endpoint; pinned results are untouched", async ({
+    page,
+  }) => {
+    const calls = { mutations: [] as string[] };
+    await installApiMock(page, "owner", calls);
+    await page.goto("/admin/");
+    await page.locator(".table-wrap table.grid tbody tr:has-text('2023-09-02')").click();
+    await page.locator(".inspector button", { hasText: "Refresh prices" }).click();
+    await expect(page.locator(".inspector .banner")).toContainText("Price refresh queued");
+    expect(calls.mutations).toContain("POST /api/admin/v1/price-refreshes");
+  });
+
+  test("viewer sees readiness but no refresh control", async ({ page }) => {
+    await viewerPage(page);
+    await page.locator(".table-wrap table.grid tbody tr").first().click();
+    const inspector = page.locator(".inspector");
+    await expect(inspector).toContainText("Price readiness");
+    await expect(inspector.locator("button", { hasText: "Refresh prices" })).toHaveCount(0);
+    await expect(inspector).toContainText("owner actions");
+  });
+});
+
 test.describe("viewer boundary", () => {
   test("viewer gets read-only workspace and no access surface", async ({ page }) => {
     await viewerPage(page);
@@ -197,7 +243,9 @@ test.describe("viewer boundary", () => {
     await expect(page.locator(".toolbar button", { hasText: "Load data" })).toHaveCount(0);
     await expect(page.locator(".rail-item", { hasText: "Access" })).toHaveCount(0);
     await page.locator(".table-wrap table.grid tbody tr").first().click();
-    await expect(page.locator(".inspector")).toContainText("Loading data is an owner action");
+    await expect(page.locator(".inspector")).toContainText(
+      "Loading data and price refreshes are owner actions",
+    );
     await page.goto("/admin/access");
     await expect(page.locator("#workspace")).toContainText("owner actions");
   });
