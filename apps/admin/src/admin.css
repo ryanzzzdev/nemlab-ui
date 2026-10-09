@@ -593,6 +593,8 @@ table.grid tbody tr.sel td:first-child {
 .split-handle {
   flex: none;
   background: transparent;
+  touch-action: none;
+  user-select: none;
 }
 .split-handle.v {
   width: 5px;

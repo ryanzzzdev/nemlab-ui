@@ -27,12 +27,11 @@ function useHandleKeys(apply: (delta: number, reset?: boolean) => void, horizont
 
 function dragStart(event: PointerEvent<HTMLDivElement>, apply: (delta: number) => void) {
   event.preventDefault();
-  const start = event.clientX ?? event.clientY;
-  let last = start;
+  const axis = event.currentTarget.dataset.axis === "y" ? "clientY" : "clientX";
+  const start = event[axis];
   const move = (e: globalThis.PointerEvent) => {
-    const pos = event.currentTarget.dataset.axis === "y" ? e.clientY : e.clientX;
-    apply(pos - last);
-    last = pos;
+    // Cumulative delta — the apply callback closes over the drag-start size.
+    apply(e[axis] - start);
   };
   const stop = () => {
     window.removeEventListener("pointermove", move);
