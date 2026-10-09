@@ -204,6 +204,181 @@ export const ATTEMPTS = [
   },
 ];
 
+export const SIMULATIONS_PAGE = {
+  rows: [
+    {
+      id: "11111111-1111-4111-8111-111111111111",
+      status: "SUCCEEDED",
+      region: "NSW1",
+      day: "2023-09-01",
+      createdAt: "2023-10-15T04:00:00Z",
+      finishedAt: "2023-10-15T04:00:09Z",
+      capacityMWh: "2",
+      chargeMW: "1",
+      dischargeMW: "1",
+      strategies: ["fixed", "threshold", "hindsight"],
+      attempts: 1,
+      hasResult: true,
+      diagnostic: null,
+    },
+    {
+      id: "22222222-2222-4222-8222-222222222222",
+      status: "RUNNING",
+      region: "NSW1",
+      day: "2023-09-02",
+      createdAt: "2023-10-15T04:10:00Z",
+      finishedAt: null,
+      capacityMWh: "4",
+      chargeMW: "2",
+      dischargeMW: "2",
+      strategies: ["fixed", "hindsight"],
+      attempts: 1,
+      hasResult: false,
+      diagnostic: null,
+    },
+    {
+      id: "33333333-3333-4333-8333-333333333333",
+      status: "FAILED",
+      region: "NSW1",
+      day: "2023-09-03",
+      createdAt: "2023-10-15T04:20:00Z",
+      finishedAt: "2023-10-15T04:30:00Z",
+      capacityMWh: "2",
+      chargeMW: "1",
+      dischargeMW: "1",
+      strategies: ["fixed", "hindsight"],
+      attempts: 3,
+      hasResult: false,
+      diagnostic: "solver timeout",
+    },
+  ],
+  counts: { QUEUED: 0, RUNNING: 1, SUCCEEDED: 1, FAILED: 1 },
+  total: 3,
+  nextCursor: null,
+  asOf: "2023-10-15T05:00:00Z",
+};
+
+export const SIMULATION_DETAIL = {
+  simulation: SIMULATIONS_PAGE.rows[0],
+  scenario: {
+    request: {
+      region: "NSW1",
+      day: "2023-09-01",
+      site: {
+        capacityMWh: "2",
+        minimumMWh: "0",
+        maximumMWh: "2",
+        initialMWh: "0",
+        chargeMW: "1",
+        dischargeMW: "1",
+        importLimitMW: "1",
+        exportLimitMW: "1",
+      },
+      efficiency: { roundTrip: "0.9" },
+      costs: { importFee: "0", exportFee: "0", degradationPerExportedMWh: "0" },
+      windows: { chargeStart: 60, chargeEnd: 600, dischargeStart: 960, dischargeEnd: 1440 },
+      thresholds: { chargeBelow: "50", dischargeAbove: "300" },
+    },
+    versions: {
+      request: "simulation-request-v1",
+      model: "battery-model-v1",
+      fixed: "fixed-windows-v1",
+      hindsight: "ordered-hindsight-v1",
+      solver: "scipy-highs",
+      executionProfile: "ordered-comparison-v1",
+      limits: { intervalsPerDay: 288 },
+    },
+  },
+  result: {
+    accounting: {
+      fixed: {
+        importedMWh: 2.05,
+        exportedMWh: 1.84,
+        chargingCost: 41.2,
+        revenue: 552.1,
+        fees: 0,
+        degradation: 0,
+        margin: 510.9,
+        lossesMWh: 0.21,
+      },
+      hindsight: {
+        importedMWh: 2.11,
+        exportedMWh: 1.9,
+        chargingCost: 38.4,
+        revenue: 612.0,
+        fees: 0,
+        degradation: 0,
+        margin: 573.6,
+        lossesMWh: 0.21,
+      },
+    },
+    solver: { status: "OPTIMAL", objective: 573.6, upperBound: 573.6, absoluteGap: 0 },
+    createdAt: "2023-10-15T04:00:09Z",
+  },
+  execution: {
+    status: "SUCCEEDED",
+    attempts: 1,
+    availableAt: "2023-10-15T04:00:00Z",
+    diagnostic: null,
+    createdAt: "2023-10-15T04:00:00Z",
+    finishedAt: "2023-10-15T04:00:09Z",
+  },
+  lifecycle: {
+    recorded: true,
+    events: [
+      {
+        kind: "QUEUED",
+        attempt: null,
+        diagnostic: null,
+        availableAt: null,
+        createdAt: "2023-10-15T04:00:00Z",
+        attemptMs: null,
+      },
+      {
+        kind: "CLAIMED",
+        attempt: 1,
+        diagnostic: null,
+        availableAt: null,
+        createdAt: "2023-10-15T04:00:01Z",
+        attemptMs: 8123,
+      },
+      {
+        kind: "SUCCEEDED",
+        attempt: 1,
+        diagnostic: null,
+        availableAt: null,
+        createdAt: "2023-10-15T04:00:09Z",
+        attemptMs: 8123,
+      },
+    ],
+  },
+  provenance: {
+    pinnedRevision: "aaaaaaaa-0000-4000-8000-000000000001",
+    currentRevision: "aaaaaaaa-0000-4000-8000-000000000001",
+    comparison: "matches",
+    checkedAt: "2023-10-15T05:00:00Z",
+  },
+};
+
+export const SIMULATION_DETAIL_NO_HISTORY = {
+  ...SIMULATION_DETAIL,
+  simulation: SIMULATIONS_PAGE.rows[2],
+  scenario: {
+    ...SIMULATION_DETAIL.scenario,
+    request: { ...SIMULATION_DETAIL.scenario.request, day: "2023-09-03", thresholds: null },
+  },
+  result: null,
+  execution: {
+    status: "FAILED",
+    attempts: 3,
+    availableAt: "2023-10-15T04:20:00Z",
+    diagnostic: "solver timeout",
+    createdAt: "2023-10-15T04:20:00Z",
+    finishedAt: "2023-10-15T04:30:00Z",
+  },
+  lifecycle: { recorded: false, events: [] },
+};
+
 export const REQUEST = {
   id: "req-1",
   name: "Fixture Applicant",
@@ -313,6 +488,21 @@ export async function installApiMock(
     if (path === "/api/admin/v1/grid-publications" && method === "GET") return json(PUBLICATIONS);
     if (path === "/api/admin/v1/grid-publications/attempts") return json(ATTEMPTS);
     if (path.startsWith("/api/admin/v1/grid-publications/")) return json(PUBLICATION_DETAIL);
+
+    // Simulation catalogue — the list honours status/strategy filters so the
+    // UI's URL state is exercised end to end.
+    if (path === "/api/admin/v1/simulations" && method === "GET") {
+      const status = url.searchParams.get("status");
+      const strategy = url.searchParams.get("strategy");
+      const rows = SIMULATIONS_PAGE.rows.filter(
+        (r) => (!status || r.status === status) && (!strategy || r.strategies.includes(strategy)),
+      );
+      return json({ ...SIMULATIONS_PAGE, rows, total: rows.length });
+    }
+    if (path === `/api/admin/v1/simulations/${SIMULATIONS_PAGE.rows[0]!.id}`)
+      return json(SIMULATION_DETAIL);
+    if (path === `/api/admin/v1/simulations/${SIMULATIONS_PAGE.rows[2]!.id}`)
+      return json(SIMULATION_DETAIL_NO_HISTORY);
 
     // Access reads
     if (path === "/api/admin/v1/access-requests" && method === "GET") return json([REQUEST]);

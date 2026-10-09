@@ -42,7 +42,7 @@ export function validateScope(scope: Scope): string | null {
 /** One active inspector selection at a time, encoded in the URL. */
 export type Selection =
   | { kind: "day"; id: string }
-  | { kind: "op" | "import" | "refresh" | "pub" | "attempt"; id: string };
+  | { kind: "op" | "import" | "refresh" | "pub" | "attempt" | "simulation"; id: string };
 
 export function parseSelection(raw: string | null): Selection | null {
   if (!raw) return null;
@@ -54,7 +54,8 @@ export function parseSelection(raw: string | null): Selection | null {
       kind === "import" ||
       kind === "refresh" ||
       kind === "pub" ||
-      kind === "attempt")
+      kind === "attempt" ||
+      kind === "simulation")
   ) {
     return { kind, id } as Selection;
   }

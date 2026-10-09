@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useOutletContext, useSearchParams } from "react-router";
 import { REGIONS, marketDay, plusDays } from "../api";
@@ -27,10 +27,12 @@ import {
   attemptsQuery,
   publicationsQuery,
 } from "./PublicationsView";
+import { SimulationInspector, SimulationsView, simulationsQuery } from "./SimulationsView";
+import type { SimFilters, SimStatusFilter, SimStrategyFilter } from "./SimulationsView";
 import { defaultScope, endExclusive, parseSelection, selectionParam, validateScope } from "./scope";
 import type { Scope, Selection } from "./scope";
 
-type View = "coverage" | "jobs" | "publications";
+type View = "coverage" | "jobs" | "publications" | "simulations";
 
 const VIEW_TABS: { id: View; label: string; hint: string }[] = [
   {
@@ -48,12 +50,18 @@ const VIEW_TABS: { id: View; label: string; hint: string }[] = [
     label: "Publications",
     hint: "Published GridReplay events and the detection runs that produced them.",
   },
+  {
+    id: "simulations",
+    label: "Simulations",
+    hint: "Stored BatteryLab simulation requests, job state and results for the applied scope.",
+  },
 ];
 
 const VIEW_SELECTIONS: Record<View, Set<Selection["kind"]>> = {
   coverage: new Set(["day"]),
   jobs: new Set(["op", "import", "refresh"]),
   publications: new Set(["pub", "attempt"]),
+  simulations: new Set(["simulation"]),
 };
 
 function scopeFromParams(params: URLSearchParams): Scope {
@@ -77,6 +85,11 @@ export function DataOpsPage() {
   const scope = scopeFromParams(params);
   const selection = parseSelection(params.get("sel"));
   const typeFilter = (params.get("type") ?? "all") as JobTypeFilter;
+  const simFilters: SimFilters = {
+    status: (params.get("status") ?? "all") as SimStatusFilter,
+    strategy: (params.get("strategy") ?? "all") as SimStrategyFilter,
+    sort: params.get("sort") === "oldest" ? "oldest" : "newest",
+  };
 
   // Draft scope edits — nothing queries until Apply.
   const [draft, setDraft] = useState<Scope>(scope);
@@ -102,6 +115,10 @@ export function DataOpsPage() {
   const refreshes = useQuery(jobsQueries.refreshes);
   const publications = useQuery(publicationsQuery);
   const attempts = useQuery({ ...attemptsQuery, enabled: view === "publications" });
+  const simulations = useInfiniteQuery({
+    ...simulationsQuery(scope, simFilters),
+    enabled: view === "simulations",
+  });
 
   function setParam(patch: Record<string, string | null>) {
     const next = new URLSearchParams(params);
@@ -145,6 +162,8 @@ export function DataOpsPage() {
       ["price-refreshes"],
       ["publications"],
       ["publication-attempts"],
+      ["simulations"],
+      ["simulation"],
     ];
     for (const key of keys) void client.invalidateQueries({ queryKey: key });
   }
@@ -155,6 +174,7 @@ export function DataOpsPage() {
     imports.dataUpdatedAt,
     refreshes.dataUpdatedAt,
     publications.dataUpdatedAt,
+    simulations.dataUpdatedAt,
   ].reduce((a, b) => Math.max(a, b), 0);
 
   const jobRows: JobRow[] = [
@@ -201,6 +221,11 @@ export function DataOpsPage() {
               );
               setOpenDrawer("load");
             }}
+            onOpenSimulations={(day) =>
+              // A deliberate navigation: narrow the applied scope to that day
+              // so the catalogue reads it, same as Apply would.
+              setParam({ view: "simulations", from: day, to: day, sel: null })
+            }
           />
         );
       case "op": {
@@ -249,6 +274,15 @@ export function DataOpsPage() {
           <Empty label="That run is not in the loaded list." />
         );
       }
+      case "simulation":
+        return (
+          <SimulationInspector
+            id={selection.id}
+            scope={scope}
+            poll={view === "simulations"}
+            onOpenCoverage={(day) => setParam({ view: "coverage", sel: `day:${day}` })}
+          />
+        );
     }
   }
 
@@ -364,6 +398,22 @@ export function DataOpsPage() {
             <Stat value={attempts.data?.length ?? "—"} label="Detection runs" />
           </>
         )}
+        {view === "simulations" && (
+          <>
+            {(["QUEUED", "RUNNING", "SUCCEEDED", "FAILED"] as const).map((status) => (
+              <Stat
+                key={status}
+                value={simulations.data?.pages[0]?.counts[status] ?? "—"}
+                label={status.charAt(0) + status.slice(1).toLowerCase()}
+                tone={
+                  status === "FAILED" && simulations.data?.pages[0]?.counts.FAILED
+                    ? "warn"
+                    : undefined
+                }
+              />
+            ))}
+          </>
+        )}
         <Stat
           value={
             latest
@@ -426,6 +476,25 @@ export function DataOpsPage() {
                 <AttemptsView attempts={attempts} selected={selection} onSelect={select} />
               )}
             </>
+          )}
+          {view === "simulations" && (
+            <SimulationsView
+              query={simulations}
+              filters={simFilters}
+              onFilter={(patch) => {
+                const next: Record<string, string | null> = {};
+                if (patch.status !== undefined)
+                  next.status = patch.status === "all" ? null : patch.status;
+                if (patch.strategy !== undefined)
+                  next.strategy = patch.strategy === "all" ? null : patch.strategy;
+                if (patch.sort !== undefined)
+                  next.sort = patch.sort === "newest" ? null : patch.sort;
+                setParam(next);
+              }}
+              scope={scope}
+              selectedId={selection?.kind === "simulation" ? selection.id : null}
+              onSelect={(id) => select({ kind: "simulation", id })}
+            />
           )}
           <ActivityPane
             scope={

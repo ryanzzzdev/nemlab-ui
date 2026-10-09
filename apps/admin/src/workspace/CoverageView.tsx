@@ -124,6 +124,7 @@ export function DayInspector({
   day,
   session,
   onLoadDay,
+  onOpenSimulations,
 }: {
   scope: Scope;
   coverage: UseQueryResult<GridCoverage>;
@@ -131,6 +132,7 @@ export function DayInspector({
   day: string;
   session: SessionView;
   onLoadDay: (day: string) => void;
+  onOpenSimulations: (day: string) => void;
 }) {
   const row = coverage.data?.days.find((d) => d.day === day);
   if (!row) {
@@ -195,6 +197,14 @@ export function DayInspector({
         </div>
       )}
       <div className="insp-actions">
+        <button
+          type="button"
+          className="btn"
+          title="List the stored simulations recorded for this market day."
+          onClick={() => onOpenSimulations(day)}
+        >
+          View simulations for this day
+        </button>
         {session.role === "owner" ? (
           <button
             type="button"
