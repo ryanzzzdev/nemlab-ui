@@ -104,6 +104,7 @@ export function DataTable<T>({
           type="button"
           className="mini-btn"
           aria-expanded={columnsOpen}
+          title="Choose which columns this table shows."
           onClick={() => setColumnsOpen((open) => !open)}
         >
           Columns

@@ -32,16 +32,36 @@ const DURATIONS: GrantDays[] = [7, 30, 90];
 const POLL_MS = 30_000;
 
 const TABS = [
-  { id: "requests", label: "Requests" },
-  { id: "visitors", label: "Visitors" },
-  { id: "audit", label: "Audit" },
+  {
+    id: "requests",
+    label: "Requests",
+    hint: "Verified applicants waiting for an approve or reject decision.",
+  },
+  {
+    id: "visitors",
+    label: "Visitors",
+    hint: "Read-only grants issued to approved visitors — extend or revoke them here.",
+  },
+  {
+    id: "audit",
+    label: "Audit",
+    hint: "Owner access actions recorded server-side — sign-ins, decisions and revocations.",
+  },
 ] as const;
 type Tab = (typeof TABS)[number]["id"];
 
-const GRANT_STATES: { state: GrantState; label: string }[] = [
-  { state: "active", label: "Active" },
-  { state: "expired", label: "Expired" },
-  { state: "revoked", label: "Revoked" },
+const GRANT_STATES: { state: GrantState; label: string; hint: string }[] = [
+  { state: "active", label: "Active", hint: "Grants that can still sign in right now." },
+  {
+    state: "expired",
+    label: "Expired",
+    hint: "Grants that ran out of time without being revoked.",
+  },
+  {
+    state: "revoked",
+    label: "Revoked",
+    hint: "Grants ended early by an owner — sessions stop working immediately.",
+  },
 ];
 
 function recentAuth(error: unknown): boolean {
@@ -247,6 +267,7 @@ function RequestInspector({ id, session }: { id: string; session: SessionView })
             <button
               type="button"
               className="btn primary"
+              title="Approve this request and issue a read-only grant for the chosen duration."
               disabled={busy}
               onClick={() => void decide("approve")}
             >
@@ -255,6 +276,7 @@ function RequestInspector({ id, session }: { id: string; session: SessionView })
             <button
               type="button"
               className="btn ghost"
+              title="Reject this request — the applicant is emailed the decision."
               disabled={busy}
               onClick={() => void decide("reject")}
             >
@@ -264,7 +286,13 @@ function RequestInspector({ id, session }: { id: string; session: SessionView })
         </div>
       )}
       <div className="insp-actions">
-        <button type="button" className="btn ghost" disabled={busy} onClick={() => void resend()}>
+        <button
+          type="button"
+          className="btn ghost"
+          title="Queue another copy of the decision email for delivery."
+          disabled={busy}
+          onClick={() => void resend()}
+        >
           Resend email
         </button>
       </div>
@@ -371,6 +399,7 @@ function GrantInspector({ grant, session }: { grant: ViewerGrantView; session: S
             <button
               type="button"
               className="btn ghost"
+              title="Add the chosen number of days to this grant's expiry."
               disabled={busy}
               onClick={() =>
                 void act(
@@ -382,7 +411,12 @@ function GrantInspector({ grant, session }: { grant: ViewerGrantView; session: S
               Extend
             </button>
             {!revoking ? (
-              <button type="button" className="btn ghost" onClick={() => setRevoking(true)}>
+              <button
+                type="button"
+                className="btn ghost"
+                title="End this visitor's access early — sessions stop on the next request."
+                onClick={() => setRevoking(true)}
+              >
                 Revoke…
               </button>
             ) : (
@@ -398,6 +432,7 @@ function GrantInspector({ grant, session }: { grant: ViewerGrantView; session: S
                 <button
                   type="button"
                   className="btn primary"
+                  title="Permanently revoke this grant now."
                   disabled={busy}
                   onClick={() =>
                     void act(

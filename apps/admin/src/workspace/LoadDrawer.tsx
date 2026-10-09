@@ -194,10 +194,22 @@ export function LoadDrawer({
         </p>
       )}
       <div className="job-actions">
-        <button type="button" className="btn primary" onClick={() => void review()} disabled={busy}>
+        <button
+          type="button"
+          className="btn primary"
+          title="Check how many days this window covers before starting the load."
+          onClick={() => void review()}
+          disabled={busy}
+        >
           Review scope
         </button>
-        <button type="button" className="btn ghost" onClick={() => setForm(scope)} disabled={busy}>
+        <button
+          type="button"
+          className="btn ghost"
+          title="Reset the form to the workspace's applied region and dates."
+          onClick={() => setForm(scope)}
+          disabled={busy}
+        >
           Use applied scope
         </button>
       </div>
@@ -228,6 +240,7 @@ export function LoadDrawer({
           <button
             type="button"
             className="btn primary"
+            title="Create the load operation — you step it forward chunk by chunk from Loads & Jobs."
             onClick={() => void begin()}
             disabled={busy}
           >
@@ -241,6 +254,7 @@ export function LoadDrawer({
           <button
             type="button"
             className="btn ghost"
+            title="Switch to the Loads & Jobs view with the new operation selected."
             onClick={() => {
               onStarted();
               onClose();
@@ -348,7 +362,13 @@ function BaselineSection({ scope, session }: { scope: Scope; session: SessionVie
           {error}
         </p>
       )}
-      <button type="button" className="btn" disabled={busy} onClick={() => void submit()}>
+      <button
+        type="button"
+        className="btn"
+        title="Queue a one-off historical baseline import for this region."
+        disabled={busy}
+        onClick={() => void submit()}
+      >
         {busy ? "Submitting…" : `Import baseline history for ${scope.region}`}
       </button>
       {report && (

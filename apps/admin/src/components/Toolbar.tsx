@@ -21,14 +21,16 @@ export function Stat({
   label,
   tone,
   onClick,
+  hint,
 }: {
   value: ReactNode;
   label: string;
   tone?: "warn" | "ok" | undefined;
   onClick?: () => void;
+  hint?: string;
 }) {
   return (
-    <button type="button" className="stat" onClick={onClick} disabled={!onClick}>
+    <button type="button" className="stat" onClick={onClick} disabled={!onClick} title={hint}>
       <b className={tone ? tone : undefined}>{value}</b>
       <span>{label}</span>
     </button>
@@ -40,7 +42,7 @@ export function Tabs<T extends string>({
   active,
   onChange,
 }: {
-  tabs: { id: T; label: string }[];
+  tabs: { id: T; label: string; hint?: string }[];
   active: T;
   onChange: (tab: T) => void;
 }) {
@@ -53,6 +55,7 @@ export function Tabs<T extends string>({
           role="tab"
           aria-selected={tab.id === active}
           className={`tab${tab.id === active ? " active" : ""}`}
+          title={tab.hint}
           onClick={() => onChange(tab.id)}
         >
           {tab.label}

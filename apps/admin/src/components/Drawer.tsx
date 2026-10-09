@@ -49,7 +49,13 @@ export function Drawer({ title, open, onClose, wide, footer, children }: DrawerP
     >
       <div className="drawer-head">
         {title}
-        <button type="button" className="close" aria-label="Close" onClick={onClose}>
+        <button
+          type="button"
+          className="close"
+          aria-label="Close"
+          title="Close this panel (Esc)"
+          onClick={onClose}
+        >
           ×
         </button>
       </div>

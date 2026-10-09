@@ -295,6 +295,7 @@ export function AttemptInspector({
             <button
               type="button"
               className="linklike"
+              title="Select the publication this detection run produced."
               onClick={() => onOpenPublication(attempt.publicationId!)}
             >
               Open the recorded publication

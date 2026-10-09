@@ -39,6 +39,7 @@ function Account({ session }: { session: SessionView }) {
       <button
         type="button"
         className="btn"
+        title="End this session — you'll need a fresh sign-in link to return."
         disabled={busy}
         onClick={() => {
           setBusy(true);
@@ -151,7 +152,12 @@ export function Shell() {
           {import.meta.env.DEV && <span className="env">development</span>}
         </Link>
         <div className="spacer" />
-        <button type="button" className="btn appbar-link" onClick={() => setHelpOpen(true)}>
+        <button
+          type="button"
+          className="btn appbar-link"
+          title="How coverage, jobs and publications fit together."
+          onClick={() => setHelpOpen(true)}
+        >
           Help
         </button>
         <label className="dim picker">

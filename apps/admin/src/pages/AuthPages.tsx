@@ -176,7 +176,13 @@ export function RequestAccessPage() {
             </p>
           )}
           {error !== null && <SubmitError error={error} />}
-          <button type="button" className="primary" disabled={busy} onClick={() => void submit()}>
+          <button
+            type="button"
+            className="primary"
+            title="Submit your request — we email a verification link to this address."
+            disabled={busy}
+            onClick={() => void submit()}
+          >
             Request access
           </button>
           <p className="hint">
@@ -320,7 +326,12 @@ export function RequestStatusPage() {
         )}
         {(data.status === "unverified" || data.status === "pending") && (
           <p>
-            <button type="button" className="ghost" onClick={() => void resend()}>
+            <button
+              type="button"
+              className="ghost"
+              title="Queue a fresh verification email for this request."
+              onClick={() => void resend()}
+            >
               Resend verification email
             </button>
           </p>
@@ -444,7 +455,13 @@ export function SignInPage() {
             </p>
           )}
           {error !== null && <SubmitError error={error} />}
-          <button type="button" className="primary" disabled={busy} onClick={() => void submit()}>
+          <button
+            type="button"
+            className="primary"
+            title="Email a one-time sign-in link — it works once and lasts 15 minutes."
+            disabled={busy}
+            onClick={() => void submit()}
+          >
             Send sign-in link
           </button>
           <p className="hint">

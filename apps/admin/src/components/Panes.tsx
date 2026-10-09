@@ -107,12 +107,18 @@ export function ActivityPane({ scope, children }: { scope?: string; children: Re
         <span>Activity</span>
         {scope && <span className="scope">{scope}</span>}
         <span className="spacer" />
-        <button type="button" className="mini-btn" onClick={reset}>
+        <button
+          type="button"
+          className="mini-btn"
+          title="Restore the default inspector width and activity height."
+          onClick={reset}
+        >
           Reset layout
         </button>
         <button
           type="button"
           className="mini-btn"
+          title={prefs.activityCollapsed ? "Show the activity list." : "Hide the activity list."}
           onClick={() => update({ activityCollapsed: !prefs.activityCollapsed })}
         >
           {prefs.activityCollapsed ? "Expand" : "Collapse"}

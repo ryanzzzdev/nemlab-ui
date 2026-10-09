@@ -61,6 +61,13 @@ const TYPE_LABEL: Record<JobRow["kind"], string> = {
   refresh: "Price refresh",
 };
 
+const KIND_HINT: Record<JobTypeFilter, string> = {
+  all: "Every queued, running and finished job across all queues.",
+  op: "Multi-day load operations — owner-started jobs that fetch and store data.",
+  import: "Single-day grid data imports dispatched by the worker.",
+  refresh: "Price re-fetch jobs that update stored market prices.",
+};
+
 function rowStatus(row: JobRow): string {
   return row.kind === "op" ? row.op.status : row.job.status;
 }
@@ -138,6 +145,7 @@ export function JobsView({
             key={kind}
             type="button"
             className={`tab${filter === kind ? " active" : ""}`}
+            title={KIND_HINT[kind]}
             onClick={() => onFilter(kind)}
           >
             {kind === "all" ? "All work" : `${TYPE_LABEL[kind]}s`}
@@ -322,6 +330,7 @@ export function OperationInspector({
               <button
                 type="button"
                 className="btn primary"
+                title="Queue the next batch of days in this load operation."
                 disabled={busy}
                 onClick={() =>
                   void act(() => dispatchLoadOperation(session.csrfToken, operation.id))
@@ -332,6 +341,7 @@ export function OperationInspector({
               <button
                 type="button"
                 className="btn"
+                title="Pause this operation — queued work finishes but nothing new is dispatched."
                 disabled={busy}
                 onClick={() => void act(() => pauseLoadOperation(session.csrfToken, operation.id))}
               >
@@ -343,6 +353,7 @@ export function OperationInspector({
             <button
               type="button"
               className="btn primary"
+              title="Continue dispatching the remaining days of this paused operation."
               disabled={busy}
               onClick={() => void act(() => resumeLoadOperation(session.csrfToken, operation.id))}
             >
@@ -442,12 +453,23 @@ export function ImportInspector({
       {owner && (CANCELLABLE.has(job.status) || RESUBMITTABLE.has(job.status)) && (
         <div className="insp-actions">
           {CANCELLABLE.has(job.status) && (
-            <button type="button" className="btn" disabled={busy} onClick={() => void cancel()}>
+            <button
+              type="button"
+              className="btn"
+              title="Cancel this queued or running job — already-imported days are kept."
+              disabled={busy}
+              onClick={() => void cancel()}
+            >
               Cancel job
             </button>
           )}
           {RESUBMITTABLE.has(job.status) && (
-            <button type="button" className="btn" onClick={submitAgain}>
+            <button
+              type="button"
+              className="btn"
+              title="Open the load drawer with this job's unfinished window pre-filled."
+              onClick={submitAgain}
+            >
               Submit remaining data
             </button>
           )}

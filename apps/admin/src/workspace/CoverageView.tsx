@@ -196,7 +196,12 @@ export function DayInspector({
       )}
       <div className="insp-actions">
         {session.role === "owner" ? (
-          <button type="button" className="btn" onClick={() => onLoadDay(day)}>
+          <button
+            type="button"
+            className="btn"
+            title="Open the load drawer to fetch this day's missing data."
+            onClick={() => onLoadDay(day)}
+          >
             Load data
           </button>
         ) : (

@@ -32,10 +32,22 @@ import type { Scope, Selection } from "./scope";
 
 type View = "coverage" | "jobs" | "publications";
 
-const VIEW_TABS: { id: View; label: string }[] = [
-  { id: "coverage", label: "Coverage" },
-  { id: "jobs", label: "Loads & Jobs" },
-  { id: "publications", label: "Publications" },
+const VIEW_TABS: { id: View; label: string; hint: string }[] = [
+  {
+    id: "coverage",
+    label: "Coverage",
+    hint: "Per-day grid and price data coverage for the scoped region — what is stored, partial or missing.",
+  },
+  {
+    id: "jobs",
+    label: "Loads & Jobs",
+    hint: "Load operations, grid imports and price refresh jobs — the work queues that fill the gaps.",
+  },
+  {
+    id: "publications",
+    label: "Publications",
+    hint: "Published GridReplay events and the detection runs that produced them.",
+  },
 ];
 
 const VIEW_SELECTIONS: Record<View, Set<Selection["kind"]>> = {
@@ -274,21 +286,41 @@ export function DataOpsPage() {
             onChange={(e) => setDraft({ ...draft, end: e.target.value })}
           />
         </label>
-        <button type="button" className="btn primary" onClick={apply}>
+        <button
+          type="button"
+          className="btn primary"
+          title="Apply the region and date range to the workspace tables."
+          onClick={apply}
+        >
           Apply
         </button>
         {session.role === "owner" && (
           <>
-            <button type="button" className="btn" onClick={() => setOpenDrawer("load")}>
+            <button
+              type="button"
+              className="btn"
+              title="Start a bounded load operation to fetch missing data for the applied scope."
+              onClick={() => setOpenDrawer("load")}
+            >
               Load data
             </button>
-            <button type="button" className="btn" onClick={() => setOpenDrawer("publish")}>
+            <button
+              type="button"
+              className="btn"
+              title="Review coverage and run detection to publish GridReplay events."
+              onClick={() => setOpenDrawer("publish")}
+            >
               Review &amp; publish
             </button>
           </>
         )}
         {checkedAt > 0 && <span className="fresh">checked {fmtTime(checkedAt)}</span>}
-        <button type="button" className="btn" onClick={refresh}>
+        <button
+          type="button"
+          className="btn"
+          title="Re-fetch every table from the server."
+          onClick={refresh}
+        >
           Refresh
         </button>
       </Toolbar>
@@ -369,8 +401,16 @@ export function DataOpsPage() {
             <>
               <Tabs
                 tabs={[
-                  { id: "pubs" as const, label: "Publications" },
-                  { id: "attempts" as const, label: "Detection runs" },
+                  {
+                    id: "pubs" as const,
+                    label: "Publications",
+                    hint: "Events published to GridReplay — what visitors can see.",
+                  },
+                  {
+                    id: "attempts" as const,
+                    label: "Detection runs",
+                    hint: "Each detection attempt over stored data — including runs that found nothing.",
+                  },
                 ]}
                 active={pubsTab}
                 onChange={setPubsTab}

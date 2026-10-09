@@ -199,6 +199,7 @@ export function PublishDrawer({
       <button
         type="button"
         className="btn ghost"
+        title="Preview required-data coverage for this window before publishing."
         onClick={() => void checkCoverage()}
         disabled={busy}
       >
@@ -257,6 +258,7 @@ export function PublishDrawer({
           <button
             type="button"
             className="btn primary"
+            title="Run the detector suite over this window and publish any events found to GridReplay."
             disabled={busy || !canPublish}
             onClick={() => void publish()}
           >
@@ -302,6 +304,7 @@ export function PublishDrawer({
             <button
               type="button"
               className="btn ghost"
+              title="Re-check the detection run history for this attempt's key."
               onClick={() => void attempts.refetch()}
               disabled={attempts.isFetching}
             >
@@ -310,6 +313,7 @@ export function PublishDrawer({
             <button
               type="button"
               className="btn ghost"
+              title="Forget this unconfirmed attempt — nothing is cancelled or undone server-side."
               onClick={() => {
                 sessionStorage.removeItem(PUBLISH_ATTEMPT_KEY);
                 setPending(null);
