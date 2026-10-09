@@ -1,4 +1,5 @@
 import type { SessionView } from "../api";
+import { fmtDateTime } from "../format";
 import { Drawer } from "./Drawer";
 
 const STEPS = [
@@ -124,7 +125,7 @@ export function HelpDrawer({
             : session.role === "owner"
               ? "owner access"
               : "access request in progress"}
-          , session until {new Date(session.expiresAt).toLocaleString("en-AU")}.
+          , session until {fmtDateTime(session.expiresAt)}.
           {session.role === "viewer" &&
             " Loading data and publishing are owner actions; you can inspect every stored, queued and published record."}
         </p>

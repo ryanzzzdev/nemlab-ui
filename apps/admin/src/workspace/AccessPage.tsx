@@ -11,6 +11,7 @@ import {
   resendAccessDelivery,
   revokeViewerGrant,
 } from "../api";
+import { fmtDateTime } from "../format";
 import type {
   AccessAuditView,
   AccessRequestDetail,
@@ -102,12 +103,12 @@ const REQUEST_COLUMNS: Column<AccessRequestView>[] = [
   {
     id: "submitted",
     header: "Submitted",
-    render: (r) => new Date(r.submittedAt).toLocaleString("en-AU"),
+    render: (r) => fmtDateTime(r.submittedAt),
   },
   {
     id: "verified",
     header: "Verified",
-    render: (r) => (r.verifiedAt ? new Date(r.verifiedAt).toLocaleDateString("en-AU") : "not yet"),
+    render: (r) => (r.verifiedAt ? fmtDateTime(r.verifiedAt) : "not yet"),
   },
 ];
 
@@ -117,15 +118,12 @@ const GRANT_COLUMNS: Column<ViewerGrantView>[] = [
   {
     id: "granted",
     header: "Granted",
-    render: (g) => new Date(g.grantedAt).toLocaleString("en-AU"),
+    render: (g) => fmtDateTime(g.grantedAt),
   },
   {
     id: "until",
     header: "Until",
-    render: (g) =>
-      g.revokedAt
-        ? `revoked ${new Date(g.revokedAt).toLocaleString("en-AU")}`
-        : new Date(g.expiresAt).toLocaleString("en-AU"),
+    render: (g) => (g.revokedAt ? `revoked ${fmtDateTime(g.revokedAt)}` : fmtDateTime(g.expiresAt)),
   },
 ];
 
@@ -138,7 +136,7 @@ const AUDIT_COLUMNS: Column<AccessAuditView>[] = [
   {
     id: "occurred",
     header: "When",
-    render: (a) => new Date(a.occurredAt).toLocaleString("en-AU"),
+    render: (a) => fmtDateTime(a.occurredAt),
   },
   { id: "actor", header: "Actor", render: (a) => a.actor },
   { id: "action", header: "Action", render: (a) => a.action },
@@ -234,13 +232,11 @@ function RequestInspector({ id, session }: { id: string; session: SessionView })
       <div className="insp-sec">
         <dl className="kv">
           <dt>Submitted</dt>
-          <dd>{new Date(request.submittedAt).toLocaleString("en-AU")}</dd>
+          <dd>{fmtDateTime(request.submittedAt)}</dd>
           <dt>Verified</dt>
-          <dd>
-            {request.verifiedAt ? new Date(request.verifiedAt).toLocaleString("en-AU") : "not yet"}
-          </dd>
+          <dd>{request.verifiedAt ? fmtDateTime(request.verifiedAt) : "not yet"}</dd>
           <dt>Decided</dt>
-          <dd>{request.decidedAt ? new Date(request.decidedAt).toLocaleString("en-AU") : "—"}</dd>
+          <dd>{request.decidedAt ? fmtDateTime(request.decidedAt) : "—"}</dd>
         </dl>
       </div>
       {request.status === "pending" && (
@@ -302,7 +298,7 @@ function RequestInspector({ id, session }: { id: string; session: SessionView })
                     <StatusChip status={d.status} />
                   </td>
                   <td className="num">{d.attempts}</td>
-                  <td>{d.sentAt ? new Date(d.sentAt).toLocaleString("en-AU") : "—"}</td>
+                  <td>{d.sentAt ? fmtDateTime(d.sentAt) : "—"}</td>
                   <td>{d.diagnostic ?? "—"}</td>
                 </tr>
               ))}
@@ -358,12 +354,12 @@ function GrantInspector({ grant, session }: { grant: ViewerGrantView; session: S
       <div className="insp-sec">
         <dl className="kv">
           <dt>Granted</dt>
-          <dd>{new Date(grant.grantedAt).toLocaleString("en-AU")}</dd>
+          <dd>{fmtDateTime(grant.grantedAt)}</dd>
           <dt>Until</dt>
           <dd>
             {grant.revokedAt
-              ? `revoked ${new Date(grant.revokedAt).toLocaleString("en-AU")}`
-              : new Date(grant.expiresAt).toLocaleString("en-AU")}
+              ? `revoked ${fmtDateTime(grant.revokedAt)}`
+              : fmtDateTime(grant.expiresAt)}
           </dd>
         </dl>
       </div>
@@ -494,7 +490,7 @@ export function AccessPage() {
         <div className="insp-head">
           <h2>{row.action}</h2>
           <div className="sub">
-            {row.actor} · {new Date(row.occurredAt).toLocaleString("en-AU")}
+            {row.actor} · {fmtDateTime(row.occurredAt)}
           </div>
         </div>
         <div className="insp-sec">

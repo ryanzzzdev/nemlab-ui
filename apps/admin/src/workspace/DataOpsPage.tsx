@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useOutletContext, useSearchParams } from "react-router";
 import { REGIONS, marketDay, plusDays } from "../api";
+import { fmtTime } from "../format";
 import type { Region, SessionView } from "../api";
 import { ActivityPane, Inspector } from "../components/Panes";
 import { Stat, StatStrip, Tabs, Toolbar } from "../components/Toolbar";
@@ -286,9 +287,7 @@ export function DataOpsPage() {
             </button>
           </>
         )}
-        {checkedAt > 0 && (
-          <span className="fresh">checked {new Date(checkedAt).toLocaleTimeString("en-AU")}</span>
-        )}
+        {checkedAt > 0 && <span className="fresh">checked {fmtTime(checkedAt)}</span>}
         <button type="button" className="btn" onClick={refresh}>
           Refresh
         </button>

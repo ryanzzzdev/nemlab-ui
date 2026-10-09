@@ -8,6 +8,7 @@ import {
   resumeLoadOperation,
   plusDays,
 } from "../api";
+import { fmtDateTime } from "../format";
 import type {
   Event,
   GridImport,
@@ -100,7 +101,7 @@ const COLUMNS: Column<JobRow>[] = [
     header: "Updated",
     render: (r) => {
       const when = rowWhen(r);
-      return when ? new Date(when).toLocaleString("en-AU") : "—";
+      return when ? fmtDateTime(when) : "—";
     },
   },
   { id: "note", header: "Note", render: (r) => rowDiagnostic(r) ?? "—" },
@@ -180,9 +181,7 @@ function Events({ path }: { path: string }) {
     <ol className="event-list">
       {events.data.map((event) => (
         <li key={event.id}>
-          <time dateTime={event.occurredAt}>
-            {new Date(event.occurredAt).toLocaleString("en-AU")}
-          </time>{" "}
+          <time dateTime={event.occurredAt}>{fmtDateTime(event.occurredAt)}</time>{" "}
           <strong>{event.action.replaceAll("_", " ")}</strong> — {event.actor}
           {event.diagnostic && <span className="hint"> ({event.diagnostic})</span>}
         </li>
@@ -266,7 +265,7 @@ export function OperationInspector({
           <dt>Next day</dt>
           <dd>{operation.nextDay}</dd>
           <dt>Updated</dt>
-          <dd>{new Date(operation.updatedAt).toLocaleString("en-AU")}</dd>
+          <dd>{fmtDateTime(operation.updatedAt)}</dd>
         </dl>
         {operation.status === "dispatched" && (
           <p className="hint">
@@ -435,7 +434,7 @@ export function ImportInspector({
           {job.availableAt && (
             <>
               <dt>Available</dt>
-              <dd>{new Date(job.availableAt).toLocaleString("en-AU")}</dd>
+              <dd>{fmtDateTime(job.availableAt)}</dd>
             </>
           )}
         </dl>
@@ -492,7 +491,7 @@ export function RefreshInspector({ job }: { job: Job }) {
           {job.availableAt && (
             <>
               <dt>Available</dt>
-              <dd>{new Date(job.availableAt).toLocaleString("en-AU")}</dd>
+              <dd>{fmtDateTime(job.availableAt)}</dd>
             </>
           )}
         </dl>
@@ -552,7 +551,7 @@ export function ActivityBody({
             <td>{rowRegion(row)}</td>
             <td>{rowWindow(row)}</td>
             <td>{rowProgress(row)}</td>
-            <td>{rowWhen(row) ? new Date(rowWhen(row)!).toLocaleString("en-AU") : "—"}</td>
+            <td>{rowWhen(row) ? fmtDateTime(rowWhen(row)!) : "—"}</td>
           </tr>
         ))}
       </tbody>

@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { Link, Navigate, NavLink, Outlet, useLocation } from "react-router";
 import { PUBLIC_BASE, listAccessRequests } from "../api";
 import type { SessionView } from "../api";
+import { fmtDateTime } from "../format";
 import { useLayoutPrefs, useThemePreference } from "../prefs";
 import type { Density, Theme } from "../prefs";
 import { useSession, useSignOut } from "../session";
@@ -25,12 +26,7 @@ const THEMES: { id: Theme; label: string }[] = [
 function Account({ session }: { session: SessionView }) {
   const signOut = useSignOut();
   const [busy, setBusy] = useState(false);
-  const expires = new Date(session.expiresAt).toLocaleString("en-AU", {
-    hour: "numeric",
-    minute: "2-digit",
-    day: "numeric",
-    month: "short",
-  });
+  const expires = fmtDateTime(session.expiresAt);
   return (
     <>
       <div className="account">

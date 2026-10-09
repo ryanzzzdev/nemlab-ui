@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import type { UseQueryResult } from "@tanstack/react-query";
 import { PUBLIC_BASE, apiGet, plusDays } from "../api";
+import { fmtDateTime } from "../format";
 import type { AdminGridPublication, GridDetectionAttempt, GridPublicationDetail } from "../api";
 import { DataTable } from "../components/Table";
 import type { Column } from "../components/Table";
@@ -50,7 +51,7 @@ const COLUMNS: Column<AdminGridPublication>[] = [
   {
     id: "published",
     header: "Published",
-    render: (p) => new Date(p.createdAt).toLocaleString("en-AU"),
+    render: (p) => fmtDateTime(p.createdAt),
   },
   {
     id: "actor",
@@ -153,7 +154,7 @@ export function AttemptsView({
         {
           id: "when",
           header: "When",
-          render: (a) => new Date(a.createdAt).toLocaleString("en-AU"),
+          render: (a) => fmtDateTime(a.createdAt),
         },
       ]}
       rows={rows}
@@ -193,7 +194,7 @@ export function PublicationInspector({ id }: { id: string }) {
         <h3>Publication</h3>
         <dl className="kv">
           <dt>Published</dt>
-          <dd>{new Date(pub.createdAt).toLocaleString("en-AU")}</dd>
+          <dd>{fmtDateTime(pub.createdAt)}</dd>
           <dt>Run</dt>
           <dd>{pub.runId ? <code>{pub.runId.slice(0, 8)}</code> : "—"}</dd>
           {pub.actor && (
@@ -279,7 +280,7 @@ export function AttemptInspector({
           <dt>Key</dt>
           <dd>{attempt.attemptKey ? <code>{attempt.attemptKey}</code> : "—"}</dd>
           <dt>When</dt>
-          <dd>{new Date(attempt.createdAt).toLocaleString("en-AU")}</dd>
+          <dd>{fmtDateTime(attempt.createdAt)}</dd>
           {attempt.diagnostic && (
             <>
               <dt>Diagnostic</dt>

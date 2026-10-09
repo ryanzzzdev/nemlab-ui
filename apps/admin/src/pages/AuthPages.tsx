@@ -10,6 +10,7 @@ import {
   resendVerification,
   verifyAccessRequest,
 } from "../api";
+import { fmtDateTime } from "../format";
 import { Failure, Loading, Panel } from "../components/States";
 import { useSession } from "../session";
 
@@ -293,9 +294,9 @@ export function RequestStatusPage() {
       >
         {data.status === "unverified" && (
           <p>
-            Your request was received {new Date(data.submittedAt).toLocaleString("en-AU")} but the
-            email address is not verified yet. Open the verification link from that email; it
-            expires 24 hours after it was sent.
+            Your request was received {fmtDateTime(data.submittedAt)} but the email address is not
+            verified yet. Open the verification link from that email; it expires 24 hours after it
+            was sent.
           </p>
         )}
         {data.status === "pending" && (
@@ -307,10 +308,8 @@ export function RequestStatusPage() {
         {data.status === "approved" && (
           <p>
             The owner approved read-only access
-            {data.grantExpiresAt
-              ? `, valid until ${new Date(data.grantExpiresAt).toLocaleString("en-AU")}`
-              : ""}
-            . Sign in with the link we emailed — it works once and lasts 15 minutes.
+            {data.grantExpiresAt ? `, valid until ${fmtDateTime(data.grantExpiresAt)}` : ""}. Sign
+            in with the link we emailed — it works once and lasts 15 minutes.
           </p>
         )}
         {data.status === "rejected" && (

@@ -1,5 +1,6 @@
 import type { UseQueryResult } from "@tanstack/react-query";
 import { apiGet, plusDays } from "../api";
+import { fmtDate } from "../format";
 import type {
   GridBaselineReadiness,
   GridCoverage,
@@ -156,9 +157,7 @@ export function DayInspector({
               <dd>
                 {s.valid != null
                   ? `${s.valid} valid${s.missing ? `, ${s.missing} missing` : ""}${
-                      s.retrievedAt
-                        ? ` · ${new Date(s.retrievedAt).toLocaleDateString("en-AU")}`
-                        : ""
+                      s.retrievedAt ? ` · ${fmtDate(s.retrievedAt)}` : ""
                     }`
                   : "not stored"}
               </dd>
