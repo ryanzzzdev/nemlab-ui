@@ -41,7 +41,7 @@ function dragStart(event: PointerEvent<HTMLDivElement>, apply: (delta: number) =
   window.addEventListener("pointerup", stop);
 }
 
-export function Inspector({ children }: { children: ReactNode }) {
+export function Inspector({ children, onClose }: { children: ReactNode; onClose?: () => void }) {
   const { prefs, update } = useLayoutPrefs();
   const apply = useCallback(
     (delta: number, reset = false) =>
@@ -70,13 +70,34 @@ export function Inspector({ children }: { children: ReactNode }) {
         style={{ width: prefs.inspectorWidth }}
         aria-label="Selection inspector"
       >
+        {onClose && (
+          <div className="inspector-toolbar">
+            <span>Record details</span>
+            <button
+              type="button"
+              className="mini-btn"
+              onClick={onClose}
+              aria-label="Close inspector"
+            >
+              Close ×
+            </button>
+          </div>
+        )}
         {children}
       </aside>
     </>
   );
 }
 
-export function ActivityPane({ scope, children }: { scope?: string; children: ReactNode }) {
+export function ActivityPane({
+  scope,
+  controls,
+  children,
+}: {
+  scope?: string;
+  controls?: ReactNode;
+  children: ReactNode;
+}) {
   const { prefs, update, reset } = useLayoutPrefs();
   const apply = useCallback(
     (delta: number, resetSize = false) =>
@@ -106,6 +127,7 @@ export function ActivityPane({ scope, children }: { scope?: string; children: Re
       <div className="activity-head">
         <span>Activity</span>
         {scope && <span className="scope">{scope}</span>}
+        {controls}
         <span className="spacer" />
         <button
           type="button"

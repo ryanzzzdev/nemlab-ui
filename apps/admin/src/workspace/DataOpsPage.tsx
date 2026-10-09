@@ -392,7 +392,7 @@ export function DataOpsPage() {
       <StatStrip>
         {view === "coverage" && (
           <>
-            <Stat value={`${completeDays}/${days.length}`} label="Complete days" tone="ok" />
+            <Stat value={`${completeDays}/${days.length}`} label="Grid complete days" tone="ok" />
             <Stat value={partialDays} label="Partial" tone={partialDays ? "warn" : undefined} />
             <Stat
               value={days.length - completeDays - partialDays}
@@ -401,7 +401,7 @@ export function DataOpsPage() {
             />
             <Stat
               value={baseline.data ? `${readyDays}/${baseline.data.days.length}` : "—"}
-              label="Baseline ready"
+              label="Ramp baseline ready"
             />
           </>
         )}
@@ -519,19 +519,28 @@ export function DataOpsPage() {
           )}
           <ActivityPane
             scope={
-              allRecent ? "all recent work" : `${scope.region} · ${scope.start} – ${scope.end}`
+              selection?.kind === "simulation"
+                ? `Simulation ${selection.id.slice(0, 8)} · execution history`
+                : allRecent
+                  ? "all recent work"
+                  : `${scope.region} · ${scope.start} – ${scope.end}`
+            }
+            controls={
+              selection?.kind !== "simulation" ? (
+                <label
+                  className="activity-toggle"
+                  title="Show all loaded work, ignoring the applied region and dates."
+                >
+                  <input
+                    type="checkbox"
+                    checked={allRecent}
+                    onChange={(e) => setAllRecent(e.target.checked)}
+                  />{" "}
+                  All recent
+                </label>
+              ) : undefined
             }
           >
-            <div className="activity-toggle">
-              <label>
-                <input
-                  type="checkbox"
-                  checked={allRecent}
-                  onChange={(e) => setAllRecent(e.target.checked)}
-                />{" "}
-                All recent
-              </label>
-            </div>
             {selection?.kind === "simulation" ? (
               <SimulationActivity id={selection.id} />
             ) : (
@@ -546,7 +555,19 @@ export function DataOpsPage() {
             )}
           </ActivityPane>
         </div>
-        <Inspector>{inspector()}</Inspector>
+        {selection && (
+          <Inspector
+            key={selectionParam(selection)}
+            onClose={() => {
+              setParam({ sel: null });
+              requestAnimationFrame(() =>
+                document.querySelector<HTMLElement>(".table-wrap table[role='grid']")?.focus(),
+              );
+            }}
+          >
+            {inspector()}
+          </Inspector>
+        )}
       </div>
       {session.role === "owner" && (
         <>

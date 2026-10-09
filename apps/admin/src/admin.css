@@ -5,6 +5,7 @@
 /* ---- tokens ---- */
 :root,
 [data-theme="light"] {
+  color-scheme: light;
   --bg: #eef0f3;
   --surface: #ffffff;
   --surface-2: #f7f8fa;
@@ -22,6 +23,7 @@
   --focus: #1a5fb4;
 }
 [data-theme="dark"] {
+  color-scheme: dark;
   --bg: #10151b;
   --surface: #181f28;
   --surface-2: #141a21;
@@ -40,6 +42,7 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]):not([data-theme="dark"]) {
+    color-scheme: dark;
     --bg: #10151b;
     --surface: #181f28;
     --surface-2: #141a21;
@@ -562,15 +565,12 @@ table.grid tbody tr.sel td:first-child {
   overflow: auto;
 }
 .activity-toggle {
-  padding: 4px 12px;
-  border-bottom: 1px solid var(--rule-soft);
-  font-size: 12px;
-  color: var(--muted);
-}
-.activity-toggle label {
   display: flex;
   align-items: center;
   gap: 6px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted);
 }
 .table-note {
   margin: 4px 14px 8px;
@@ -1153,4 +1153,83 @@ table.grid tbody tr.sel td:first-child {
   .appbar .account .sub {
     display: none;
   }
+}
+
+/* Inspection polish: useful width before selection; readable, contained detail. */
+.stat {
+  opacity: 1;
+}
+.stat:not(button) {
+  cursor: default;
+}
+.stat:not(button):hover {
+  background: var(--surface);
+}
+.inspector-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 14px;
+  min-height: 32px;
+  border-bottom: 1px solid var(--rule);
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.inspector > * {
+  flex-shrink: 0;
+}
+.kv {
+  grid-template-columns: minmax(90px, 36%) minmax(0, 1fr);
+}
+.kv dd {
+  overflow-wrap: anywhere;
+}
+.insp-sec h3 {
+  color: var(--muted);
+}
+.insp-actions {
+  border-bottom: 1px solid var(--rule-soft);
+}
+.result-comparison {
+  width: 100%;
+  font-variant-numeric: tabular-nums;
+}
+.result-comparison caption {
+  text-align: left;
+  font-size: 11px;
+  color: var(--muted);
+  padding: 10px 0 6px;
+}
+.result-comparison th,
+.result-comparison td {
+  padding: 7px 5px;
+  font-size: 11px;
+}
+.result-comparison td,
+.result-comparison thead th:not(:first-child) {
+  text-align: right;
+}
+.result-comparison tbody th {
+  text-align: left;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.result-comparison tbody tr:first-child {
+  background: var(--accent-soft);
+  font-weight: 600;
+}
+.table-note {
+  padding: 8px 12px;
+  margin: 0;
+  border-top: 1px solid var(--rule-soft);
+}
+
+.strip > .stat:last-child {
+  flex: 1.6;
 }
