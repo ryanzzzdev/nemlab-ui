@@ -29,11 +29,20 @@ export function Stat({
   onClick?: () => void;
   hint?: string;
 }) {
-  return (
-    <button type="button" className="stat" onClick={onClick} disabled={!onClick} title={hint}>
+  const content = (
+    <>
       <b className={tone ? tone : undefined}>{value}</b>
       <span>{label}</span>
+    </>
+  );
+  return onClick ? (
+    <button type="button" className="stat" onClick={onClick} title={hint}>
+      {content}
     </button>
+  ) : (
+    <div className="stat" title={hint}>
+      {content}
+    </div>
   );
 }
 

@@ -70,8 +70,8 @@ export function WelcomePage() {
         </Panel>
         <Panel title="Request read-only access">
           <p>
-            New here? Ask for a read-only visitor pass — you can inspect coverage, jobs and
-            publications once the owner approves you.
+            New here? Ask for a read-only visitor pass — you can inspect coverage, simulations, jobs
+            and publications once the owner approves you.
           </p>
           <p>
             <Link className="primary-link" to="/request-access">
@@ -141,7 +141,7 @@ export function RequestAccessPage() {
       <h1 tabIndex={-1}>Ask for read-only access</h1>
       <p className="intro">
         Tell the owner who you are. If they approve, you get a sign-in link and read-only access to
-        coverage, jobs and publications.
+        coverage, simulations, jobs and publications.
       </p>
       <section className="card scenario-form">
         <div className="scenario-fields">

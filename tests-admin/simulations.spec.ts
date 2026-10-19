@@ -86,6 +86,7 @@ test.describe("Simulations catalogue", () => {
   test("selecting a simulation swaps the activity pane to its lifecycle", async ({ page }) => {
     await ownerPage(page);
     await page.locator(".tab", { hasText: "Simulations" }).click();
+    await page.getByRole("checkbox", { name: "All recent" }).check();
     await expect(page.locator(".activity-body")).toContainText("Load operation");
     await page.locator(".table-wrap table.grid tbody tr").first().click();
     const activity = page.locator(".activity-body");

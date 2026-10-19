@@ -538,12 +538,21 @@ export function ActivityBody({
   allRecent: boolean;
   onSelect: (sel: Selection) => void;
 }) {
-  const scoped = allRecent ? rows : rows.filter((r) => rowRegion(r) === scope.region);
+  const scoped = allRecent
+    ? rows
+    : rows.filter((r) => {
+        if (rowRegion(r) !== scope.region) return false;
+        if (r.kind === "refresh") return r.job.day >= scope.start && r.job.day <= scope.end;
+        const window = r.kind === "op" ? r.op : r.job;
+        return window.startDay <= scope.end && window.endExclusive > scope.start;
+      });
   const sorted = [...scoped].sort((a, b) => (rowWhen(b) ?? "").localeCompare(rowWhen(a) ?? ""));
   if (sorted.length === 0) {
     return (
       <p className="empty-insp">
-        {allRecent ? "No recent work." : `No work touches ${scope.region} in the loaded lists.`}
+        {allRecent
+          ? "No recent work."
+          : `No loaded work overlaps ${scope.region} · ${scope.start} – ${scope.end}.`}
       </p>
     );
   }

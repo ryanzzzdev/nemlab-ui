@@ -65,11 +65,12 @@ test.describe("DataOps workspace", () => {
     await expect(page).toHaveURL(/view=publications/);
     await expect(page.locator(".table-wrap table.grid tbody")).toContainText("Current");
     // A jobs selection cannot follow into publications — inspector resets.
-    await expect(page.locator(".inspector")).not.toContainText("Dispatching");
+    await expect(page.locator(".inspector")).toHaveCount(0);
   });
 
   test("activity pane selection switches view and selection atomically", async ({ page }) => {
     await ownerPage(page);
+    await page.getByRole("checkbox", { name: "All recent" }).check();
     await page.locator(".activity-body tbody tr").first().click();
     await expect(page).toHaveURL(/view=jobs/);
     await expect(page).toHaveURL(/sel=/);
@@ -78,6 +79,7 @@ test.describe("DataOps workspace", () => {
 
   test("split handles resize the inspector and activity panes", async ({ page }) => {
     await ownerPage(page);
+    await page.locator(".table-wrap tbody tr").first().click();
     const vHandle = (await page.locator(".split-handle.v").boundingBox())!;
     const before = await page
       .locator(".inspector")
@@ -249,4 +251,34 @@ test.describe("viewer boundary", () => {
     await page.goto("/admin/access");
     await expect(page.locator("#workspace")).toContainText("owner actions");
   });
+});
+
+test("inspector uses space only when selected and returns keyboard focus on close", async ({
+  page,
+}) => {
+  await ownerPage(page);
+  await expect(page.locator(".inspector")).toHaveCount(0);
+  const grid = page.locator(".table-wrap table[role=grid]");
+  const fullWidth = await grid.evaluate((el) => el.getBoundingClientRect().width);
+  await grid.locator("tbody tr").first().click();
+  await expect(page.locator(".inspector")).toBeVisible();
+  expect(await grid.evaluate((el) => el.getBoundingClientRect().width)).toBeLessThan(fullWidth);
+  await page.getByRole("button", { name: "Close inspector" }).click();
+  await expect(page.locator(".inspector")).toHaveCount(0);
+  await expect(grid).toBeFocused();
+  await expect(page).not.toHaveURL(/sel=/);
+});
+
+test("activity respects market dates and All recent deliberately widens them", async ({ page }) => {
+  await ownerPage(page);
+  await page.getByLabel("From", { exact: true }).fill("2023-09-01");
+  await page.getByLabel("To", { exact: true }).fill("2023-09-03");
+  await page.getByRole("button", { name: "Apply", exact: true }).click();
+  await expect(page.locator(".activity")).toContainText("2023-09-01");
+  await expect(page.locator(".activity")).not.toContainText("2023-08-01");
+  await page.getByRole("checkbox", { name: "All recent" }).check();
+  await expect(page.locator(".activity")).toContainText("2023-08-01");
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await expect(page.getByRole("link", { name: "Data Ops", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Access", exact: true })).toBeVisible();
 });

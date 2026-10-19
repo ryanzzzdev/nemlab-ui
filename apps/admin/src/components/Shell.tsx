@@ -155,24 +155,26 @@ export function Shell() {
         <button
           type="button"
           className="btn appbar-link"
-          title="How coverage, jobs and publications fit together."
+          title="How prices, simulations, jobs and publications fit together."
           onClick={() => setHelpOpen(true)}
         >
           Help
         </button>
-        <label className="dim picker">
-          Density
-          <select
-            value={prefs.density}
-            onChange={(event) => update({ density: event.target.value as Density })}
-          >
-            {DENSITIES.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        {signedIn && (
+          <label className="dim picker">
+            Density
+            <select
+              value={prefs.density}
+              onChange={(event) => update({ density: event.target.value as Density })}
+            >
+              {DENSITIES.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <label className="dim picker">
           Theme
           <select value={theme} onChange={(event) => setTheme(event.target.value as Theme)}>
@@ -193,6 +195,8 @@ export function Shell() {
               <NavLink
                 key={item.to}
                 to={item.to}
+                aria-label={item.label}
+                title={item.label}
                 end={"end" in item}
                 className={({ isActive }) => `rail-item${isActive ? " active" : ""}`}
               >
@@ -203,6 +207,8 @@ export function Shell() {
             {role === "owner" && (
               <NavLink
                 to="/access"
+                aria-label="Access"
+                title="Access"
                 className={({ isActive }) => `rail-item${isActive ? " active" : ""}`}
               >
                 <IconLock />

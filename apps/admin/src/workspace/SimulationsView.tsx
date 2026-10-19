@@ -198,8 +198,8 @@ export function SimulationsView({
         </button>
       )}
       <p className="hint table-note">
-        Stored simulation requests and their job state — the catalogue never loads full price or
-        dispatch arrays; open a row for the detail projection.
+        Select a simulation to inspect its scenario, results and price history. Dates refer to the
+        market day; created times show when the request was stored.
       </p>
     </>
   );
@@ -273,28 +273,44 @@ function ResultSection({ result }: { result: AdminSimulationDetail["result"] }) 
         <dd>{fmtDateTime(result.createdAt)}</dd>
       </dl>
       {strategies.length > 0 && (
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th scope="col">Strategy</th>
-              <th scope="col">Margin</th>
-              <th scope="col">Revenue</th>
-              <th scope="col">Charging</th>
-              <th scope="col">Export MWh</th>
-            </tr>
-          </thead>
-          <tbody>
-            {strategies.map(([name, acc]) => (
-              <tr key={name}>
-                <td>{STRATEGY_LABEL[name] ?? name}</td>
-                <td>{acc.margin.toFixed(2)}</td>
-                <td>{acc.revenue.toFixed(2)}</td>
-                <td>{acc.chargingCost.toFixed(2)}</td>
-                <td>{acc.exportedMWh.toFixed(2)}</td>
+        <div className="table-scroll">
+          <table className="data-table result-comparison">
+            <caption>Stored comparison · AUD unless labelled MWh</caption>
+            <thead>
+              <tr>
+                <th scope="col">Metric</th>
+                {strategies.map(([name]) => (
+                  <th scope="col" key={name}>
+                    {STRATEGY_LABEL[name] ?? name}
+                  </th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {(
+                [
+                  ["Net margin", "margin"],
+                  ["Revenue", "revenue"],
+                  ["Charging", "chargingCost"],
+                  ["Export MWh", "exportedMWh"],
+                ] as const
+              ).map(([label, field]) => (
+                <tr key={field}>
+                  <th scope="row">{label}</th>
+                  {strategies.map(([name, acc]) => (
+                    <td
+                      key={name}
+                      title={String(acc[field])}
+                      aria-label={`${label}: ${acc[field]}`}
+                    >
+                      {acc[field].toFixed(2)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </>
   );
@@ -378,6 +394,27 @@ export function SimulationInspector({
         <div className="sub">
           Simulation · <StatusChip status={sim.status} /> · {sim.id.slice(0, 8)}
         </div>
+      </div>
+      <div className="insp-actions">
+        {sim.hasResult && (
+          <a
+            className="btn"
+            href={`${PUBLIC_BASE}/batterylab?simulation=${sim.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Open this stored comparison in the public BatteryLab workspace."
+          >
+            Open in BatteryLab ↗
+          </a>
+        )}
+        <button
+          type="button"
+          className="btn"
+          title="Open the Coverage view on this simulation's market day."
+          onClick={() => onOpenCoverage(sim.day)}
+        >
+          Inspect price coverage
+        </button>
       </div>
       {outOfScope && (
         <p className="banner" role="status">
@@ -498,7 +535,7 @@ export function SimulationInspector({
             {d.provenance.comparison === "matches"
               ? "Pinned revision is current"
               : d.provenance.comparison === "different"
-                ? "Prices were corrected since this run"
+                ? "Pinned revision differs from current prices"
                 : "Current revision unavailable"}
           </dd>
           <dt>Pinned</dt>
@@ -518,27 +555,6 @@ export function SimulationInspector({
             ) : null,
           )}
         </dl>
-      </div>
-      <div className="insp-actions">
-        {sim.hasResult && (
-          <a
-            className="btn"
-            href={`${PUBLIC_BASE}/batterylab?simulation=${sim.id}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            title="Open this stored comparison in the public BatteryLab workspace."
-          >
-            Open in BatteryLab ↗
-          </a>
-        )}
-        <button
-          type="button"
-          className="btn"
-          title="Open the Coverage view on this simulation's market day."
-          onClick={() => onOpenCoverage(sim.day)}
-        >
-          Inspect price coverage
-        </button>
       </div>
     </>
   );

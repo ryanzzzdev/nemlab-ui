@@ -611,7 +611,19 @@ export function AccessPage() {
               />
             ))}
         </div>
-        <Inspector>{inspector()}</Inspector>
+        {sel && (
+          <Inspector
+            key={sel}
+            onClose={() => {
+              setParam({ sel: null });
+              requestAnimationFrame(() =>
+                document.querySelector<HTMLElement>(".table-wrap table[role='grid']")?.focus(),
+              );
+            }}
+          >
+            {inspector()}
+          </Inspector>
+        )}
       </div>
     </>
   );
