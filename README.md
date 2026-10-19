@@ -1,16 +1,27 @@
 # NEMLab frontend
 
-The public React application for BatteryLab and GridReplay. This is a separate Git
-repository from `../nemlab`, the Java API/worker backend. The current application has public navigation, feature descriptions and methodology.
-BatteryLab can read stored price days, validate a battery scenario, submit it and follow
-simulation progress through stored-result retrieval. Detailed comparison charts and saved-link
-reopening are the next slices; the GridReplay workflow is not implemented yet.
+The browser applications for BatteryLab and GridReplay. This is a separate Git
+repository from [nemlab](https://github.com/ryanzzzdev/nemlab), the Python
+API/worker backend.
 
-BatteryLab uses a centered 1160px workspace; GridReplay uses a centered 1440px workspace,
-following the static mock's panel design. Both share aligned navigation. The header's Appearance control offers Light, Dark and Auto
-(device preference). The choice persists across pages/reloads and updates open charts.
-The visual direction and remaining integration tasks are recorded in
-[decision 018](https://github.com/ryanzzzdev/nemlab/blob/main/docs/project/decisions/018-product-layouts-and-appearance.md).
+Two applications live here:
+
+- **`apps/public`** — the public product: price explorer, BatteryLab battery
+  simulation (scenario form → job polling → stored comparison with charts and
+  shareable saved links), and GridReplay (event catalogue, replay, highlights
+  and deep links).
+- **`apps/admin`** — a separately built owner/viewer console: data operations
+  (coverage, loads, jobs, publications, simulations), access management and
+  sign-in flows. It never shares a bundle with the public app and holds no
+  operator credentials.
+
+The public app uses centered workspaces (1160px BatteryLab, 1440px GridReplay)
+following the accepted layouts in
+[decision 018](https://github.com/ryanzzzdev/nemlab/blob/main/docs/project/decisions/018-product-layouts-and-appearance.md);
+Admin uses an independent full-viewport desktop design under
+[decision 025](https://github.com/ryanzzzdev/nemlab/blob/main/docs/project/decisions/025-admin-desktop-workspace.md).
+Both share Light/Dark/Auto appearance; the public header's Appearance control
+persists across pages and updates open charts.
 
 ## Local setup
 
@@ -18,12 +29,13 @@ Use Node.js 22.23.1 (`nvm use` reads `.nvmrc`) and npm 10.9.8. From this reposit
 
 ```sh
 npm ci --ignore-scripts
-npm run dev
+npm run dev         # public app  — http://127.0.0.1:5173
+npm run dev:admin   # admin app   — http://127.0.0.1:5274/admin
 ```
 
-Open <http://127.0.0.1:5173>. The shell starts without a backend. Price reads require the API configuration below;
-OE and operator credentials never belong in this frontend. The development server binds to loopback and fails if its port is
-already occupied.
+Each shell starts without a backend. Price reads and sign-in require the API
+configuration below; OE and operator credentials never belong in this frontend.
+The development servers bind to loopback and fail if their ports are occupied.
 
 ```sh
 npx --no-install playwright install chromium
@@ -32,39 +44,45 @@ npm run check
 
 On a Linux host missing browser system libraries, use
 `npx --no-install playwright install --with-deps chromium` once; it may require
-administrator permissions. `check` verifies formatting, strict TypeScript, the
-production bundle and Chromium startup at desktop/mobile widths. CI runs these same
-checks. No hosted CI run is implied by the workflow file.
+administrator permissions. `check` verifies contract hashes, formatting, strict
+TypeScript, both production bundles and both Playwright suites (public and
+Admin) at desktop/mobile widths. Hosted CI runs these same checks on the
+frontend workflow.
 
-`npm run format` applies Prettier. `npm run build` produces `apps/public/dist/`;
-`npm run preview` serves that output at <http://127.0.0.1:4173> for local inspection.
-Build before preview or `test:browser`. Preview is not a production server.
-Playwright owns its preview process and refuses to reuse another process on port 4173.
-Browser screenshots/traces live in ignored `test-results/`.
+`npm run format` applies Prettier. `npm run build` produces `apps/public/dist/`
+and `apps/admin/dist/`; `npm run preview`/`preview:admin` serve those outputs
+at <http://127.0.0.1:4173> and <http://127.0.0.1:4274/admin> for local inspection.
+Build before preview or browser tests. Preview is not a production server.
+Playwright owns its preview process and refuses to reuse another process on the
+preview port. Browser screenshots/traces live in ignored `test-results/`.
 
 ## Layout and boundaries
 
 - `apps/public/`: the public browser application, built as static assets.
-- `tests/`: browser checks against the built output.
+- `apps/admin/`: the Admin workspace, a separate build at base `/admin/` with
+  its own stylesheet/tokens; the public bundle contains zero Admin code.
+- `tests/`, `tests-admin/`: browser checks against the built outputs.
+- `contracts/`: versioned OpenAPI snapshot and generated types synced from the
+  backend (see _Contract handoff_).
 - Root tooling, lockfile and CI: shared by applications in this npm workspace.
 
-An eventual `apps/admin/` will be a separate build and deployment within this Git
-repository. No empty Admin application or shared package is created now. Extract
-shared components only when both applications need them. Vite environment variables
-are public; never place OE credentials or operator tokens in this repository.
+Extract shared components only when both applications need them; Admin imports
+nothing from `apps/public` styles. Vite environment variables are public bundle
+inputs; never place OE credentials or operator tokens in this repository.
 
-The initial stack is React 19.3.0, Vite 8.3.0, React plugin 6.1.1 and TypeScript 5.9.3.
-Prettier 3.9.8 enforces formatting and Playwright 1.63.0 checks browser startup.
-Exact dependencies and the lockfile are committed together when a commit is requested.
-React Router 8.4.0 provides navigation; plain CSS styles the current shell. Forms, query
-caching and charts will be added with their first verified slice.
+The stack is React 19.3.0, Vite 8.3.0, React plugin 6.1.1, TypeScript 5.9.3 and
+React Router 8.4.0 with plain CSS. TanStack Query 5.103.1 owns caching/polling,
+ECharts 6.1.0 renders linked charts (lazy-loaded) and the typed API client uses
+openapi-fetch 0.16.0 over the generated contract. Prettier 3.9.8 enforces
+formatting and Playwright 1.63.0 runs the browser suites. Exact dependencies
+and the lockfile are committed together.
 
 ## Project records
 
 Read [AGENTS.md](AGENTS.md) and the backend's canonical documents:
 
 - [Roadmap](https://github.com/ryanzzzdev/nemlab/blob/main/docs/project/roadmap.md)
-- [Tasks](https://github.com/ryanzzzdev/nemlab/blob/main/docs/project/backlog.md#nem-015)
+- [Tasks](https://github.com/ryanzzzdev/nemlab/blob/main/docs/project/backlog.md)
 - [Documentation guide](https://github.com/ryanzzzdev/nemlab/blob/main/docs/project/documentation-guide.md)
 - [API contract](https://github.com/ryanzzzdev/nemlab/blob/main/api/contracts/README.md)
 
@@ -74,10 +92,12 @@ repository builds independently of the backend. The imported contract snapshot a
 
 ## Routes and static hosting
 
-The public app uses browser-history URLs at `/`, `/batterylab`, `/gridreplay` and
-`/methodology`. Unknown paths show an in-app not-found page with a home link. The
-current build assumes hosting at the origin root; subdirectory hosting would require
-matching Vite base and router basename settings.
+The public app uses browser-history URLs at `/`, `/batterylab`, `/prices`,
+`/gridreplay` and `/methodology`. Unknown paths show an in-app not-found page
+with a home link. The build assumes hosting at the origin root; subdirectory
+hosting would require matching Vite base and router basename settings. The
+Admin build serves under `/admin/` on the same origin; static hosts should
+redirect `/admin` to `/admin/` (the dev server does this itself).
 
 Configure the static host to serve `index.html` for page routes, including direct
 loads and reloads. Vite development/preview already provides this fallback; production
@@ -112,9 +132,11 @@ location / {
 }
 ```
 
-This example is documentation, not a deployed or nginx-tested configuration. With
-SPA fallback, a direct unknown page normally has HTTP 200 even though the app displays
-not-found; server-level 404 status/SEO handling requires a later hosting decision.
+This example is documentation, not a deployed or nginx-tested configuration; it
+covers the public bundle only — the Admin deployment additionally proxies the
+`/api/auth`, `/api/access` and `/api/admin` families. With SPA fallback, a direct
+unknown page normally has HTTP 200 even though the app displays not-found;
+server-level 404 status/SEO handling requires a later hosting decision.
 
 The shared layout provides visible mobile navigation, active-page indicators, a
 skip link, page titles and heading focus after route changes. Browser tests cover
@@ -124,20 +146,22 @@ required for this shell. Tailwind/shadcn remain candidates for richer form contr
 
 ## Stored-price integration
 
-Start the Java API with `NEMLAB_DATA_ENABLED=true` and its database settings from
+Start the Python API with `NEMLAB_DATA_ENABLED=true` and its database settings from
 [backend API setup](https://github.com/ryanzzzdev/nemlab/blob/main/api/README.md). The database must be migrated and contain
-imported days to show values. Keep `NEMLAB_ADMIN_ENABLED=false` for this public slice.
-The public form never imports data or runs a simulation.
+imported days to show values. The public form never imports data or triggers an
+unbounded fetch directly.
 
-Vite development **and preview** proxy `/api/v1/prices` to `http://127.0.0.1:8080`.
+Vite development **and preview** proxy `/api/v1/prices`, `/api/v1/simulations`
+and `/api/v1/events` to `http://127.0.0.1:8080`; the Admin dev server proxies
+`/api/admin`, `/api/auth`, `/api/access` and `/api/v1/prices`.
 Set `NEMLAB_API_TARGET` in the server process to change that target. This is a Node/Vite
 server setting, not a `VITE_` browser variable. Production static hosting needs the
 explicit reverse-proxy rule above; the built browser uses same-origin relative URLs.
 No wildcard CORS change or embedded backend address is needed.
 
-The private openapi-fetch 0.16.0 client exposes only the two public GET operations,
+The private openapi-fetch 0.16.0 client exposes only the public GET operations,
 rejects other request paths/methods, strips caller headers, omits cookies/credentials,
-rejects redirects and uses a 15-second request timeout. TanStack Query 5.103.1 keys
+rejects redirects and uses a 15-second request timeout. TanStack Query keys
 results by region/day, disables automatic retries and window-focus refresh, keeps
 inactive cache entries for five minutes and regards cached entries as immediately
 stale. Rechecking the same day refetches it. Loading/error states hide old results.
@@ -148,6 +172,58 @@ are displayed without conversion to floating point; missing/source-null rows sta
 separate. Dates and interval labels use fixed UTC+10. No result implies investment return.
 Generated types are compile-time contracts; small runtime guards protect the displayed
 fields, not every OpenAPI invariant.
+
+## GridReplay
+
+`/gridreplay` presents the published event catalogue with type/region filters,
+date-scoped replay (price, demand, interconnector flow and fuel panels sharing
+one cursor/window), per-event detail, Highlights selections and shareable
+deep links (`?region=&from=&to=` and event parameters). Replay data is pinned to
+an immutable publication, so corrected source data cannot silently alter a
+saved link. Public reads are bounded and never trigger backend fetches.
+
+## Battery scenario and simulation progress
+
+Enable `NEMLAB_DATA_ENABLED=true` and `NEMLAB_SIMULATION_API_ENABLED=true` on the API,
+and `NEMLAB_SIMULATION_ENABLED=true` on the worker, with the same migrated database.
+The local Vite proxy forwards public price/simulation requests to `NEMLAB_API_TARGET`
+(default `http://127.0.0.1:8080`). It adds no operator credentials.
+
+The form sends exact decimal strings and integer five-minute boundaries in fixed UTC+10;
+24:00 means next midnight. Illustrative defaults are editable and are not recommendations.
+Coverage is checked before submission; the server remains authoritative if prices change.
+Inputs are locked during submission/polling. Stop checking aborts browser requests only;
+an accepted backend job continues. Resume checks the same ID. Automatic polling pauses
+after 60 waits (Retry-After bounded to 1–30 seconds); failed network/status/result reads
+leave a resume action. Requests have a 15-second timeout and never retry POST automatically.
+Equivalent submissions reuse the job, including a failed job. Editing inputs clears the
+displayed job/result to avoid showing a previous scenario as current.
+
+Stored results render the strategy comparison — stat cards, financial breakdown,
+interval table and four linked chart panels — and reopen via
+`?simulation=<uuid>` route state.
+
+## Linked charts
+
+For an imported day or a stored result, the ECharts 6.1.0 module loads
+on demand; failure to download it leaves the exact table available. Panels
+share one cursor/x-axis window; interval selection supports keyboard with an
+exact text readout; the visible-window selector zooms panels together.
+Pinch/wheel gestures are deliberately not captured for chart zoom, allowing
+page navigation on mobile. Interval-end labels use fixed NEM UTC+10; the final
+midnight explicitly says “+1 day”. Missing prices are null plot points with
+disconnected lines and explicit readout states.
+
+Shared grids reuse one ECharts instance and x-axis window. SVG rendering makes the
+288-point series inspectable; ResizeObserver handles size changes and unmounting
+disposes the chart. Only line/grid/mark-line/inside-zoom/SVG modules are registered.
+Native controls and the exact tables remain accessible alternatives.
+
+Browser tests verify cursor geometries, changed zoom geometry, gaps, negative
+prices, keyboard and touch selection, DST-independent labels, 320-pixel resizing,
+reopening and failed chunk downloads. The real API suite also opens the chart.
+Performance observations and limits live in the backend's
+[chart evidence](https://github.com/ryanzzzdev/nemlab/blob/main/docs/project/evidence/frontend/chart-findings.md).
 
 ## Contract handoff
 
@@ -170,71 +246,25 @@ Ordinary frontend checks verify hashes and compare with the backend when present
 isolated frontend checkout/CI verifies the recorded snapshot only and reports that limit;
 it cannot discover future upstream changes without a backend checkout. Admin definitions
 exist in the full declaration snapshot but are excluded from the public client's type.
-No runtime Admin client or credentials are imported.
+No operator credential or token is imported into the public bundle.
 
 ## Real-backend browser check
 
 ```sh
-export JAVA_HOME=/path/to/jdk-25
 npm run test:live
 ```
 
-This requires Docker, the sibling backend (or `NEMLAB_BACKEND`), cached Java dependencies,
-installed frontend dependencies and Playwright Chromium. It builds the API/worker jars and public
-bundle, creates its own PostgreSQL 18.6 container on a random loopback port, applies the
-backend SQL migrations to that empty test database and seeds clearly synthetic days.
-It verifies real API/proxy/browser behaviour for complete, incomplete and absent days,
-plus simulation submission, worker execution, result retrieval and deduplication
-on desktop/mobile. It does not use `.env`, a persistent database or OE. The API/worker processes
-and container are cleaned up on success or failure. SQL application here is fixture setup;
-backend tests remain responsible for Flyway migration behaviour.
+This requires Docker, the sibling backend checkout (or `NEMLAB_BACKEND`), a synced
+backend uv workspace, installed frontend dependencies and Playwright Chromium. It
+launches the Python API/worker, creates its own PostgreSQL container on a random
+loopback port, applies the backend migrations to that empty test database and seeds
+clearly synthetic days. It verifies real API/proxy/browser behaviour for complete,
+incomplete and absent days, plus simulation submission, worker execution, result
+retrieval and deduplication on desktop/mobile. It does not use `.env`, a persistent
+database or OE. The API/worker processes and container are cleaned up on success or
+failure. SQL application here is fixture setup; backend tests remain responsible for
+migration behaviour.
 
-`npm run check`/frontend CI use intercepted browser fixtures and need no Java/database.
-The real integration suite is an explicit local/coordinated check, not a claim of a hosted
-cross-repository CI run. Screenshots are in ignored `test-results/`.
-
-## Battery scenario and simulation progress
-
-Enable `NEMLAB_DATA_ENABLED=true` and `NEMLAB_SIMULATION_API_ENABLED=true` on the API,
-and `NEMLAB_SIMULATION_ENABLED=true` on the worker, with the same migrated database.
-The local Vite proxy forwards public price/simulation requests to `NEMLAB_API_TARGET`
-(default `http://127.0.0.1:8080`). It adds no operator credentials.
-
-The form sends exact decimal strings and integer five-minute boundaries in fixed UTC+10;
-24:00 means next midnight. Illustrative defaults are editable and are not recommendations.
-Coverage is checked before submission; the server remains authoritative if prices change.
-Inputs are locked during submission/polling. Stop checking aborts browser requests only;
-an accepted backend job continues. Resume checks the same ID. Automatic polling pauses
-after 60 waits (Retry-After bounded to 1–30 seconds); failed network/status/result reads
-leave a resume action. Requests have a 15-second timeout and never retry POST automatically.
-Equivalent submissions reuse the job, including a failed job. Editing inputs clears the
-displayed job/result to avoid showing a previous scenario as current.
-
-Result retrieval is connected, but comparison charts and saved-link reopening are not
-implemented yet. The existing price explorer's synthetic chart remains clearly identified.
-
-## Linked-chart prototype
-
-For an imported day, choose **Show chart prototype**. The ECharts 6.1.0 module loads
-on demand; failure to download it leaves the exact table available. The top panel
-plots stored prices (approximate numbers for drawing only); the bottom is a clearly
-labelled synthetic 0–100% triangular energy trace, independent of prices. It tests
-interaction and is not a battery result or observed energy data.
-
-Point or tap either panel to move both cursors. The interval slider supports keyboard
-selection with an exact text readout. The visible-window selector zooms both panels
-together to a full day or six-hour block. Pinch/wheel gestures are deliberately not
-captured for chart zoom, allowing page navigation on mobile. Interval-end labels use
-fixed NEM UTC+10; the final midnight explicitly says “+1 day”. Missing prices are
-null plot points with disconnected lines and explicit readout states.
-
-The two grids share one ECharts instance and x-axis window. SVG rendering makes the
-288-point prototype inspectable; ResizeObserver handles size changes and unmounting
-disposes the chart. Only line/grid/mark-line/inside-zoom/SVG modules are registered.
-Native controls and the existing exact table remain accessible alternatives.
-
-Browser tests verify both cursor geometries, changed zoom geometry, gaps, negative
-prices, keyboard and touch selection, DST-independent labels, 320-pixel resizing,
-reopening and failed chunk downloads. The real API suite also opens the chart.
-Performance observations and limits live in the backend's
-[chart evidence](https://github.com/ryanzzzdev/nemlab/blob/main/docs/project/evidence/frontend/chart-findings.md).
+`npm run check`/frontend CI use intercepted browser fixtures and need no
+backend/database. The real integration suite is an explicit local/coordinated check.
+Screenshots are in ignored `test-results/`.
