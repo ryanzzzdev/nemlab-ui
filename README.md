@@ -10,7 +10,7 @@ BatteryLab uses a centered 1160px workspace; GridReplay uses a centered 1440px w
 following the static mock's panel design. Both share aligned navigation. The header's Appearance control offers Light, Dark and Auto
 (device preference). The choice persists across pages/reloads and updates open charts.
 The visual direction and remaining integration tasks are recorded in
-[decision 018](../nemlab/docs/project/decisions/018-product-layouts-and-appearance.md).
+[decision 018](https://github.com/ryanzzzdev/nemlab/blob/main/docs/project/decisions/018-product-layouts-and-appearance.md).
 
 ## Local setup
 
@@ -63,12 +63,13 @@ caching and charts will be added with their first verified slice.
 
 Read [AGENTS.md](AGENTS.md) and the backend's canonical documents:
 
-- [Roadmap](../nemlab/docs/project/roadmap.md)
-- [Tasks](../nemlab/docs/project/backlog.md#nem-015)
-- [Documentation guide](../nemlab/docs/project/documentation-guide.md)
-- [API contract](../nemlab/api/contracts/README.md)
+- [Roadmap](https://github.com/ryanzzzdev/nemlab/blob/main/docs/project/roadmap.md)
+- [Tasks](https://github.com/ryanzzzdev/nemlab/blob/main/docs/project/backlog.md#nem-015)
+- [Documentation guide](https://github.com/ryanzzzdev/nemlab/blob/main/docs/project/documentation-guide.md)
+- [API contract](https://github.com/ryanzzzdev/nemlab/blob/main/api/contracts/README.md)
 
-These relative links assume sibling checkouts called `nemlab` and `nemlab-ui`. This
+These links point at the backend's GitHub repository; locally they correspond to a
+sibling checkout named `nemlab` (tools like `contract:sync` still use that layout). This
 repository builds independently of the backend. The imported contract snapshot and its provenance are described below.
 
 ## Routes and static hosting
@@ -124,7 +125,7 @@ required for this shell. Tailwind/shadcn remain candidates for richer form contr
 ## Stored-price integration
 
 Start the Java API with `NEMLAB_DATA_ENABLED=true` and its database settings from
-[backend API setup](../nemlab/api/README.md). The database must be migrated and contain
+[backend API setup](https://github.com/ryanzzzdev/nemlab/blob/main/api/README.md). The database must be migrated and contain
 imported days to show values. Keep `NEMLAB_ADMIN_ENABLED=false` for this public slice.
 The public form never imports data or runs a simulation.
 
@@ -236,4 +237,4 @@ Browser tests verify both cursor geometries, changed zoom geometry, gaps, negati
 prices, keyboard and touch selection, DST-independent labels, 320-pixel resizing,
 reopening and failed chunk downloads. The real API suite also opens the chart.
 Performance observations and limits live in the backend's
-[chart evidence](../nemlab/docs/project/evidence/frontend/chart-findings.md).
+[chart evidence](https://github.com/ryanzzzdev/nemlab/blob/main/docs/project/evidence/frontend/chart-findings.md).
